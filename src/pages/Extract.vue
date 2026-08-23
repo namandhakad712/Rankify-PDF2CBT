@@ -1,10 +1,37 @@
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import AppNav from '@/components/AppNav.vue'
+import { ref, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { parsePastedJSON, fetchAndParse } from "@/lib/parse"
 import { getDB } from "@/lib/db"
 import { providers, providerOptions } from "@/lib/providers"
 import { extractPdfText } from "@/lib/pdf"
+import gsap from "gsap"
+import { Sparkles, UploadCloud, ClipboardPaste, Cpu, ArrowRight } from "lucide-vue-next"
+
+// --- Awwwards entrance ---
+onMounted(() => {
+  gsap.from(".ex-hero-badge", { y: 24, opacity: 0, duration: 0.7, ease: "power3.out" })
+  gsap.from(".ex-title", { y: 40, opacity: 0, duration: 0.9, delay: 0.1, ease: "power4.out" })
+  gsap.from(".ex-sub", { y: 20, opacity: 0, duration: 0.8, delay: 0.25, ease: "power3.out" })
+  gsap.from(".spotlight-card", { y: 50, opacity: 0, duration: 0.8, stagger: 0.12, delay: 0.35, ease: "power2.out" })
+})
+
+function handleSpotlight(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  const rect = card.getBoundingClientRect()
+  card.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`)
+  card.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`)
+}
+
+function handleMagnetic(e: MouseEvent) {
+  const btn = e.currentTarget as HTMLElement
+  const rect = btn.getBoundingClientRect()
+  gsap.to(btn, { x: (e.clientX - rect.left - rect.width / 2) * 0.25, y: (e.clientY - rect.top - rect.height / 2) * 0.25, duration: 0.4, ease: "power2.out" })
+}
+function resetMagnetic(e: MouseEvent) {
+  gsap.to(e.currentTarget as HTMLElement, { x: 0, y: 0, duration: 0.9, ease: "elastic.out(1, 0.3)" })
+}
 
 const router = useRouter()
 const pdfFile = ref<File | null>(null)
@@ -133,47 +160,66 @@ Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4"
 </script>
 
 <template>
-  <div class="min-h-screen bg-zinc-50">
+  <div class="min-h-screen bg-background text-foreground font-sans pt-28 pb-10">
+    <AppNav />
     <div class="max-w-4xl mx-auto px-4 py-8">
-      <button class="text-sm underline" @click="router.push('/')">← Home</button>
-      <h1 class="text-2xl font-bold mt-2">Extract — Paste JSON from GEM</h1>
-      <p class="text-sm text-zinc-500">Primary flow: GEM chat → copy JSON → paste here. Fallback AI only for small PDFs.</p>
+      <button class="text-sm underline text-muted-foreground hover:text-foreground transition-colors" @click="router.push('/')">← Home</button>
+      <div class="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border bg-background/50 backdrop-blur-sm text-sm font-medium ex-hero-badge">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+        </span>
+        PDF → CBT · GEM Primary
+      </div>
+      <h1 class="ex-title text-4xl md:text-6xl font-display font-bold tracking-tighter mt-3">Extract — <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500">Paste JSON</span></h1>
+      <p class="ex-sub text-muted-foreground mt-2 max-w-xl">Primary flow: GEM chat → copy JSON → paste here. Fallback AI only for small PDFs.</p>
 
-      <div class="mt-6 grid gap-4">
+      <div class="mt-8 grid gap-5">
         <!-- Step 1 GEM -->
-        <div class="bg-white border rounded-2xl p-4">
-          <div class="font-semibold">Step 1 — Get JSON from GEM</div>
-          <p class="text-sm text-zinc-500">Open preset GEM, upload PDF there, copy the JSON output.</p>
-          <a href="https://ishortn.ink/gemini-gem" target="_blank" class="inline-block mt-2 px-4 py-2 rounded-full bg-violet-600 text-white text-sm">Open GEM Chat →</a>
+        <div class="spotlight-card rounded-3xl p-6 group relative overflow-hidden" @mousemove="handleSpotlight">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-2"><span class="w-9 h-9 rounded-xl bg-purple-500/10 grid place-items-center"><Sparkles class="w-4.5 h-4.5 text-purple-500" /></span><span class="font-mono text-xs text-purple-500 font-bold">STEP 01</span></div>
+              <div class="text-lg font-bold font-display">Get JSON from GEM</div>
+              <p class="text-sm text-muted-foreground mt-1">Open preset GEM, upload PDF there, copy the JSON output.</p>
+            </div>
+          </div>
+          <a href="https://ishortn.ink/gemini-gem" target="_blank" @mousemove="handleMagnetic" @mouseleave="resetMagnetic" class="magnetic-btn group inline-flex items-center gap-2 mt-4 px-6 py-3 rounded-full bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors relative overflow-hidden">Open GEM Chat <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" /></a>
         </div>
 
         <!-- Step 2 PDF -->
-        <div class="bg-white border rounded-2xl p-4">
-          <div class="font-semibold">Step 2 — Upload PDF (for diagram cropping in Review)</div>
-          <input type="file" accept="application/pdf" @change="onPdf" class="mt-2 block w-full text-sm border rounded p-2" />
-          <div v-if="pdfFile" class="text-xs text-green-600 mt-1">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
-          <div v-else class="text-xs text-zinc-400 mt-1">PDF <20MB. Stored locally for per-question crop in Review.</div>
+        <div class="spotlight-card rounded-3xl p-6 group relative overflow-hidden" @mousemove="handleSpotlight">
+          <div class="flex items-center gap-2 mb-2"><span class="w-9 h-9 rounded-xl bg-blue-500/10 grid place-items-center"><UploadCloud class="w-4.5 h-4.5 text-blue-500" /></span><span class="font-mono text-xs text-blue-500 font-bold">STEP 02</span></div>
+          <div class="text-lg font-bold font-display">Upload PDF — for diagram crop in Review</div>
+          <label class="mt-3 block border-2 border-dashed border-border rounded-2xl p-6 text-center cursor-pointer hover:border-purple-500/50 transition-colors">
+            <input type="file" accept="application/pdf" class="hidden" @change="onPdf" />
+            <UploadCloud class="w-6 h-6 mx-auto text-muted-foreground" />
+            <span class="block mt-2 text-sm text-muted-foreground">{{ pdfFile ? pdfFile.name : "Drop or click — PDF <20MB, stored locally in Dexie" }}</span>
+          </label>
+          <div v-if="pdfFile" class="text-xs text-green-600 mt-2">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
         </div>
 
         <!-- Step 3 Paste -->
-        <div class="bg-white border rounded-2xl p-4">
-          <div class="font-semibold">Step 3 — Paste JSON</div>
-          <textarea v-model="pasteText" rows="10" placeholder='Paste full JSON here — e.g. {"meta":{"title":"Test",...},"sections":[],"questions":[...]} or {"questions":[...]}' class="mt-2 w-full border rounded p-3 font-mono text-xs"></textarea>
-          <div class="mt-2 flex gap-2">
-            <button :disabled="parsing" class="px-5 py-2 rounded-full bg-zinc-900 text-white text-sm disabled:opacity-50" @click="handlePasteParse">{{ parsing ? 'Parsing...' : 'Parse & Go to Review →' }}</button>
-            <button class="px-4 py-2 rounded-full border text-sm" @click="pasteText=''">Clear</button>
-          </div>
+        <div class="spotlight-card rounded-3xl p-6 group relative overflow-hidden" @mousemove="handleSpotlight">
+          <div class="flex items-center gap-2 mb-2"><span class="w-9 h-9 rounded-xl bg-green-500/10 grid place-items-center"><ClipboardPaste class="w-4.5 h-4.5 text-green-500" /></span><span class="font-mono text-xs text-green-500 font-bold">STEP 03</span></div>
+          <div class="text-lg font-bold font-display">Paste JSON</div>
+          <textarea v-model="pasteText" rows="10" placeholder='Paste full JSON here — e.g. {"meta":{"title":"Test",...},"sections":[],"questions":[...]} or {"questions":[...]}' class="mt-3 w-full bg-card border border-border rounded-2xl p-4 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/50"></textarea>
           <div class="mt-3 flex gap-2">
-            <input v-model="pasteUrl" placeholder="Or paste JSON URL and fetch" class="flex-1 border rounded px-3 py-2 text-sm" />
-            <button class="px-4 py-2 rounded border text-sm" @click="handleUrlFetch">Fetch URL</button>
+            <button :disabled="parsing" class="magnetic-btn px-6 py-3 rounded-full bg-foreground text-background text-sm font-bold disabled:opacity-50 hover:scale-[1.02] transition-transform" @click="handlePasteParse">{{ parsing ? 'Parsing...' : 'Parse & Go to Review' }} <ArrowRight v-if="!parsing" class="w-4 h-4 inline ml-1" /></button>
+            <button class="px-5 py-3 rounded-full border border-border text-sm hover:bg-accent transition-colors" @click="pasteText=''">Clear</button>
           </div>
-          <div v-if="error" class="mt-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700 whitespace-pre-wrap">{{ error }}</div>
-          <div v-if="issuesText" class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded text-xs whitespace-pre-wrap">{{ issuesText }}</div>
+          <div class="mt-4 flex gap-2">
+            <input v-model="pasteUrl" placeholder="Or paste JSON URL and fetch" class="flex-1 bg-card border border-border rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50" />
+            <button class="px-5 py-2.5 rounded-full border border-border text-sm hover:bg-accent transition-colors" @click="handleUrlFetch">Fetch URL</button>
+          </div>
+          <div v-if="error" class="mt-3 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-sm text-red-600 whitespace-pre-wrap">{{ error }}</div>
+          <div v-if="issuesText" class="mt-2 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs whitespace-pre-wrap">{{ issuesText }}</div>
         </div>
 
         <!-- Fallback — Modular Providers -->
-        <div class="bg-white border rounded-2xl p-4">
-          <button class="text-sm font-medium underline" @click="showFallback=!showFallback">{{ showFallback ? 'Hide' : 'Show' }} Fallback AI — Modular (Mistral / Groq / NVIDIA) for &lt;10 Q PDFs</button>
+        <div class="spotlight-card rounded-3xl p-6 group relative overflow-hidden" @mousemove="handleSpotlight">
+          <div class="flex items-center gap-2 mb-1"><span class="w-9 h-9 rounded-xl bg-orange-500/10 grid place-items-center"><Cpu class="w-4.5 h-4.5 text-orange-500" /></span><span class="font-mono text-xs text-orange-500 font-bold">OPTIONAL</span></div>
+          <button class="text-sm font-semibold underline decoration-dotted underline-offset-4" @click="showFallback=!showFallback">{{ showFallback ? 'Hide' : 'Show' }} Fallback AI — Modular (Mistral / Groq / NVIDIA) for &lt;10 Q PDFs</button>
           <div v-if="showFallback" class="mt-4 border-t pt-4 space-y-3">
             <p class="text-xs text-zinc-500">Add/delete provider = add/delete file in <code class="bg-zinc-100 px-1 rounded">src/lib/providers/</code> + one line in <code class="bg-zinc-100 px-1 rounded">index.ts</code> — docs in <code class="bg-zinc-100 px-1 rounded">providers/README.md</code></p>
             <div class="grid md:grid-cols-3 gap-3">

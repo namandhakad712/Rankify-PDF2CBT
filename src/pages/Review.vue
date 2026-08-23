@@ -1,10 +1,19 @@
 <script setup lang="ts">
+import AppNav from '@/components/AppNav.vue'
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import type { UniversalPaper, UniversalQuestion } from "@/types"
 import { validatePaper } from "@/lib/validate"
 import { getDB } from "@/lib/db"
 import DiagramCropper from "@/components/review/DiagramCropper.vue"
+import gsap from "gsap"
+
+function handleSpotlight(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  const rect = card.getBoundingClientRect()
+  card.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`)
+  card.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`)
+}
 
 const router = useRouter()
 const paper = ref<UniversalPaper | null>(null)
@@ -14,6 +23,7 @@ const pdfBuffer = ref<ArrayBuffer | null>(null)
 const cropFor = ref<number | null>(null)
 
 onMounted(async () => {
+  setTimeout(() => gsap.from(".q-card", { y: 40, opacity: 0, duration: 0.6, stagger: 0.06, ease: "power2.out" }), 100)
   const raw = localStorage.getItem("rpdf2cbt-review")
   if (raw) {
     try { paper.value = JSON.parse(raw) } catch {}
@@ -68,7 +78,8 @@ function onCropped(url: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-zinc-50">
+  <div class="min-h-screen bg-background text-foreground font-sans pt-28 pb-10">
+    <AppNav />
     <div class="max-w-5xl mx-auto px-4 py-6">
       <button class="text-sm underline" @click="router.push('/extract')">← Extract</button>
       <h1 class="text-2xl font-bold mt-2">Review — Edit & Crop Diagrams</h1>
@@ -89,7 +100,7 @@ function onCropped(url: string) {
         <div v-if="issues" class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded text-xs whitespace-pre-wrap">{{ issues }}</div>
 
         <div class="mt-4 grid gap-4">
-          <div v-for="(q, i) in paper.questions" :key="q.id" class="bg-white border rounded-xl p-4">
+          <div v-for="(q, i) in paper.questions" :key="q.id" class="q-card spotlight-card rounded-2xl p-5 relative overflow-hidden" @mousemove="handleSpotlight">
             <div class="flex items-start justify-between gap-3">
               <div class="text-xs font-mono text-zinc-500">Q{{ q.number }} · {{ q.type }} · {{ q.subject || 'No subject' }}</div>
               <label class="flex items-center gap-1 text-xs"><input type="checkbox" :checked="q.hasDiagram" @change="toggleDiagram(i)" /> hasDiagram</label>

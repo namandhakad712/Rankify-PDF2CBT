@@ -1,14 +1,33 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import AppNav from '@/components/AppNav.vue'
+import { ref, onMounted, computed, nextTick } from "vue"
 import { useRouter } from "vue-router"
+import gsap from "gsap"
 const router = useRouter()
 
 interface LastResult { paper: import("@/types").UniversalPaper; answers: Record<string,string>; createdAt: number }
 const result = ref<LastResult | null>(null)
+const scoreDisplay = ref(0)
 
-onMounted(() => {
+onMounted(async () => {
   const raw = localStorage.getItem("rpdf2cbt-last-result")
   if (raw) result.value = JSON.parse(raw)
+  if (!result.value) return
+  await nextTick()
+  // Awwwards entrance + count-up + staggered bars
+  gsap.from(".res-hero", { y: 40, opacity: 0, duration: 0.9, ease: "power4.out" })
+  gsap.from(".stat-card", { y: 50, opacity: 0, duration: 0.7, stagger: 0.1, delay: 0.15, ease: "power3.out" })
+  const s = stats.value!
+  const scoreObj = { v: 0 }
+  gsap.to(scoreObj, { v: s.score, duration: 1.6, delay: 0.4, ease: "power2.out", onUpdate: () => (scoreDisplay.value = Math.round(scoreObj.v)) })
+  gsap.fromTo(".bar-fill", { width: "0%" }, { width: (i, el: HTMLElement) => el.dataset.w || "0%", duration: 1.2, delay: 0.6, stagger: 0.12, ease: "power3.out" })
+  // Confetti for passing scores
+  if (s.total > 0 && s.correct / s.total >= 0.6) {
+    try {
+      const confetti = (await import("canvas-confetti")).default
+      confetti({ particleCount: 120, spread: 75, origin: { y: 0.35 }, colors: ["#a855f7", "#3b82f6", "#22c55e"] })
+    } catch {}
+  }
 })
 
 const stats = computed(() => {
@@ -35,22 +54,23 @@ const stats = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-zinc-50">
+  <div class="min-h-screen bg-background text-foreground font-sans pt-28 pb-10">
+    <AppNav />
     <div class="max-w-4xl mx-auto px-4 py-6">
-      <button class="text-sm underline" @click="router.push('/')">← Home</button>
-      <h1 class="text-2xl font-bold mt-2">Results — Simple Analytics</h1>
+      <button class="text-sm underline text-muted-foreground hover:text-foreground transition-colors" @click="router.push('/')">← Home</button>
+      <h1 class="res-hero text-4xl md:text-5xl font-display font-black tracking-tighter mt-2">Results — <span class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-blue-500 to-purple-500">Analytics</span></h1>
 
-      <div v-if="!result" class="mt-6 bg-white border rounded-xl p-6 text-center">
+      <div v-if="!result" class="mt-6 spotlight-card rounded-3xl p-8 text-center">
         <div class="text-sm">No result yet — take a test first.</div>
-        <button class="mt-3 px-4 py-2 rounded-full bg-zinc-900 text-white text-sm" @click="router.push('/extract')">Start</button>
+        <button class="mt-3 px-6 py-3 rounded-full bg-purple-600 text-white text-sm font-bold" @click="router.push('/extract')">Start</button>
       </div>
 
       <template v-else-if="stats">
-        <div class="mt-4 grid grid-cols-4 gap-3">
-          <div class="bg-white border rounded-xl p-4 text-center"><div class="text-2xl font-bold">{{ stats.score }}</div><div class="text-xs text-zinc-500">Score</div></div>
-          <div class="bg-white border rounded-xl p-4 text-center"><div class="text-2xl font-bold text-green-600">{{ stats.correct }}</div><div class="text-xs text-zinc-500">Correct / {{ stats.total }}</div></div>
-          <div class="bg-white border rounded-xl p-4 text-center"><div class="text-2xl font-bold text-red-600">{{ stats.wrong }}</div><div class="text-xs text-zinc-500">Wrong</div></div>
-          <div class="bg-white border rounded-xl p-4 text-center"><div class="text-2xl font-bold text-zinc-400">{{ stats.unattempted }}</div><div class="text-xs text-zinc-500">Unattempted</div></div>
+        <div class="mt-6 grid grid-cols-4 gap-3">
+          <div class="stat-card spotlight-card rounded-2xl p-5 text-center"><div class="text-3xl font-black font-display">{{ scoreDisplay }}</div><div class="text-xs text-muted-foreground mt-1">Score</div></div>
+          <div class="stat-card spotlight-card rounded-2xl p-5 text-center"><div class="text-3xl font-black font-display text-green-600">{{ stats.correct }}</div><div class="text-xs text-muted-foreground mt-1">Correct / {{ stats.total }}</div></div>
+          <div class="stat-card spotlight-card rounded-2xl p-5 text-center"><div class="text-3xl font-black font-display text-red-600">{{ stats.wrong }}</div><div class="text-xs text-muted-foreground mt-1">Wrong</div></div>
+          <div class="stat-card spotlight-card rounded-2xl p-5 text-center"><div class="text-3xl font-black font-display text-muted-foreground">{{ stats.unattempted }}</div><div class="text-xs text-muted-foreground mt-1">Unattempted</div></div>
         </div>
 
         <div class="mt-4 bg-white border rounded-xl p-4">
@@ -58,8 +78,8 @@ const stats = computed(() => {
           <div class="mt-3 grid gap-2">
             <div v-for="(v,k) in stats.bySubject" :key="k" class="flex items-center gap-3">
               <div class="w-24 text-xs">{{ k }}</div>
-              <div class="flex-1 h-3 bg-zinc-100 rounded overflow-hidden flex">
-                <div class="bg-green-600 h-full" :style="{width: (100*v.correct/v.total)+'%'}"></div>
+              <div class="flex-1 h-3 bg-zinc-100 dark:bg-zinc-800 rounded overflow-hidden flex">
+                <div class="bar-fill bg-gradient-to-r from-purple-500 to-blue-500 h-full" :data-w="(100*v.correct/v.total)+'%'" :style="{width: (100*v.correct/v.total)+'%'}"></div>
               </div>
               <div class="text-xs w-16 text-right">{{ v.correct }}/{{ v.total }}</div>
             </div>

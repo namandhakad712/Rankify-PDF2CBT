@@ -45,3 +45,5 @@ Thumbs.db
 # Optional local notes
 temp.md
 tmp.md
+temp/
+opencode.json

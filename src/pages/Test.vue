@@ -97,15 +97,18 @@ const fmt = computed(() => {
 <template>
   <div v-if="!paper" class="min-h-screen grid place-items-center"><div class="text-center"><div>No test data</div><button class="mt-3 px-4 py-2 rounded bg-zinc-900 text-white" @click="router.push('/review')">Go to Review</button></div></div>
   <div v-else class="min-h-screen bg-zinc-50 flex flex-col">
-    <div class="bg-white border-b px-4 py-2 flex items-center justify-between">
-      <div class="font-semibold">{{ paper.meta.title }}</div>
-      <div class="font-mono text-sm">{{ fmt }}</div>
-      <button class="px-4 py-1.5 rounded bg-zinc-900 text-white text-sm" @click="submit">Submit</button>
+    <div class="bg-card border-b border-border px-4 py-2.5 flex items-center justify-between backdrop-blur sticky top-0 z-30">
+      <div class="font-semibold font-display flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+        {{ paper.meta.title }}
+      </div>
+      <div class="font-mono text-sm font-bold px-3 py-1 rounded-full" :class="timeLeft < 300 ? 'bg-red-500/10 text-red-600 animate-pulse' : 'bg-purple-500/10 text-purple-500'">{{ fmt }}</div>
+      <button class="px-5 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition-colors" @click="submit">Submit</button>
     </div>
     <div class="flex-1 flex">
       <div class="flex-1 p-4">
-        <div v-if="q" class="bg-white border rounded-xl p-4">
-          <div class="text-xs text-zinc-500">Q{{ q.number }} · {{ q.type }} · {{ q.subject || '' }} <span v-if="q.hasDiagram" class="ml-2 bg-amber-100 px-1 rounded">diagram</span></div>
+        <div v-if="q" class="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <div class="text-xs text-muted-foreground font-mono">Q{{ q.number }} / {{ total }} · {{ q.type.toUpperCase() }} · {{ q.subject || 'General' }} <span v-if="q.hasDiagram" class="ml-2 bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full font-sans font-semibold">diagram</span></div>
           <div class="mt-2 text-sm whitespace-pre-wrap">{{ q.text }}</div>
           <div v-if="q.diagrams?.length" class="mt-2 flex gap-2 flex-wrap"><img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-40 border rounded bg-white" /></div>
           <div v-if="q.options" class="mt-4 grid gap-2">
@@ -116,7 +119,7 @@ const fmt = computed(() => {
               </label>
             </template>
             <template v-else>
-              <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left border rounded px-3 py-2 text-sm', answers[q.id]===String(oi+1) ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white']">
+              <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left border rounded px-3 py-2 text-sm', answers[q.id]===String(oi+1) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white']">
                 <span class="font-mono text-xs mr-2">{{ String.fromCharCode(65+oi) }}.</span>{{ opt }}
               </button>
             </template>
@@ -132,7 +135,7 @@ const fmt = computed(() => {
       <div class="w-64 bg-white border-l p-3">
         <div class="text-xs font-semibold">Palette</div>
         <div class="grid grid-cols-5 gap-2 mt-2">
-          <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-8 h-8 rounded text-xs border', idx===i ? 'ring-2 ring-violet-500' : '', status[qq.id]==='answered' ? 'bg-green-600 text-white' : status[qq.id]==='marked' ? 'bg-purple-600 text-white' : status[qq.id]==='markedAnswered' ? 'bg-purple-600 text-white ring-1' : 'bg-zinc-100']">{{ qq.number }}</button>
+          <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-9 h-9 rounded-lg text-xs border font-semibold transition-all', idx===i ? 'ring-2 ring-purple-500 scale-110' : '', status[qq.id]==='answered' ? 'bg-green-500 text-white border-green-500' : status[qq.id]==='marked' ? 'bg-purple-500 text-white border-purple-500' : status[qq.id]==='markedAnswered' ? 'bg-purple-500 text-white border-purple-500 ring-1 ring-purple-300' : status[qq.id]==='answered' ? 'bg-green-500 text-white' : status[qq.id]==='notAnswered' ? 'bg-red-500/10 text-red-600 border-red-500/40' : 'bg-transparent border-dashed border-border text-muted-foreground']">{{ qq.number }}</button>
         </div>
         <div class="mt-4 flex gap-2">
           <button class="flex-1 py-2 border rounded text-xs" @click="go(idx-1)" :disabled="idx===0">Prev</button>

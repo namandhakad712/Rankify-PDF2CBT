@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import AppNav from '@/components/AppNav.vue'
 import { useHead } from "@vueuse/head"
 useHead({ title: "Getting Started — Rankify PDF2CBT" })
 </script>
 
 <template>
-  <div class="min-h-screen bg-white">
+  <div class="min-h-screen bg-background text-foreground font-sans pt-24 pb-16">
+    <AppNav />
     <div class="max-w-3xl mx-auto px-4 py-10">
       <a href="/" class="text-sm underline">← Home</a>
       <h1 class="text-3xl font-black tracking-tight mt-4">Getting Started</h1>
