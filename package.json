@@ -1,0 +1,35 @@
+{
+  "name": "rankify-pdf2cbt",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vueuse/core": "^14.4.0",
+    "@vueuse/head": "^2.0.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dexie": "^4.2.1",
+    "katex": "^0.16.25",
+    "lucide-vue-next": "^0.545.0",
+    "pdfjs-dist": "^5.4.296",
+    "reka-ui": "^2.10.3",
+    "tailwind-merge": "^3.6.0",
+    "vue": "^3.5.40",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.16",
+    "@types/node": "^24.13.3",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/tsconfig": "^0.9.1",
+    "tailwindcss": "^4.1.16",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.0",
+    "vue-tsc": "^3.3.8"
+  }
+}

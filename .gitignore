@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Deps & build
+node_modules
+dist
+dist-ssr
+*.local
+.output
+.cache
+.parcel-cache
+
+# Vite / Vercel
+.vercel
+.vite
+
+# Env — keep .env.example, ignore rest
+.env
+.env.*
+!.env.example
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+Thumbs.db
+
+# Keep Rankify-V1 private — do not add as submodule or copy its secrets
+# If you work on both repos locally, never `git add` ../Rankify-V1
+
+# Optional local notes
+temp.md
+tmp.md

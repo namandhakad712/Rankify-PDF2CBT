@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec vue-tsc -b --noEmit
+
+      - name: Build (Vite + Rolldown)
+        run: pnpm build
+
+      # Optional — enable when vitest added:
+      # - name: Test
+      #   run: pnpm exec vitest --run
+      # To add vitest: pnpm add -D vitest jsdom @vue/test-utils
+      # and add "test": "vitest --run" to package.json scripts.
+
+      - name: Check no .env leaked
+        run: |
+          if git ls-files | grep -q "^\.env$"; then echo ".env committed!"; exit 1; fi
+          if git ls-files | grep -q "^\.vercel"; then echo ".vercel committed!"; exit 1; fi
+          echo "No secrets leaked"
