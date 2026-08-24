@@ -76,7 +76,8 @@ async function saveAndGoTest() {
   paper.value.meta.totalQuestions = paper.value.questions.length
   localStorage.setItem("rpdf2cbt-review", JSON.stringify(paper.value))
   localStorage.setItem("rpdf2cbt-current", JSON.stringify(paper.value))
-  await getDB().papers.put({ id: "current", paper: paper.value, updatedAt: Date.now() })
+  // paper.value is a deep reactive Proxy — IndexedDB structured-clone rejects it.
+  await getDB().papers.put({ id: "current", paper: JSON.parse(JSON.stringify(paper.value)), updatedAt: Date.now() })
   router.push("/test")
 }
 
