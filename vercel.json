@@ -31,6 +31,7 @@
     "api/agent/chat.ts": {
       "maxDuration": 30,
       "includeFiles": "src/config/providers.yaml"
-    }
+    },
+    "api/agent/ocr.ts": { "maxDuration": 60 }
   }
 }

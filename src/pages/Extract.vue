@@ -13,6 +13,7 @@ import {
   type ProviderEntry,
 } from "@/lib/providers"
 import { extractPdfPages } from "@/lib/pdf"
+import { needsOcr, ocrPdf } from "@/lib/ocr"
 import { runAgentExtract, type AgentProgress, type AgentJobState } from "@/lib/agentExtract"
 import gsap from "gsap"
 import { Sparkles, UploadCloud, ClipboardPaste, Cpu, ArrowRight, Play, RotateCcw, X, Settings } from "lucide-vue-next"
@@ -241,6 +242,8 @@ const agentRunning = ref(false)
 const agentError = ref<string | null>(null)
 const agentProgress = ref<AgentProgress[]>([])
 const resumeAvailable = ref(false)
+const forceOcr = ref(false)
+const ocrUsed = ref(false)
 let abortCtl: AbortController | null = null
 
 const jobId = computed(() => (pdfFile.value ? `${pdfFile.value.name}__${pdfFile.value.size}` : ""))
@@ -267,7 +270,15 @@ async function startAgent(resume = false) {
   abortCtl = new AbortController()
   try {
     const buf = await pdfFile.value.arrayBuffer()
-    const pages = await extractPdfPages(buf)
+    let pages = await extractPdfPages(buf)
+    if (forceOcr.value || needsOcr(pages)) {
+      // text-to-text models can't read scans — Mistral OCR first (625 pages/min free)
+      ocrUsed.value = true
+      agentProgress.value = [{ index: 0, status: "running", note: "Scanned PDF — running Mistral OCR on all pages…" }]
+      pages = await ocrPdf(pdfFile.value)
+    } else {
+      ocrUsed.value = false
+    }
     const id = jobId.value
     let resumeState: AgentJobState | null = null
     if (resume) {
@@ -388,6 +399,10 @@ function cancelAgent() { abortCtl?.abort() }
             </label>
             <div v-if="pdfFile" class="text-sm text-correct font-medium mt-2">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
             <p v-if="resumeAvailable && !agentRunning" class="mt-3 text-[13px] font-medium text-green-700">✓ Previous checkpoint found — hit Resume checkpoint below</p>
+            <label class="mt-3 flex items-start gap-2 text-xs text-ink/60 cursor-pointer">
+              <input type="checkbox" v-model="forceOcr" class="accent-pen mt-0.5" />
+              <span>Scanned / image-only PDF? Force <b>Mistral OCR</b> first (625 pages/min free tier, needs MISTRAL_API_KEY on Vercel; PDF &lt; 4.5MB). Text-based PDFs are read directly — no OCR needed.</span>
+            </label>
           </div>
 
         <!-- AI Agent tab — page-chunked extraction -->
@@ -517,7 +532,7 @@ function cancelAgent() { abortCtl?.abort() }
               <div class="grid grid-cols-8 sm:grid-cols-12 gap-1.5">
                 <div v-for="p in agentProgress" :key="p.index" :title="'Page ' + (p.index+1) + (p.note ? ' — ' + p.note : '')" class="h-7 rounded-md grid place-items-center font-mono text-[10px]" :class="[p.status==='done' ? 'bg-correct/15 text-green-700' : p.status==='running' ? 'bg-pen text-white animate-pulse' : p.status==='failed' ? 'bg-redmargin text-white' : 'bg-ink/[0.06] text-ink/40']">{{ p.index+1 }}</div>
               </div>
-              <div class="font-mono text-[11px] text-ink/50">{{ agentProgress.filter(x => x.status==='done').length }}/{{ agentProgress.length }} pages done — checkpoints save as you go; if it crashes, hit Resume</div>
+              <div class="font-mono text-[11px] text-ink/50">{{ agentProgress.filter(x => x.status==='done').length }}/{{ agentProgress.length }} pages done — checkpoints save as you go; if it crashes, hit Resume{{ ocrUsed ? ' · Mistral OCR used' : '' }}</div>
             </div>
             <div v-if="agentError" class="p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ agentError }}</div>
           </div>
