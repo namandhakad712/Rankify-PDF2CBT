@@ -82,6 +82,7 @@ export function parsePastedJSON(raw: string): ParseResult {
     hasDiagram: q.hasDiagram ?? false,
     diagrams: q.diagrams ?? null,
     difficulty: q.difficulty ?? null,
+    pageNo: q.pageNo ?? null,
     text: normalizeText(q.text),
   }))
 

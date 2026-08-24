@@ -34,6 +34,7 @@ export interface UniversalQuestion {
   hasDiagram: boolean
   diagrams: string[] | null // client objectURLs — Gemini puts _imageRefs, client resolves
   difficulty: Difficulty
+  pageNo?: number | null // source PDF page (1-based) — jumps cropper straight to it
   tags?: string[]
   explanation?: string | null // solution
   passageId?: string | null

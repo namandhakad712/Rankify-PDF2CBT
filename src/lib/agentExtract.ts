@@ -290,6 +290,7 @@ export async function runAgentExtract(opts: {
         continue
       }
       state.results[String(i)] = res
+      if (res.questions.length) for (const q of res.questions) q.pageNo = i + 1 // source page → cropper jump
       progress[i] = { index: i, status: "done" }
     } catch (e: unknown) {
       if (signalRef.aborted) { progress[i] = { index: i, status: "pending" }; break }

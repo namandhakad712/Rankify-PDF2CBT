@@ -115,7 +115,7 @@ function onCropped(url: string) {
             <div class="pointer-events-none absolute inset-y-0 left-9 w-px bg-redmargin/25"></div>
             <div class="px-5 pl-14 py-5">
               <div class="flex items-center justify-between gap-3">
-                <div class="font-mono text-[11px] tracking-wider text-ink/50 uppercase">Q{{ q.number }} · {{ q.type }} · {{ q.subject || 'no subject' }}</div>
+                <div class="font-mono text-[11px] tracking-wider text-ink/50 uppercase">Q{{ q.number }} · {{ q.type }} · {{ q.subject || 'no subject' }}<span v-if="q.pageNo" class="ml-2 bg-hlyellow/60 text-ink px-1.5 py-0.5 rounded normal-case">p.{{ q.pageNo }}</span></div>
                 <label class="flex items-center gap-1.5 text-xs font-medium text-ink/60 cursor-pointer">
                   <input type="checkbox" :checked="q.hasDiagram" @change="toggleDiagram(i)" class="accent-pen" /> hasDiagram
                 </label>
@@ -158,7 +158,7 @@ function onCropped(url: string) {
         </div>
       </template>
     </div>
-    <DiagramCropper v-if="cropFor!==null" :pdfBuffer="pdfBuffer" :initialPage="1" @cropped="onCropped" @close="cropFor=null" />
+    <DiagramCropper v-if="cropFor!==null && paper" :pdfBuffer="pdfBuffer" :initialPage="(paper.questions[cropFor]?.pageNo || 1)" @cropped="onCropped" @close="cropFor=null" />
   </div>
 </template>
 

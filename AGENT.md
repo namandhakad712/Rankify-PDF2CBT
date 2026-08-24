@@ -279,3 +279,10 @@ The app's `parsePastedJSON` also: accepts both full `UniversalPaper` and minimal
   ]
 }
 ```
+---
+
+## 10. Page number — `pageNo` (new, required when detectable)
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `pageNo` | `integer \| null` | best-effort | 1-based PDF page where the question appears. Use the printed page label if present, else the PDF sheet index. `null` only if truly undetectable. Enables one-click diagram cropping on that exact page.

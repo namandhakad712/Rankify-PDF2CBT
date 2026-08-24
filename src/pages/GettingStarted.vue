@@ -90,7 +90,7 @@ useHead({ title: "Getting Started — Rankify PDF2CBT" })
         </section>
 
         <section class="rounded-lg bg-white p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)]">
-          <h2 class="font-display font-bold text-xl tracking-tight">Fatafat fixes <span class="font-hand text-xl text-ink/45 font-normal">(troubleshooting)</span></h2>
+          <h2 class="font-display font-bold text-xl tracking-tight">Instant fixes <span class="font-hand text-xl text-ink/45 font-normal">(troubleshooting)</span></h2>
           <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
             <li><b>Invalid JSON</b> → make sure you copied the whole output; fences are stripped automatically.</li>
             <li><b>PDF &gt;20MB</b> → use the GEM flow (it handles large files); the AI Agent reads big PDFs too but OCR caps at ~4.5MB.</li>

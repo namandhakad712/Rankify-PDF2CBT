@@ -1,0 +1,69 @@
+name: "🌐 Language request"
+description: Request a new language for the Rankify interface
+title: "[i18n] New language request"
+labels: ["i18n"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping Rankify go multilingual! 🎉
+        The interface currently ships with **English, हिन्दी (Hindi) and Hinglish**. Fill this form and we'll add your language to the switcher.
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Which language?
+      description: Pick the language you want in the UI switcher.
+      options:
+        - Spanish
+        - Bengali
+        - Tamil
+        - Telugu
+        - Marathi
+        - Urdu
+        - Gujarati
+        - Kannada
+        - Malayalam
+        - Punjabi
+        - Other (tell us below)
+    validations:
+      required: true
+
+  - type: input
+    id: other-language
+    attributes:
+      label: If you picked "Other" — which language?
+      placeholder: e.g. Odia, Assamese, Nepali…
+    validations:
+      required: false
+
+  - type: textarea
+    id: sample-phrases
+    attributes:
+      label: Sample translations
+      description: Translate these three UI strings into your language so we can check script/tone.
+      value: |
+        1. Start free →
+        2. Guide →
+        3. Privacy →
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Anything else?
+      description: Tone preferences (formal/casual), dialect notes, links to glossaries…
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Can you help translate?
+      description: Maintainers will coordinate with you in this issue.
+      options:
+        - label: Yes, I can help translate the full interface
+        - label: Maybe — just reviewing translations
+        - label: No, just requesting
+    validations:
+      required: true
