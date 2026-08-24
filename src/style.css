@@ -442,6 +442,7 @@ body {
 @theme inline {
   --color-ink: #23203A;
   --color-paper: #FBF8F1;
+  --color-cream: #FBF8F1;
   --color-pen: #2F5FE0;
   --color-redmargin: #F26D6D;
   --color-correct: #1FA45C;

@@ -3,6 +3,9 @@
     <div ref="progressBar" class="fixed top-0 left-0 h-[3px] w-full bg-pen origin-left scale-x-0 z-[70] pointer-events-none"></div>
     <!-- Ink trail canvas — whole page, pencil texture -->
     <canvas ref="inkCanvas" class="ink-canvas" aria-hidden="true"></canvas>
+    <div class="pointer-events-none fixed inset-0 z-[90]">
+      <Crosshair :container-ref="reportCardRef" fixed color="#F26D6D" />
+    </div>
 
     <!-- ═══════════ NAV ═══════════ -->
     <header ref="navEl" class="fixed top-0 inset-x-0 z-50 -translate-y-20 opacity-0">
@@ -237,7 +240,7 @@
       <!-- ═══════════ REPORT CARD ═══════════ -->
       <section class="paper relative py-24 md:py-32">
         <div class="mx-auto max-w-3xl px-5">
-          <div class="relative rounded-2xl bg-white p-8 md:p-12 shadow-[0_30px_70px_-30px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07] rotate-[-0.6deg]">
+          <div ref="reportCardRef" class="relative overflow-hidden rounded-2xl bg-white p-8 md:p-12 shadow-[0_30px_70px_-30px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07] rotate-[-0.6deg]">
             <div class="flex items-center justify-between border-b-2 border-ink/10 pb-5">
               <div>
                 <div class="font-mono text-[10px] uppercase tracking-[0.3em] text-ink/45">term report · 2026</div>
@@ -286,32 +289,35 @@
     </main>
 
     <!-- ═══════════ FOOTER ═══════════ -->
-    <footer class="relative overflow-hidden bg-[#F4EFE3] border-t-2 border-ink/[0.07]">
-      <img src="/images/notebook/footer-doodle.png" alt="" class="hidden lg:block absolute right-8 -top-10 w-44 pointer-events-none select-none opacity-90 rotate-3" style="filter: drop-shadow(0 8px 20px rgba(35,32,58,0.1));" />
-      <div class="mx-auto max-w-6xl px-5 pt-16 pb-8 relative">
+    <footer class="relative overflow-hidden bg-ink rounded-t-[3rem] mx-auto">
+      <div class="absolute inset-0">
+        <Dither :wave-speed="0" :wave-frequency="1.9" :wave-amplitude="0.26" :color-num="4" :pixel-size="2" :mouse-radius="0.3" />
+      </div>
+      <img src="/images/notebook/footer-doodle.png" alt="" class="hidden lg:block absolute right-8 -top-10 w-44 pointer-events-none select-none invert opacity-20 rotate-3" />
+      <div class="mx-auto max-w-6xl px-5 pt-16 pb-8 relative z-10">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-10">
           <div>
             <div class="flex items-baseline gap-2">
-              <span class="font-display font-extrabold text-ink text-3xl tracking-tight">Rankify</span>
-              <span class="font-hand text-xl text-redmargin -rotate-6">pdf→cbt</span>
+              <span class="font-display font-extrabold text-cream text-3xl tracking-tight">Rankify</span>
+              <span class="font-hand text-xl text-hlyellow -rotate-6">pdf→cbt</span>
             </div>
-            <p class="mt-3 max-w-xs text-[15px] leading-relaxed text-ink/55">The free bridge between dead question papers and living practice exams.</p>
+            <p class="mt-3 max-w-xs text-[15px] leading-relaxed text-cream/60">The free bridge between dead question papers and living practice exams.</p>
           </div>
-          <div class="flex flex-wrap gap-x-8 gap-y-3 text-[15px] font-medium text-ink/60">
-            <RouterLink to="/extract" class="hover:text-pen transition-colors">Extract</RouterLink>
-            <RouterLink to="/getting-started" class="hover:text-pen transition-colors">Guide</RouterLink>
-            <RouterLink to="/about" class="hover:text-pen transition-colors">About</RouterLink>
-            <RouterLink to="/privacy" class="hover:text-pen transition-colors">Privacy</RouterLink>
-          </div>
-          <button class="relative h-36 w-36 md:h-40 md:w-40 shrink-0 text-ink/70 hover:text-pen transition-colors" aria-label="Back to top" @click="toTop">
+          <nav class="flex flex-col items-start md:items-end gap-3.5" aria-label="Footer">
+            <RouterLink to="/extract" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">Extract</RouterLink>
+            <RouterLink to="/getting-started" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">Guide</RouterLink>
+            <RouterLink to="/about" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">About</RouterLink>
+            <RouterLink to="/privacy" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">Privacy</RouterLink>
+          </nav>
+          <button class="relative h-36 w-36 md:h-40 md:w-40 shrink-0 text-cream/75 hover:text-hlyellow transition-colors" aria-label="Back to top" @click="toTop">
             <CircularText text="BACK TO TOP  •  BACK TO TOP  •  " :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
             <ArrowUp class="absolute inset-0 m-auto w-6 h-6" />
           </button>
         </div>
-        <div class="mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent" style="-webkit-text-stroke: 2px rgba(35,32,58,0.14)" aria-hidden="true">RANKIFY</div>
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 border-ink/[0.07] pt-6 font-mono text-[10px] uppercase tracking-[0.25em] text-ink/40">
+        <div class="mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent" style="-webkit-text-stroke: 2px rgba(251,248,241,0.28)" aria-hidden="true">RANKIFY</div>
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 border-cream/[0.12] pt-6 font-mono text-[10px] uppercase tracking-[0.25em] text-cream/45">
           <span>© 2026 rankify-pdf2cbt · PolyForm NC</span>
-          <span class="font-hand text-base normal-case tracking-normal text-ink/50">made for students, by people who remember roll numbers</span>
+          <span class="font-hand text-lg normal-case tracking-normal text-hlyellow" style="text-shadow: 0 0 14px rgba(255,216,77,0.6), 0 0 38px rgba(255,216,77,0.3);">made for students, by people who remember roll numbers</span>
         </div>
       </div>
     </footer>
@@ -332,6 +338,8 @@ import Lenis from 'lenis'
 import { ArrowRight, ArrowUp, Plus } from 'lucide-vue-next'
 import CircularText from '@/components/CircularText.vue'
 import ImageTrail from '@/components/ImageTrail.vue'
+import Dither from '@/components/Dither.vue'
+import Crosshair from '@/components/Crosshair.vue'
 
 gsap.registerPlugin(ScrollTrigger, SplitText, Flip, ScrambleTextPlugin, DrawSVGPlugin)
 
@@ -402,6 +410,7 @@ const faqs = [
 
 /* refs */
 const root = ref(null)
+const reportCardRef = ref(null)
 const navEl = ref(null)
 const progressBar = ref(null)
 const inkCanvas = ref(null)
@@ -489,6 +498,19 @@ onMounted(() => {
   gsap.ticker.add(tick)
   gsap.ticker.lagSmoothing(0)
 
+  /* Footer grows from narrow to full width on scroll-in */
+  const footerEl = root.value?.querySelector('footer')
+  if (footerEl && !reduced) {
+    gsap.fromTo(footerEl,
+      { width: '72%' },
+      {
+        width: '100%',
+        ease: 'none',
+        scrollTrigger: { trigger: footerEl, start: 'top 98%', end: 'top 12%', scrub: 0.5 }
+      }
+    )
+  }
+
   document.querySelectorAll('.nb-anchor').forEach(a => {
     a.addEventListener('click', e => {
       const id = a.getAttribute('href')
@@ -502,8 +524,21 @@ onMounted(() => {
   /* ink trail */
   if (!reduced && window.matchMedia('(pointer: fine)').matches) {
     inkCtx = inkCanvas.value.getContext('2d')
+    const howEl = document.getElementById('how')
     let last = 0
+    let crossOn = false
+    const inRect = (el, x, y) => {
+      if (!el) return false
+      const b = el.getBoundingClientRect()
+      return x >= b.left && x <= b.right && y >= b.top && y <= b.bottom
+    }
     window.addEventListener('pointermove', e => {
+      crossOn = inRect(reportCardRef.value, e.clientX, e.clientY)
+      // image trail (#how) ya crosshair (report card) active ho to pencil line suppress
+      if (crossOn || inRect(howEl, e.clientX, e.clientY)) {
+        if (inkPts.length) inkPts.length = 0
+        return
+      }
       const now = performance.now()
       if (now - last < 16) return
       last = now
