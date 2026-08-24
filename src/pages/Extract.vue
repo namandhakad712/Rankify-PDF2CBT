@@ -4,13 +4,13 @@ import { ref, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { parsePastedJSON, fetchAndParse } from "@/lib/parse"
 import { getDB } from "@/lib/db"
-import { providers, providerOptions } from "@/lib/providers"
 import {
-  createCustomProvider,
-  loadCustomConfig,
-  saveCustomConfig,
-  clearCustomConfig,
-  CUSTOM_PRESETS,
+  loadProviders,
+  upsertProvider,
+  deleteProvider as deleteProviderEntry,
+  fetchModels as fetchProviderModels,
+  normalizeBaseUrl,
+  type ProviderEntry,
 } from "@/lib/providers"
 import { extractPdfPages } from "@/lib/pdf"
 import { runAgentExtract, type AgentProgress, type AgentJobState } from "@/lib/agentExtract"
@@ -111,82 +111,124 @@ async function handleUrlFetch() {
   }
 }
 
+/* ── Provider manager — the harness window ── */
 /* Curated from official docs (console.groq.com/docs/rate-limits, docs.mistral.ai, build.nvidia.com) */
 const PROVIDER_LIMITS: Record<string, string> = {
   groq: "Groq free tier (per model): 30 RPM · 1K-14.4K RPD · 6-12K TPM · 128K context",
   mistral: "Mistral free tier: medium ~23 req/min at 356K TPM (best quality) · ministral for volume · large throttled to ~4 req/min",
   nvidia: "NVIDIA trial API: ~40 RPM dynamic shared limit · 100+ models · up to 1M-token context",
-  custom: "Limits depend on whichever provider your base URL points to",
 }
 
-const _recommended = providerOptions.find((p) => p.value === "groq") ?? providerOptions[0]
-const fallbackProviderId = ref(_recommended?.value || "mistral")
-const fallbackModel = ref(_recommended?.defaultModel || "")
-const fallbackKey = ref("")
-const fallbackViaProxy = ref(true)
+const providerList = ref<ProviderEntry[]>([])
+const activeProviderId = ref("")
+const activeModel = ref("")
+const formOpen = ref(false)
+const formEditingId = ref<string | null>(null)
+const formName = ref("")
+const formUrl = ref("")
+const formKey = ref("")
+const formModels = ref<string[]>([])
+const formModelPick = ref("")
+const formManualModel = ref("")
+const formStatus = ref<string | null>(null)
+const formFetching = ref(false)
 
-/* generic custom provider harness */
-const customVersion = ref(0)
-const customBaseUrl = ref("")
-const customApiKey = ref("")
-const customModelInput = ref("")
-const customModels = ref<string[]>([])
-const customStatus = ref<string | null>(null)
-
-const allProviders = computed(() => {
-  void customVersion.value
-  const cfg = loadCustomConfig()
-  return cfg ? [...providers, createCustomProvider(cfg)] : providers
-})
-const allOptions = computed(() =>
-  allProviders.value.map((p) => ({ value: p.id, label: p.label, defaultModel: p.defaultModel, docsUrl: p.docsUrl })),
-)
-const customConfigured = computed(() => {
-  void customVersion.value
-  return !!loadCustomConfig()
+const activeProvider = computed(() => providerList.value.find((p) => p.id === activeProviderId.value))
+const keyMode = computed(() => {
+  const p = activeProvider.value
+  if (!p) return "none"
+  if (p.apiKey) return "client ✓"
+  return ["groq", "mistral", "nvidia"].includes(p.id) ? "server env proxy" : "none (local?)"
 })
 
-async function fetchCustomModels() {
-  customStatus.value = null
-  if (!customBaseUrl.value.trim()) { customStatus.value = "Base URL required"; return }
+function refreshProviders() {
+  providerList.value = loadProviders()
+  const stillThere = providerList.value.some((p) => p.id === activeProviderId.value)
+  if (!stillThere) {
+    const first = providerList.value[0]
+    activeProviderId.value = first?.id ?? ""
+    activeModel.value = first?.model || first?.models[0] || ""
+  } else {
+    const a = activeProvider.value
+    if (a && !a.models.includes(activeModel.value)) activeModel.value = a.model || a.models[0] || ""
+  }
+}
+refreshProviders()
+
+function selectProvider(id: string) {
+  activeProviderId.value = id
+  const p = activeProvider.value
+  activeModel.value = p?.model || p?.models?.[0] || ""
+}
+
+function openAdd() {
+  formEditingId.value = null
+  formName.value = ""
+  formUrl.value = ""
+  formKey.value = ""
+  formModels.value = []
+  formModelPick.value = ""
+  formManualModel.value = ""
+  formStatus.value = null
+  formOpen.value = true
+}
+
+function openEdit(p: ProviderEntry) {
+  formEditingId.value = p.id
+  formName.value = p.name
+  formUrl.value = p.baseUrl
+  formKey.value = p.apiKey
+  formModels.value = [...(p.models || [])]
+  formModelPick.value = p.model && p.models.includes(p.model) ? p.model : p.models[0] || ""
+  formManualModel.value = ""
+  formStatus.value = null
+  formOpen.value = true
+}
+
+async function formFetch() {
+  formStatus.value = null
+  if (!formUrl.value.trim()) { formStatus.value = "Endpoint URL required"; return }
+  formFetching.value = true
   try {
-    const prov = createCustomProvider({ baseUrl: customBaseUrl.value, apiKey: customApiKey.value, model: "" })
-    const list = await (prov.listModels as (k?: string) => Promise<string[]>)(customApiKey.value.trim() || undefined)
-    customModels.value = list
-    if (!list.length) customStatus.value = "Connected — no models listed, type model name manually"
-    else customStatus.value = `Connected — ${list.length} models`
-    if (list.length && !customModelInput.value) customModelInput.value = list.find(m => m.includes("free")) || list[0]
+    const list = await fetchProviderModels(formUrl.value, formKey.value)
+    formModels.value = list
+    if (!list.length) {
+      formStatus.value = "Connected, but no models listed — type a model id manually"
+    } else {
+      formStatus.value = `Connected — ${list.length} models found`
+      if (!formModelPick.value) formModelPick.value = list.find((m) => m.includes("free")) || list[0]
+    }
   } catch (e: unknown) {
-    customStatus.value = e instanceof Error ? e.message : String(e)
+    formStatus.value = e instanceof Error ? e.message : String(e)
+  } finally {
+    formFetching.value = false
   }
 }
 
-function saveCustomProvider() {
-  if (!customBaseUrl.value.trim()) { customStatus.value = "Base URL required"; return }
-  saveCustomConfig({ baseUrl: customBaseUrl.value, apiKey: customApiKey.value.trim(), model: customModelInput.value.trim() })
-  customVersion.value++
-  fallbackProviderId.value = "custom"
-  fallbackModel.value = customModelInput.value.trim()
-  fallbackViaProxy.value = false
-  fallbackKey.value = customApiKey.value.trim()
-  onProviderChange()
-  customStatus.value = "Saved ✓ Custom provider active"
+function formSave() {
+  if (!formName.value.trim()) { formStatus.value = "Name required"; return }
+  if (!formUrl.value.trim()) { formStatus.value = "Endpoint URL required"; return }
+  const chosen = formModelPick.value || formManualModel.value || formModels.value[0] || ""
+  const prev = formEditingId.value ? providerList.value.find((p) => p.id === formEditingId.value) : null
+  const entry: ProviderEntry = {
+    id: formEditingId.value ?? `${normalizeBaseUrl(formUrl.value).replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${Date.now().toString(36)}`,
+    name: formName.value.trim(),
+    baseUrl: normalizeBaseUrl(formUrl.value),
+    apiKey: formKey.value.trim() || prev?.apiKey || "",
+    models: formModels.value.length ? formModels.value : chosen ? [chosen] : [],
+    model: chosen,
+    docsUrl: prev?.docsUrl,
+  }
+  upsertProvider(entry)
+  refreshProviders()
+  selectProvider(entry.id)
+  formOpen.value = false
 }
 
-function removeCustomProvider() {
-  clearCustomConfig()
-  customVersion.value++
-  customBaseUrl.value = ""; customApiKey.value = ""; customModelInput.value = ""; customModels.value = []
-  if (fallbackProviderId.value === "custom") { fallbackProviderId.value = providerOptions[0]?.value || "mistral"; onProviderChange() }
-  customStatus.value = "Removed"
-}
-
-const selectedProvider = computed(() => allProviders.value.find((p) => p.id === fallbackProviderId.value))
-const selectedModels = computed(() => selectedProvider.value?.models || [])
-
-function onProviderChange() {
-  const p = selectedProvider.value
-  if (p) fallbackModel.value = p.defaultModel
+function askDelete(p: ProviderEntry) {
+  if (!window.confirm(`Remove provider "${p.name}"?`)) return
+  deleteProviderEntry(p.id)
+  refreshProviders()
 }
 
 /* ── AI Agent — page-chunked extraction ── */
@@ -214,8 +256,9 @@ async function startAgent(resume = false) {
   agentError.value = null
   issuesText.value = null
   if (!pdfFile.value) { agentError.value = "Upload a PDF first"; return }
-  const prov = selectedProvider.value
-  if (!prov || !fallbackModel.value) { agentError.value = "Select a provider and model"; return }
+  const prov = activeProvider.value
+  if (!prov) { agentError.value = "Add or select a provider first"; return }
+  if (!activeModel.value) { agentError.value = "Pick a model"; return }
   agentRunning.value = true
   abortCtl = new AbortController()
   try {
@@ -230,10 +273,7 @@ async function startAgent(resume = false) {
     const { paper } = await runAgentExtract({
       jobId: id,
       pages,
-      provider: prov,
-      apiKey: fallbackKey.value.trim(),
-      model: fallbackModel.value,
-      viaProxy: fallbackViaProxy.value && prov.id !== "custom",
+      entry: { ...prov, model: activeModel.value },
       delayMs: 1500,
       resumeState,
       onProgress: (p) => { agentProgress.value = p },
@@ -352,55 +392,64 @@ function cancelAgent() { abortCtl?.abort() }
             <span class="w-9 h-9 rounded-xl bg-hlblue grid place-items-center"><Cpu class="w-4.5 h-4.5 text-ink" /></span>
               <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">AGENT · STEP 2 — PROVIDER &amp; RUN</span>
           </div>
-          <p class="text-sm font-semibold text-ink/75">Page-by-page agent — har PDF page alag self-contained request. Rate-limit backoff, output-truncation split, Dexie checkpoints + resume built-in.</p>
+          <p class="text-sm font-semibold text-ink/75">Page-by-page agent — each PDF page is one self-contained request. Rate-limit backoff, truncation split, Dexie checkpoints + resume built-in.</p>
           <div class="mt-5 border-t border-dashed border-ink/15 pt-5 space-y-4">
-            <p class="text-xs text-ink/55">Add/delete provider = one file in <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10">src/lib/providers/</code> + one line in <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10">index.ts</code> — see <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10">providers/README.md</code></p>
-            <div class="grid md:grid-cols-3 gap-4">
-              <label class="text-xs font-semibold text-ink/70">Provider
-                <select :value="fallbackProviderId" @change="(e)=>{fallbackProviderId=(e.target as HTMLSelectElement).value; onProviderChange()}" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
-                  <option v-for="o in allOptions.filter(x => x.value !== 'custom')" :key="o.value" :value="o.value">{{ o.label }} — {{ o.defaultModel || 'set below' }}</option>
-                  <option value="custom">{{ customConfigured ? 'Custom — saved ✓' : 'Custom — any OpenAI-compatible URL' }}</option>
-                </select>
-                <a v-if="selectedProvider && fallbackProviderId !== 'custom'" :href="selectedProvider.docsUrl" target="_blank" class="text-[11px] underline text-pen mt-1 inline-block">{{ selectedProvider.docsUrl }}</a>
-              </label>
-              <label class="text-xs font-semibold text-ink/70">Model
-                <select v-model="fallbackModel" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
-                  <option v-for="m in selectedModels" :key="m" :value="m">{{ m }}</option>
-                </select>
-              </label>
-              <label class="text-xs font-semibold text-ink/70">API key (BYOK, or env via proxy)
-                <input v-model="fallbackKey" type="password" placeholder="sk-… / gsk_… / nvapi-…" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
-              </label>
+            <!-- Provider manager -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button v-for="p in providerList" :key="p.id" @click="selectProvider(p.id)" :class="['inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-bold transition-all', activeProviderId===p.id ? 'bg-pen text-white shadow-[0_8px_20px_-10px_rgba(47,95,224,0.7)]' : 'border border-ink/15 bg-paper text-ink/70 hover:border-pen/60 hover:text-ink']">
+                {{ p.name }}
+                <span @click.stop="openEdit(p)" title="Edit provider" class="w-5 h-5 grid place-items-center rounded-full hover:bg-black/10">✎</span>
+                <span @click.stop="askDelete(p)" title="Remove" class="w-5 h-5 grid place-items-center rounded-full hover:bg-black/10">✕</span>
+              </button>
+              <button @click="openAdd" class="px-3 py-1.5 rounded-full text-xs font-bold bg-hlyellow text-ink hover:brightness-95 transition-all">+ Add provider</button>
             </div>
-            <p class="text-[11px] font-mono text-ink/45">Free-tier snapshot: {{ PROVIDER_LIMITS[fallbackProviderId] || '' }}</p>
 
-            <!-- Custom provider harness — any OpenAI-compatible endpoint -->
-            <div v-if="fallbackProviderId === 'custom'" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3">
-              <div class="flex flex-wrap gap-1.5">
-                <button v-for="pr in CUSTOM_PRESETS" :key="pr.label" type="button" @click="customBaseUrl = pr.baseUrl; if (!customApiKey) customStatus = pr.label + ': ' + pr.hint" class="px-2.5 py-1 rounded-full border border-ink/15 bg-paper text-[11px] font-semibold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ pr.label }}</button>
-              </div>
+            <!-- Add / Edit window -->
+            <div v-if="formOpen" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3">
               <div class="grid md:grid-cols-2 gap-3">
-                <label class="text-xs font-semibold text-ink/70">Base URL
-                  <input v-model="customBaseUrl" :placeholder="CUSTOM_PRESETS[0].baseUrl" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                <label class="text-xs font-semibold text-ink/70">Provider name
+                  <input v-model="formName" placeholder="Groq / MyFreeAPI / Ollama local" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
                 </label>
-                <label class="text-xs font-semibold text-ink/70">API key (empty for local)
-                  <input v-model="customApiKey" type="password" placeholder="sk-or-… / gsk_… / none" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                <label class="text-xs font-semibold text-ink/70">API endpoint (base URL)
+                  <input v-model="formUrl" placeholder="https://api.provider.com/v1" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
                 </label>
               </div>
-              <div class="flex flex-wrap items-end gap-2">
-                <label class="text-xs font-semibold text-ink/70 grow">Model
-                  <input v-model="customModelInput" list="custom-models" placeholder="fetch below or type exact model id" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
-                  <datalist id="custom-models"><option v-for="m in customModels" :key="m" :value="m" /></datalist>
+              <div class="grid md:grid-cols-2 gap-3 items-end">
+                <label class="text-xs font-semibold text-ink/70">API key <span class="font-normal text-ink/45">(blank = server env for seeded, or unauthenticated local)</span>
+                  <input v-model="formKey" type="password" placeholder="sk-… or leave empty" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
                 </label>
-                <button type="button" @click="fetchCustomModels" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/75 hover:border-pen hover:text-pen transition-colors">Fetch models</button>
-                <button type="button" @click="saveCustomProvider" class="px-3.5 py-2 rounded-lg bg-pen text-white text-xs font-bold">Save &amp; use</button>
-                <button v-if="customConfigured" type="button" @click="removeCustomProvider" class="px-3.5 py-2 rounded-lg border border-redmargin/40 text-redmargin text-xs font-bold hover:bg-redmargin/[0.06]">Remove</button>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" :disabled="formFetching" @click="formFetch" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/75 hover:border-pen hover:text-pen transition-colors disabled:opacity-50">{{ formFetching ? 'Fetching…' : 'Fetch models' }}</button>
+                  <button type="button" @click="formSave" class="px-3.5 py-2 rounded-lg bg-pen text-white text-xs font-bold">{{ formEditingId ? 'Update provider' : 'Save provider' }}</button>
+                  <button type="button" @click="formOpen=false" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/60 hover:text-ink">Cancel</button>
+                </div>
               </div>
-              <p v-if="customStatus" class="text-[11px]" :class="customStatus.startsWith('Connected') || customStatus.includes('✓') ? 'text-green-700' : 'text-redmargin'">{{ customStatus }}</p>
-              <p class="text-[11px] text-ink/50">Works with any OpenAI-compatible <code class="bg-paper px-1 rounded border border-ink/10">POST {base}/chat/completions</code> — OpenRouter, Groq, Together, Cerebras, xAI, Vercel AI Gateway, Ollama/LM Studio, or any new free provider — just paste the base URL. Keys stay browser-local.</p>
+              <label v-if="formModels.length" class="block text-xs font-semibold text-ink/70">Default model
+                <select v-model="formModelPick" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
+                  <option v-for="m in formModels" :key="m" :value="m">{{ m }}</option>
+                </select>
+              </label>
+              <label v-else class="block text-xs font-semibold text-ink/70">Model id
+                <input v-model="formManualModel" placeholder="type exact model id (e.g. llama-3.3-70b-versatile)" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+              </label>
+              <p v-if="formStatus" class="text-[11px] font-medium" :class="formStatus.startsWith('Connected') || formStatus.includes('✓') ? 'text-green-700' : 'text-redmargin'">{{ formStatus }}</p>
+              <p class="text-[11px] text-ink/50">Any OpenAI-compatible endpoint works — Groq, Mistral, NVIDIA, OpenRouter, Together, Cerebras, xAI, Vercel AI Gateway, Ollama / LM Studio, or whatever free provider launches next.</p>
             </div>
 
-            <label class="flex items-start gap-2 text-xs text-ink/65"><input type="checkbox" v-model="fallbackViaProxy" class="accent-pen mt-0.5" /> <span><span v-if="fallbackProviderId !== 'custom'">viaProxy <code class="bg-paper px-1 rounded border border-ink/10">/api/{{ fallbackProviderId }}/chat</code> — key env-side, browser mein hidden. </span>Custom provider hamesha direct call (key client-local).</span></label>
+            <!-- Active provider run row -->
+            <div class="grid md:grid-cols-2 gap-4 items-end">
+              <label class="text-xs font-semibold text-ink/70">Model
+                <select v-if="activeProvider?.models?.length" v-model="activeModel" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
+                  <option v-for="m in activeProvider.models" :key="m" :value="m">{{ m }}</option>
+                </select>
+                <input v-else v-model="activeModel" placeholder="model id" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+              </label>
+              <div class="font-mono text-[11px] text-ink/45 pb-2.5 truncate">
+                {{ activeProvider ? activeProvider.baseUrl : 'no provider selected' }}
+                · key: {{ keyMode }}
+              </div>
+            </div>
+            <p class="text-[11px] font-mono text-ink/45">Free-tier snapshot: {{ PROVIDER_LIMITS[activeProviderId] || 'depends on your endpoint' }}</p>
 
             <div class="flex flex-wrap gap-3">
               <button :disabled="agentRunning" @click="startAgent(false)" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5"><Play class="w-4 h-4" /> {{ agentRunning ? 'Extracting…' : 'Start page-by-page extraction' }}</button>

@@ -1,5 +1,5 @@
 import type { UniversalPaper, UniversalQuestion } from "@/types"
-import type { ProviderDef, ProviderMessage } from "./providers"
+import { chat as providerChat, type ProviderEntry, type ProviderMessage } from "./providers"
 import { normalizeText, normalizeOptions } from "./normalize"
 import { validatePaper } from "./validate"
 import { jsonrepair } from "jsonrepair"
@@ -71,8 +71,8 @@ function parseChunkJSON(raw: string): { questions?: unknown[]; lastCompleteQuest
 }
 
 async function chatWithBackoff(
-  prov: ProviderDef,
-  opts: { apiKey: string; model: string; messages: ProviderMessage[]; viaProxy?: boolean },
+  entry: ProviderEntry,
+  opts: { model: string; messages: ProviderMessage[] },
   signal: AbortSignal,
   maxTries = 4,
 ): Promise<string> {
@@ -80,7 +80,7 @@ async function chatWithBackoff(
   for (let attempt = 1; attempt <= maxTries; attempt++) {
     if (signal.aborted) throw new Error("cancelled")
     try {
-      return await prov.chat({ ...opts, responseFormat: { type: "json_object" }, maxTokens: 6000 })
+      return await providerChat(entry, { ...opts, responseFormat: { type: "json_object" }, maxTokens: 6000 })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
@@ -97,21 +97,18 @@ async function chatWithBackoff(
 
 /** Process one chunk; on truncation/parse failure recursively split big chunks */
 async function processChunk(
-  prov: ProviderDef,
-  cfg: { apiKey: string; model: string; viaProxy?: boolean },
+  entry: ProviderEntry,
   chunkText: string,
   contextStart: string,
   expectNext: number,
   signal: AbortSignal,
 ): Promise<ChunkResult> {
-  const content = await chatWithBackoff(prov, {
-    apiKey: cfg.apiKey,
-    model: cfg.model,
+  const content = await chatWithBackoff(entry, {
+    model: entry.model || "",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userPrompt(chunkText, contextStart, expectNext) },
     ],
-    viaProxy: cfg.viaProxy,
   }, signal)
   try {
     const j = parseChunkJSON(content)
@@ -122,8 +119,8 @@ async function processChunk(
     if (chunkText.length > 4000) {
       const mid = chunkText.lastIndexOf("\n", Math.floor(chunkText.length / 2))
       const cut = mid > 1000 ? mid : Math.floor(chunkText.length / 2)
-      const a = await processChunk(prov, cfg, chunkText.slice(0, cut), contextStart, expectNext, signal)
-      const b = await processChunk(prov, cfg, chunkText.slice(cut), chunkText.slice(Math.max(0, cut - 700)), a.lastNum + 1, signal)
+      const a = await processChunk(entry, chunkText.slice(0, cut), contextStart, expectNext, signal)
+      const b = await processChunk(entry, chunkText.slice(cut), chunkText.slice(Math.max(0, cut - 700)), a.lastNum + 1, signal)
       return { questions: [...a.questions, ...b.questions], lastNum: Math.max(a.lastNum, b.lastNum) }
     }
     throw new Error("Chunk unparseable even after repair")
@@ -184,17 +181,14 @@ export function mergeChunkResults(results: Record<string, ChunkResult>): Univers
 export async function runAgentExtract(opts: {
   jobId: string
   pages: string[]
-  provider: ProviderDef
-  apiKey: string
-  model: string
-  viaProxy?: boolean
+  entry: ProviderEntry
   delayMs?: number
   resumeState?: AgentJobState | null
   onProgress?: (p: AgentProgress[]) => void
   onCheckpoint?: (state: AgentJobState) => Promise<void> | void
   signal?: AbortSignal
 }): Promise<{ paper: UniversalPaper; progress: AgentProgress[] }> {
-  const { jobId, pages, provider, apiKey, model, viaProxy, delayMs = 1500, resumeState, onProgress, onCheckpoint, signal } = opts
+  const { jobId, pages, entry, delayMs = 1500, resumeState, onProgress, onCheckpoint, signal } = opts
   const signalRef = signal ?? new AbortController().signal
 
   const state: AgentJobState = resumeState?.pages.length === pages.length
@@ -217,7 +211,7 @@ export async function runAgentExtract(opts: {
     try {
       const prevTail = i > 0 ? state.pages[i - 1].slice(-800) : ""
       const knownMax = Object.values(state.results).reduce((m, r) => Math.max(m, r.lastNum), 0)
-      const res = await processChunk(provider, { apiKey: apiKey.trim(), model, viaProxy }, pageText, prevTail, knownMax + 1, signalRef)
+      const res = await processChunk(entry, pageText, prevTail, knownMax + 1, signalRef)
       if (!res.questions.length && pageText.length > 200) throw new Error("No questions found on this page")
       state.results[String(i)] = res
       progress[i] = { index: i, status: "done" }

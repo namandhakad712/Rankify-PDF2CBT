@@ -30,7 +30,7 @@ useHead({ title: "About — Rankify PDF2CBT" })
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(-0.3deg)">
           <div class="tape" aria-hidden="true"></div>
           <h2 class="font-display font-bold text-xl tracking-tight">The stack (nerd corner)</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">Vite 8 (Rolldown) · Vue 3.5 · Tailwind 4 · Dexie (one DB) · pdfjs-dist 5 · GSAP + Lenis for the notebook feel. Fallback AI is a modular registry: <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">src/lib/providers/</code> — one file = one provider. Open on <a href="https://github.com/namandhakad712/Rankify-PDF2CBT" class="text-pen underline decoration-wavy underline-offset-2">GitHub</a>.</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">Vite 8 (Rolldown) · Vue 3.5 · Tailwind 4 · Dexie (one DB) · pdfjs-dist 5 · GSAP + Lenis for the notebook feel. The AI engine is a built-in multi-provider harness: add any OpenAI-compatible endpoint (name + URL + key → fetch models) right inside <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">Extract → AI Agent</code>. Open on <a href="https://github.com/namandhakad712/Rankify-PDF2CBT" class="text-pen underline decoration-wavy underline-offset-2">GitHub</a>.</p>
         </div>
 
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(0.5deg)">
