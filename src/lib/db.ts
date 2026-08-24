@@ -37,11 +37,21 @@ export interface PdfCache {
   updatedAt: number
 }
 
+export interface ExtractJob {
+  id: string // `${fileName}__${fileSize}`
+  fileName: string
+  pages: string[] // chunk texts
+  results: Record<string, { questions: unknown[]; lastNum: number }>
+  done: boolean
+  updatedAt: number
+}
+
 export class RankifyPDF2CBTDB extends Dexie {
   papers!: Table<StoredPaper, string>
   results!: Table<Result, number>
   settings!: Table<Settings, string>
   pdfs!: Table<PdfCache, string>
+  extractJobs!: Table<ExtractJob, string>
 
   constructor() {
     super("RankifyPDF2CBT")
@@ -55,6 +65,13 @@ export class RankifyPDF2CBTDB extends Dexie {
       results: "++id, paperId, createdAt",
       settings: "id",
       pdfs: "id",
+    })
+    this.version(3).stores({
+      papers: "id",
+      results: "++id, paperId, createdAt",
+      settings: "id",
+      pdfs: "id",
+      extractJobs: "id",
     })
   }
 }

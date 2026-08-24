@@ -12,9 +12,10 @@ import {
   clearCustomConfig,
   CUSTOM_PRESETS,
 } from "@/lib/providers"
-import { extractPdfText } from "@/lib/pdf"
+import { extractPdfPages } from "@/lib/pdf"
+import { runAgentExtract, type AgentProgress, type AgentJobState } from "@/lib/agentExtract"
 import gsap from "gsap"
-import { Sparkles, UploadCloud, ClipboardPaste, Cpu, ArrowRight } from "lucide-vue-next"
+import { Sparkles, UploadCloud, ClipboardPaste, Cpu, ArrowRight, Play, RotateCcw, X } from "lucide-vue-next"
 
 onMounted(() => {
   gsap.from(".ex-hero-badge", { y: 24, opacity: 0, duration: 0.7, ease: "power3.out" })
@@ -110,13 +111,10 @@ async function handleUrlFetch() {
   }
 }
 
-const showFallback = ref(false)
 const fallbackProviderId = ref(providerOptions[0]?.value || "mistral")
 const fallbackModel = ref(providerOptions[0]?.defaultModel || "")
 const fallbackKey = ref("")
 const fallbackViaProxy = ref(true)
-const fallbackLoading = ref(false)
-const fallbackPdfText = ref<string | null>(null)
 
 /* generic custom provider harness */
 const customVersion = ref(0)
@@ -182,38 +180,69 @@ function onProviderChange() {
   if (p) fallbackModel.value = p.defaultModel
 }
 
-async function handleFallbackExtract() {
-  error.value = null
-  issuesText.value = null
-  if (!pdfFile.value) { error.value = "Upload PDF first for fallback"; return }
-  const prov = selectedProvider.value
-  if (!prov) { error.value = "Pick provider"; return }
-  fallbackLoading.value = true
+/* ── AI Agent — page-chunked extraction ── */
+const activeTab = ref<"gem" | "agent">("gem")
+const agentRunning = ref(false)
+const agentError = ref<string | null>(null)
+const agentProgress = ref<AgentProgress[]>([])
+const resumeAvailable = ref(false)
+let abortCtl: AbortController | null = null
+
+const jobId = computed(() => (pdfFile.value ? `${pdfFile.value.name}__${pdfFile.value.size}` : ""))
+
+async function checkResume() {
+  resumeAvailable.value = false
+  if (!pdfFile.value) return
   try {
-    const buf = await pdfFile.value!.arrayBuffer()
-    const text = await extractPdfText(buf, 4)
-    fallbackPdfText.value = text
-    const sys = `You are a PDF→JSON extractor. Output ONLY valid JSON for UniversalPaper: {meta:{title,durationMinutes,totalQuestions,createdAt}, sections:[], questions:[{id,number,subject,section,topic,type:"mcq"|"msq"|"nat"|"true-false", text, options, answer, answers, marks:4, negativeMarks:1, hasDiagram:false, difficulty}]}
-Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4" 1-indexed, msq answer "" + answers ["0","2"] 0-indexed, nat answer numeric string. No markdown outside JSON.`
-    const user = `Extract all questions from this PDF text. Return JSON only.\n\nPDF_TEXT:\n${text.slice(0,12000)}`
-    const content = await prov.chat({
+    const j = await getDB().extractJobs.get(jobId.value)
+    resumeAvailable.value = !!j && !j.done && Object.keys(j.results).length > 0
+  } catch { /* table missing on old DB — ignore */ }
+}
+
+function onPdfAgent() { void checkResume() }
+
+async function startAgent(resume = false) {
+  agentError.value = null
+  issuesText.value = null
+  if (!pdfFile.value) { agentError.value = "PDF upload karo pehle"; return }
+  const prov = selectedProvider.value
+  if (!prov || !fallbackModel.value) { agentError.value = "Provider + model select karo"; return }
+  agentRunning.value = true
+  abortCtl = new AbortController()
+  try {
+    const buf = await pdfFile.value.arrayBuffer()
+    const pages = await extractPdfPages(buf)
+    const id = jobId.value
+    let resumeState: AgentJobState | null = null
+    if (resume) {
+      const j = await getDB().extractJobs.get(id)
+      if (j && j.pages.length === pages.length) resumeState = j as unknown as AgentJobState
+    }
+    const { paper } = await runAgentExtract({
+      jobId: id,
+      pages,
+      provider: prov,
       apiKey: fallbackKey.value.trim(),
       model: fallbackModel.value,
-      messages: [{ role: "system", content: sys }, { role: "user", content: user }],
-      responseFormat: { type: "json_object" },
-      viaProxy: fallbackViaProxy.value,
+      viaProxy: fallbackViaProxy.value && prov.id !== "custom",
+      delayMs: 1500,
+      resumeState,
+      onProgress: (p) => { agentProgress.value = p },
+      onCheckpoint: async (s) => { await getDB().extractJobs.put({ ...s, results: s.results }).catch(() => {}) },
+      signal: abortCtl.signal,
     })
-    const r = parsePastedJSON(content)
-    if (!r.ok) { error.value = r.error || "Fallback returned invalid JSON"; if (r.issues) issuesText.value = r.issues.map((x)=>`[${x.severity}] ${x.field}: ${x.message}`).join("\n"); return }
-    localStorage.setItem("rpdf2cbt-review", JSON.stringify(r.paper))
-    await getDB().papers.put({ id: "review", paper: r.paper!, updatedAt: Date.now() })
+    localStorage.setItem("rpdf2cbt-review", JSON.stringify(paper))
+    await getDB().papers.put({ id: "review", paper, updatedAt: Date.now() })
     router.push("/review")
   } catch (e: unknown) {
-    error.value = e instanceof Error ? e.message : String(e)
+    agentError.value = e instanceof Error ? e.message : String(e)
   } finally {
-    fallbackLoading.value = false
+    agentRunning.value = false
+    abortCtl = null
+    void checkResume()
   }
 }
+function cancelAgent() { abortCtl?.abort() }
 </script>
 
 <template>
@@ -256,15 +285,21 @@ Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4"
           </div>
           <div class="text-xl font-bold font-display tracking-tight">Upload the PDF — for diagram crops in Review</div>
           <label class="mt-4 block border-2 border-dashed border-ink/15 rounded-2xl p-7 text-center cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors">
-            <input type="file" accept="application/pdf" class="hidden" @change="onPdf" />
+            <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
             <UploadCloud class="w-6 h-6 mx-auto text-ink/40" />
             <span class="block mt-2 text-sm text-ink/55">{{ pdfFile ? pdfFile.name : "Drop or click — PDF under 20MB, stored in your browser only" }}</span>
           </label>
           <div v-if="pdfFile" class="text-sm text-correct font-medium mt-2">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
         </div>
 
+        <!-- Flow tabs -->
+        <div class="flex gap-2 px-1">
+          <button @click="activeTab='gem'" :class="['px-5 py-2.5 rounded-xl text-sm font-bold transition-all', activeTab==='gem' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">GEM paste JSON</button>
+          <button @click="activeTab='agent'" :class="['px-5 py-2.5 rounded-xl text-sm font-bold transition-all', activeTab==='agent' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">AI Agent — free models</button>
+        </div>
+
         <!-- Step III — Paste -->
-        <div class="tape-card relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" style="transform: rotate(-0.3deg)" @mousemove="handleSpotlight">
+        <div v-show="activeTab==='gem'" class="tape-card relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" style="transform: rotate(-0.3deg)" @mousemove="handleSpotlight">
           <div class="tape" aria-hidden="true"></div>
           <div class="flex items-center gap-2.5 mb-2">
             <span class="w-9 h-9 rounded-xl bg-hlyellow grid place-items-center"><ClipboardPaste class="w-4.5 h-4.5 text-ink" /></span>
@@ -284,14 +319,14 @@ Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4"
           <div v-if="issuesText" class="mt-2 p-4 bg-hlyellow/40 border border-hlyellow rounded-2xl text-xs text-ink/75 whitespace-pre-wrap">{{ issuesText }}</div>
         </div>
 
-        <!-- Fallback — Modular Providers -->
-        <div class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
+        <!-- AI Agent tab — page-chunked extraction -->
+        <div v-show="activeTab==='agent'" class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
           <div class="flex items-center gap-2.5 mb-1">
             <span class="w-9 h-9 rounded-xl bg-hlblue grid place-items-center"><Cpu class="w-4.5 h-4.5 text-ink" /></span>
-            <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">OPTIONAL</span>
+            <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">AGENT</span>
           </div>
-          <button class="text-sm font-semibold underline decoration-dotted underline-offset-4 text-ink/75 hover:text-ink" @click="showFallback=!showFallback">{{ showFallback ? 'Hide' : 'Show' }} Fallback AI — Mistral / Groq / NVIDIA (small PDFs)</button>
-          <div v-if="showFallback" class="mt-5 border-t border-dashed border-ink/15 pt-5 space-y-4">
+          <p class="text-sm font-semibold text-ink/75">Page-by-page agent — har PDF page alag self-contained request. Rate-limit backoff, output-truncation split, Dexie checkpoints + resume built-in.</p>
+          <div class="mt-5 border-t border-dashed border-ink/15 pt-5 space-y-4">
             <p class="text-xs text-ink/55">Add/delete provider = one file in <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10">src/lib/providers/</code> + one line in <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10">index.ts</code> — see <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10">providers/README.md</code></p>
             <div class="grid md:grid-cols-3 gap-4">
               <label class="text-xs font-semibold text-ink/70">Provider
@@ -337,10 +372,21 @@ Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4"
               <p class="text-[11px] text-ink/50">Works with any OpenAI-compatible <code class="bg-paper px-1 rounded border border-ink/10">POST {base}/chat/completions</code> — OpenRouter, Groq, Together, Cerebras, xAI, Vercel AI Gateway, Ollama/LM Studio, naya free provider — bas URL paste karo. Key browser-local rehti hai.</p>
             </div>
 
-            <label class="flex items-start gap-2 text-xs text-ink/65"><input type="checkbox" v-model="fallbackViaProxy" class="accent-pen mt-0.5" /> <span>viaProxy <code class="bg-paper px-1 rounded border border-ink/10">/api/{{ fallbackProviderId }}/chat</code> (hides key on Vercel) — uncheck for direct <code class="bg-paper px-1 rounded border border-ink/10">{{ selectedProvider?.baseUrl }}/chat/completions</code></span></label>
-            <button :disabled="fallbackLoading" @click="handleFallbackExtract" class="px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50">{{ fallbackLoading ? 'Extracting…' : 'Fallback extract with ' + (selectedProvider?.label || '') + ' → Review' }}</button>
-            <div v-if="fallbackPdfText" class="text-xs bg-paper border border-ink/10 rounded-xl p-3 max-h-32 overflow-auto whitespace-pre-wrap text-ink/60">PDF text (first 15k): {{ fallbackPdfText.slice(0, 800) }}…</div>
-            <div class="text-[11px] text-ink/45">All providers are OpenAI-compatible <code>POST /v1/chat/completions</code> with <code>response_format: json_object</code>. To add Cerebras: copy <code>mistral.ts</code> → <code>cerebras.ts</code>, change <code>baseUrl</code>, register in <code>index.ts</code>.</div>
+            <label class="flex items-start gap-2 text-xs text-ink/65"><input type="checkbox" v-model="fallbackViaProxy" class="accent-pen mt-0.5" /> <span><span v-if="fallbackProviderId !== 'custom'">viaProxy <code class="bg-paper px-1 rounded border border-ink/10">/api/{{ fallbackProviderId }}/chat</code> — key env-side, browser mein hidden. </span>Custom provider hamesha direct call (key client-local).</span></label>
+
+            <div class="flex flex-wrap gap-3">
+              <button :disabled="agentRunning" @click="startAgent(false)" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5"><Play class="w-4 h-4" /> {{ agentRunning ? 'Extracting…' : 'Start page-by-page extraction' }}</button>
+              <button v-if="resumeAvailable && !agentRunning" @click="startAgent(true)" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-correct/50 text-green-700 text-sm font-bold hover:bg-correct/[0.07] transition-colors"><RotateCcw class="w-4 h-4" /> Resume checkpoint</button>
+              <button v-if="agentRunning" @click="cancelAgent" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-redmargin/40 text-redmargin text-sm font-bold hover:bg-redmargin/[0.06]"><X class="w-4 h-4" /> Cancel</button>
+            </div>
+
+            <div v-if="agentProgress.length" class="space-y-2">
+              <div class="grid grid-cols-8 sm:grid-cols-12 gap-1.5">
+                <div v-for="p in agentProgress" :key="p.index" :title="'Page ' + (p.index+1) + (p.note ? ' — ' + p.note : '')" class="h-7 rounded-md grid place-items-center font-mono text-[10px]" :class="[p.status==='done' ? 'bg-correct/15 text-green-700' : p.status==='running' ? 'bg-pen text-white animate-pulse' : p.status==='failed' ? 'bg-redmargin text-white' : 'bg-ink/[0.06] text-ink/40']">{{ p.index+1 }}</div>
+              </div>
+              <div class="font-mono text-[11px] text-ink/50">{{ agentProgress.filter(x => x.status==='done').length }}/{{ agentProgress.length }} pages done — checkpoint save hota rahta hai, crash pe Resume dabao</div>
+            </div>
+            <div v-if="agentError" class="p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ agentError }}</div>
           </div>
         </div>
       </div>

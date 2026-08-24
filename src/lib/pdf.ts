@@ -37,6 +37,27 @@ export async function getPageCount(buf: ArrayBuffer): Promise<number> {
   }
 }
 
+export async function extractPdfPages(buf: ArrayBuffer): Promise<string[]> {
+  const doc = await loadPdfFromBuffer(buf)
+  try {
+    const out: string[] = []
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i)
+      const content = await page.getTextContent()
+      // join with newline but keep item order; trim heavy whitespace runs
+      const text = (content.items as { str: string }[])
+        .map((x) => x.str)
+        .join(" ")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim()
+      out.push(text)
+    }
+    return out
+  } finally {
+    doc.destroy()
+  }
+}
+
 export async function extractPdfText(buf: ArrayBuffer, maxPages = 5): Promise<string> {
   const doc = await loadPdfFromBuffer(buf)
   try {

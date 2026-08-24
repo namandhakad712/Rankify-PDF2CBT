@@ -38,6 +38,7 @@ let gl: OGLRenderingContext | null = null;
 let program: Program | null = null;
 let mesh: Mesh | null = null;
 let animationId: number | null = null;
+let resizeObserver: ResizeObserver | null = null;
 let currentMouse = [0, 0];
 let targetMouse = [0, 0];
 
@@ -334,7 +335,9 @@ const initializeScene = () => {
 
   container.appendChild(canvas);
 
-  window.addEventListener('resize', resize);
+  if (resizeObserver) resizeObserver.disconnect();
+  resizeObserver = new ResizeObserver(() => resize());
+  resizeObserver.observe(container);
   if (props.enableMouseInteraction) {
     window.addEventListener('mousemove', handleMouseMove);
   }
@@ -349,7 +352,10 @@ const cleanup = () => {
     animationId = null;
   }
 
-  window.removeEventListener('resize', resize);
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
 
   if (containerRef.value) {
     const canvas = containerRef.value.querySelector('canvas');
