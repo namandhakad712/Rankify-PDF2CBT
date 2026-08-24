@@ -54,7 +54,7 @@ useHead({ title: "Getting Started — Rankify PDF2CBT" })
             <li><b>Crop diagram</b> → the PDF opens → drag a rectangle → crop. Saved to that question.</li>
             <li>Happy? <b>Save &amp; start test</b>.</li>
           </ol>
-          <p class="font-hand text-xl text-ink/50 mt-3 -rotate-1">AI galat figure bheje toh yahi par theek karo</p>
+          <p class="font-hand text-xl text-ink/50 mt-3 -rotate-1">If the AI sends a wrong figure, fix it right here</p>
         </section>
 
         <section class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(0.4deg)">

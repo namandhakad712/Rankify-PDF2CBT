@@ -283,7 +283,7 @@
               </div>
             </div>
           </div>
-          <p class="mt-10 text-center font-hand text-2xl text-ink/45 -rotate-1">doubt nahi gaya? <RouterLink to="/getting-started" class="text-pen underline decoration-wavy underline-offset-4">full guide padh le</RouterLink></p>
+          <p class="mt-10 text-center font-hand text-2xl text-ink/45 -rotate-1">Still have doubts? <RouterLink to="/getting-started" class="text-pen underline decoration-wavy underline-offset-4">full guide padh le</RouterLink></p>
         </div>
       </section>
     </main>
@@ -467,7 +467,7 @@ function inkLoop (now) {
   const life = 620
   inkPts = inkPts.filter(p => now - p.t < life)
   if (!inkPts.length) {
-    // idle: ek final clear, phir rAF free — GSAP perf: pause dead work
+    //     // idle: one last clear once the trail expires, then the rAF loop goes quiet (GSAP skill: pause dead work)
     if (inkNeedsClear) {
       inkCtx.clearRect(0, 0, w, h)
       inkNeedsClear = false
@@ -500,7 +500,7 @@ function inkLoop (now) {
 
 onMounted(() => {
   homeCtx = gsap.context(() => {
-  /* GSAP best practice: mobile browser chrome resize se trigger refresh skip */
+  /* GSAP best practice: skip ScrollTrigger refresh on mobile browser-chrome resizes */
   ScrollTrigger.config({ ignoreMobileResize: true })
   /* Lenis */
   lenis = new Lenis({ duration: reduced ? 0 : 1.1, smoothWheel: !reduced })
@@ -545,7 +545,7 @@ onMounted(() => {
     }
     window.addEventListener('pointermove', e => {
       crossOn = inRect(reportCardRef.value, e.clientX, e.clientY)
-      // image trail (#how) ya crosshair (report card) active ho to pencil line suppress
+      // suppress the pencil line while the image trail (#how) or crosshair (report card) is active
       if (crossOn || inRect(howEl, e.clientX, e.clientY)) {
         if (inkPts.length) inkPts.length = 0
         return
@@ -560,7 +560,7 @@ onMounted(() => {
   }
 
   /* marquee: base drift + scroll-velocity skew — docs: velocity via ScrollTrigger.getVelocity */
-  // perf: section viewport se bahar → tick free (skill: pause off-screen work)
+  // perf: skip the marquee ticker entirely while the section is off-screen (GSAP skill: pause off-screen work)
   let mqVisible = true
   const mqEl = marqueeTrack.value?.closest('section')
   if (mqEl && 'IntersectionObserver' in window) {

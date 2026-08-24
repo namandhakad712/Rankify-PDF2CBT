@@ -11,14 +11,12 @@ export const nvidiaProvider: ProviderDef = {
   id: "nvidia",
   label: "NVIDIA",
   baseUrl: "https://integrate.api.nvidia.com/v1",
-  defaultModel: "meta/llama-3.1-8b-instruct",
+  defaultModel: "meta/llama-3.3-70b-instruct",
   models: [
+    "meta/llama-3.3-70b-instruct",
     "meta/llama-3.1-8b-instruct",
-    "meta/llama-3.1-70b-instruct",
     "nvidia/llama-3.3-nemotron-super-49b-v1",
-    "nvidia/nemotron-mini-4b-instruct",
-    "nvidia/llama-3.1-nemotron-ultra-253b-v1",
-    "google/codegemma-1.1-7b",
+    "deepseek-ai/deepseek-r1",
   ],
   docsUrl: "https://docs.api.nvidia.com/nim/reference/create_chat_completion_v1_chat_completions_post-1",
   async chat(opts: ProviderChatOpts): Promise<string> {

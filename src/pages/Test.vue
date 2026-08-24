@@ -98,7 +98,7 @@ const fmt = computed(() => {
   <div v-if="!paper" class="min-h-screen grid place-items-center bg-paper text-ink">
     <div class="text-center px-5">
       <img src="/images/notebook/empty-state-mascot.webp" alt="" class="w-36 mx-auto mb-4" loading="lazy" />
-      <p class="font-hand text-2xl text-ink/50 -rotate-2">kuch hai hi nahi…</p>
+      <p class="font-hand text-2xl text-ink/50 -rotate-2">nothing here yet.</p>
       <div class="font-display font-bold text-2xl mt-1">No test data</div>
       <button class="mt-4 px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/review')">Go to Review</button>
     </div>
@@ -176,7 +176,7 @@ const fmt = computed(() => {
           <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-hlyellow inline-block"></span> Marked</div>
           <div class="flex items-center gap-2"><span class="w-3 h-3 rounded border border-dashed border-ink/30 inline-block"></span> Not visited</div>
         </div>
-        <p class="font-hand text-lg text-ink/40 mt-5 -rotate-1">ek-ek karke, koi jaldi nahi</p>
+        <p class="font-hand text-lg text-ink/40 mt-5 -rotate-1">one at a time, no rush</p>
       </div>
     </div>
   </div>

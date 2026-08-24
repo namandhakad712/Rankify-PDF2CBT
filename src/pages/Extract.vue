@@ -111,8 +111,17 @@ async function handleUrlFetch() {
   }
 }
 
-const fallbackProviderId = ref(providerOptions[0]?.value || "mistral")
-const fallbackModel = ref(providerOptions[0]?.defaultModel || "")
+/* Curated from official docs (console.groq.com/docs/rate-limits, docs.mistral.ai, build.nvidia.com) */
+const PROVIDER_LIMITS: Record<string, string> = {
+  groq: "Groq free tier (per model): 30 RPM · 1K-14.4K RPD · 6-12K TPM · 128K context",
+  mistral: "Mistral free tier: medium ~23 req/min at 356K TPM (best quality) · ministral for volume · large throttled to ~4 req/min",
+  nvidia: "NVIDIA trial API: ~40 RPM dynamic shared limit · 100+ models · up to 1M-token context",
+  custom: "Limits depend on whichever provider your base URL points to",
+}
+
+const _recommended = providerOptions.find((p) => p.value === "groq") ?? providerOptions[0]
+const fallbackProviderId = ref(_recommended?.value || "mistral")
+const fallbackModel = ref(_recommended?.defaultModel || "")
 const fallbackKey = ref("")
 const fallbackViaProxy = ref(true)
 
@@ -204,9 +213,9 @@ function onPdfAgent() { void checkResume() }
 async function startAgent(resume = false) {
   agentError.value = null
   issuesText.value = null
-  if (!pdfFile.value) { agentError.value = "PDF upload karo pehle"; return }
+  if (!pdfFile.value) { agentError.value = "Upload a PDF first"; return }
   const prov = selectedProvider.value
-  if (!prov || !fallbackModel.value) { agentError.value = "Provider + model select karo"; return }
+  if (!prov || !fallbackModel.value) { agentError.value = "Select a provider and model"; return }
   agentRunning.value = true
   abortCtl = new AbortController()
   try {
@@ -276,23 +285,23 @@ function cancelAgent() { abortCtl?.abort() }
               <span class="w-9 h-9 rounded-xl bg-pen/10 grid place-items-center"><Sparkles class="w-4.5 h-4.5 text-pen" /></span>
               <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-pen">GEM FLOW · FREE · NO KEY</span>
             </div>
-            <div class="text-2xl font-bold font-display tracking-tight">Teen steps, bas.</div>
+            <div class="text-2xl font-bold font-display tracking-tight">Three steps. Done.</div>
             <div class="mt-5 grid md:grid-cols-3 gap-3">
               <div class="rounded-2xl border border-ink/10 bg-paper p-4">
                 <div class="font-hand text-2xl text-pen leading-none">1</div>
-                <p class="mt-2 text-[13px] text-ink/65 leading-snug">GEM chat kholo, apna PDF wahan upload karo</p>
+                <p class="mt-2 text-[13px] text-ink/65 leading-snug">Open the GEM chat, upload your PDF there</p>
                 <a href="https://ishortn.ink/gemini-gem" target="_blank" @mousemove="handleMagnetic" @mouseleave="resetMagnetic" class="magnetic-btn group mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-pen text-white text-xs font-bold transition-transform hover:-translate-y-0.5">
                   Open GEM Chat <ArrowRight class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </a>
               </div>
               <div class="rounded-2xl border border-ink/10 bg-paper p-4">
                 <div class="font-hand text-2xl text-pen leading-none">2</div>
-                <p class="mt-2 text-[13px] text-ink/65 leading-snug">GEM jo JSON deta hai use poora copy kar lo</p>
+                <p class="mt-2 text-[13px] text-ink/65 leading-snug">Copy the full JSON the GEM returns</p>
                 <span class="font-hand text-lg text-ink/45 -rotate-2 inline-block mt-2">ctrl+A, ctrl+C</span>
               </div>
               <div class="rounded-2xl border border-ink/10 bg-paper p-4">
                 <div class="font-hand text-2xl text-pen leading-none">3</div>
-                <p class="mt-2 text-[13px] text-ink/65 leading-snug">Neeche paste karo → seedha Review</p>
+                <p class="mt-2 text-[13px] text-ink/65 leading-snug">Paste it below → straight to Review</p>
                 <ClipboardPaste class="w-5 h-5 text-ink/35 mt-2" />
               </div>
             </div>
@@ -310,7 +319,7 @@ function cancelAgent() { abortCtl?.abort() }
           </div>
 
           <details class="rounded-lg bg-white ring-1 ring-ink/[0.06] p-5">
-            <summary class="cursor-pointer text-sm font-semibold text-ink/70 hover:text-ink select-none">Optional — PDF yahan bhi upload karo <span class="text-ink/45 font-normal">(sirf Review mein diagram crops ke liye)</span></summary>
+            <summary class="cursor-pointer text-sm font-semibold text-ink/70 hover:text-ink select-none">Optional — upload the PDF here too <span class="text-ink/45 font-normal">(only for diagram crops in Review)</span></summary>
             <label class="mt-4 block border-2 border-dashed border-ink/15 rounded-2xl p-6 text-center cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors">
               <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
               <UploadCloud class="w-6 h-6 mx-auto text-ink/40" />
@@ -327,21 +336,21 @@ function cancelAgent() { abortCtl?.abort() }
               <span class="w-9 h-9 rounded-xl bg-hlgreen grid place-items-center"><UploadCloud class="w-4.5 h-4.5 text-ink" /></span>
               <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">AGENT · STEP 1</span>
             </div>
-            <div class="text-xl font-bold font-display tracking-tight">PDF upload karo</div>
+            <div class="text-xl font-bold font-display tracking-tight">Upload PDF</div>
             <label class="mt-4 block border-2 border-dashed border-ink/15 rounded-2xl p-7 text-center cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors">
               <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
               <UploadCloud class="w-6 h-6 mx-auto text-ink/40" />
               <span class="block mt-2 text-sm text-ink/55">{{ pdfFile ? pdfFile.name : "Drop or click — PDF under 20MB, stored in your browser only" }}</span>
             </label>
             <div v-if="pdfFile" class="text-sm text-correct font-medium mt-2">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
-            <p v-if="resumeAvailable && !agentRunning" class="mt-3 text-[13px] font-medium text-green-700">✓ Pichla checkpoint mila — neeche Resume checkpoint dabao</p>
+            <p v-if="resumeAvailable && !agentRunning" class="mt-3 text-[13px] font-medium text-green-700">✓ Previous checkpoint found — hit Resume checkpoint below</p>
           </div>
 
         <!-- AI Agent tab — page-chunked extraction -->
         <div v-show="activeTab==='agent'" class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
           <div class="flex items-center gap-2.5 mb-1">
             <span class="w-9 h-9 rounded-xl bg-hlblue grid place-items-center"><Cpu class="w-4.5 h-4.5 text-ink" /></span>
-            <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">AGENT</span>
+              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">AGENT · STEP 2 — PROVIDER &amp; RUN</span>
           </div>
           <p class="text-sm font-semibold text-ink/75">Page-by-page agent — har PDF page alag self-contained request. Rate-limit backoff, output-truncation split, Dexie checkpoints + resume built-in.</p>
           <div class="mt-5 border-t border-dashed border-ink/15 pt-5 space-y-4">
@@ -363,6 +372,7 @@ function cancelAgent() { abortCtl?.abort() }
                 <input v-model="fallbackKey" type="password" placeholder="sk-… / gsk_… / nvapi-…" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
               </label>
             </div>
+            <p class="text-[11px] font-mono text-ink/45">Free-tier snapshot: {{ PROVIDER_LIMITS[fallbackProviderId] || '' }}</p>
 
             <!-- Custom provider harness — any OpenAI-compatible endpoint -->
             <div v-if="fallbackProviderId === 'custom'" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3">
@@ -387,7 +397,7 @@ function cancelAgent() { abortCtl?.abort() }
                 <button v-if="customConfigured" type="button" @click="removeCustomProvider" class="px-3.5 py-2 rounded-lg border border-redmargin/40 text-redmargin text-xs font-bold hover:bg-redmargin/[0.06]">Remove</button>
               </div>
               <p v-if="customStatus" class="text-[11px]" :class="customStatus.startsWith('Connected') || customStatus.includes('✓') ? 'text-green-700' : 'text-redmargin'">{{ customStatus }}</p>
-              <p class="text-[11px] text-ink/50">Works with any OpenAI-compatible <code class="bg-paper px-1 rounded border border-ink/10">POST {base}/chat/completions</code> — OpenRouter, Groq, Together, Cerebras, xAI, Vercel AI Gateway, Ollama/LM Studio, naya free provider — bas URL paste karo. Key browser-local rehti hai.</p>
+              <p class="text-[11px] text-ink/50">Works with any OpenAI-compatible <code class="bg-paper px-1 rounded border border-ink/10">POST {base}/chat/completions</code> — OpenRouter, Groq, Together, Cerebras, xAI, Vercel AI Gateway, Ollama/LM Studio, or any new free provider — just paste the base URL. Keys stay browser-local.</p>
             </div>
 
             <label class="flex items-start gap-2 text-xs text-ink/65"><input type="checkbox" v-model="fallbackViaProxy" class="accent-pen mt-0.5" /> <span><span v-if="fallbackProviderId !== 'custom'">viaProxy <code class="bg-paper px-1 rounded border border-ink/10">/api/{{ fallbackProviderId }}/chat</code> — key env-side, browser mein hidden. </span>Custom provider hamesha direct call (key client-local).</span></label>
@@ -402,9 +412,10 @@ function cancelAgent() { abortCtl?.abort() }
               <div class="grid grid-cols-8 sm:grid-cols-12 gap-1.5">
                 <div v-for="p in agentProgress" :key="p.index" :title="'Page ' + (p.index+1) + (p.note ? ' — ' + p.note : '')" class="h-7 rounded-md grid place-items-center font-mono text-[10px]" :class="[p.status==='done' ? 'bg-correct/15 text-green-700' : p.status==='running' ? 'bg-pen text-white animate-pulse' : p.status==='failed' ? 'bg-redmargin text-white' : 'bg-ink/[0.06] text-ink/40']">{{ p.index+1 }}</div>
               </div>
-              <div class="font-mono text-[11px] text-ink/50">{{ agentProgress.filter(x => x.status==='done').length }}/{{ agentProgress.length }} pages done — checkpoint save hota rahta hai, crash pe Resume dabao</div>
+              <div class="font-mono text-[11px] text-ink/50">{{ agentProgress.filter(x => x.status==='done').length }}/{{ agentProgress.length }} pages done — checkpoints save as you go; if it crashes, hit Resume</div>
             </div>
             <div v-if="agentError" class="p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ agentError }}</div>
+          </div>
           </div>
         </div>
       </div>
