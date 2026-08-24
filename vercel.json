@@ -26,5 +26,11 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/agent/chat.ts": {
+      "maxDuration": 30,
+      "includeFiles": "src/config/providers.yaml"
+    }
+  }
 }

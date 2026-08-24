@@ -15,7 +15,7 @@ import {
 import { extractPdfPages } from "@/lib/pdf"
 import { runAgentExtract, type AgentProgress, type AgentJobState } from "@/lib/agentExtract"
 import gsap from "gsap"
-import { Sparkles, UploadCloud, ClipboardPaste, Cpu, ArrowRight, Play, RotateCcw, X } from "lucide-vue-next"
+import { Sparkles, UploadCloud, ClipboardPaste, Cpu, ArrowRight, Play, RotateCcw, X, Settings } from "lucide-vue-next"
 
 onMounted(() => {
   gsap.from(".ex-hero-badge", { y: 24, opacity: 0, duration: 0.7, ease: "power3.out" })
@@ -122,11 +122,13 @@ const PROVIDER_LIMITS: Record<string, string> = {
 const providerList = ref<ProviderEntry[]>([])
 const activeProviderId = ref("")
 const activeModel = ref("")
+const showSettings = ref(false)
 const formOpen = ref(false)
 const formEditingId = ref<string | null>(null)
 const formName = ref("")
 const formUrl = ref("")
 const formKey = ref("")
+const formResponse = ref<"openai-completions" | "openai-responses">("openai-completions")
 const formModels = ref<string[]>([])
 const formModelPick = ref("")
 const formManualModel = ref("")
@@ -137,8 +139,8 @@ const activeProvider = computed(() => providerList.value.find((p) => p.id === ac
 const keyMode = computed(() => {
   const p = activeProvider.value
   if (!p) return "none"
-  if (p.apiKey) return "client ✓"
-  return ["groq", "mistral", "nvidia"].includes(p.id) ? "server env proxy" : "none (local?)"
+  if (p.isPreset) return p.envKey ? `server env (${p.envKey})` : "BYOK"
+  return p.apiKey ? "client ✓" : "direct, no key"
 })
 
 function refreshProviders() {
@@ -166,6 +168,7 @@ function openAdd() {
   formName.value = ""
   formUrl.value = ""
   formKey.value = ""
+  formResponse.value = "openai-completions"
   formModels.value = []
   formModelPick.value = ""
   formManualModel.value = ""
@@ -177,7 +180,7 @@ function openEdit(p: ProviderEntry) {
   formEditingId.value = p.id
   formName.value = p.name
   formUrl.value = p.baseUrl
-  formKey.value = p.apiKey
+  formKey.value = p.apiKey || ""
   formModels.value = [...(p.models || [])]
   formModelPick.value = p.model && p.models.includes(p.model) ? p.model : p.models[0] || ""
   formManualModel.value = ""
@@ -215,6 +218,7 @@ function formSave() {
     name: formName.value.trim(),
     baseUrl: normalizeBaseUrl(formUrl.value),
     apiKey: formKey.value.trim() || prev?.apiKey || "",
+    response: formResponse.value as ProviderEntry["response"],
     models: formModels.value.length ? formModels.value : chosen ? [chosen] : [],
     model: chosen,
     docsUrl: prev?.docsUrl,
@@ -388,68 +392,120 @@ function cancelAgent() { abortCtl?.abort() }
 
         <!-- AI Agent tab — page-chunked extraction -->
         <div v-show="activeTab==='agent'" class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
-          <div class="flex items-center gap-2.5 mb-1">
-            <span class="w-9 h-9 rounded-xl bg-hlblue grid place-items-center"><Cpu class="w-4.5 h-4.5 text-ink" /></span>
-              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">AGENT · STEP 2 — PROVIDER &amp; RUN</span>
+          <div class="flex items-center justify-end mb-3">
+            <button type="button" @click="showSettings = true" title="AI providers &amp; settings" class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-ink/15 bg-paper text-ink/50 hover:border-pen hover:text-pen transition-colors"><Settings class="w-4 h-4" /></button>
           </div>
-          <p class="text-sm font-semibold text-ink/75">Page-by-page agent — each PDF page is one self-contained request. Rate-limit backoff, truncation split, Dexie checkpoints + resume built-in.</p>
-          <div class="mt-5 border-t border-dashed border-ink/15 pt-5 space-y-4">
-            <!-- Provider manager -->
-            <div class="flex flex-wrap items-center gap-2">
-              <button v-for="p in providerList" :key="p.id" @click="selectProvider(p.id)" :class="['inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full text-xs font-bold transition-all', activeProviderId===p.id ? 'bg-pen text-white shadow-[0_8px_20px_-10px_rgba(47,95,224,0.7)]' : 'border border-ink/15 bg-paper text-ink/70 hover:border-pen/60 hover:text-ink']">
-                {{ p.name }}
-                <span @click.stop="openEdit(p)" title="Edit provider" class="w-5 h-5 grid place-items-center rounded-full hover:bg-black/10">✎</span>
-                <span @click.stop="askDelete(p)" title="Remove" class="w-5 h-5 grid place-items-center rounded-full hover:bg-black/10">✕</span>
-              </button>
-              <button @click="openAdd" class="px-3 py-1.5 rounded-full text-xs font-bold bg-hlyellow text-ink hover:brightness-95 transition-all">+ Add provider</button>
-            </div>
-
-            <!-- Add / Edit window -->
-            <div v-if="formOpen" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3">
-              <div class="grid md:grid-cols-2 gap-3">
-                <label class="text-xs font-semibold text-ink/70">Provider name
-                  <input v-model="formName" placeholder="Groq / MyFreeAPI / Ollama local" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
-                </label>
-                <label class="text-xs font-semibold text-ink/70">API endpoint (base URL)
-                  <input v-model="formUrl" placeholder="https://api.provider.com/v1" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
-                </label>
-              </div>
-              <div class="grid md:grid-cols-2 gap-3 items-end">
-                <label class="text-xs font-semibold text-ink/70">API key <span class="font-normal text-ink/45">(blank = server env for seeded, or unauthenticated local)</span>
-                  <input v-model="formKey" type="password" placeholder="sk-… or leave empty" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
-                </label>
-                <div class="flex flex-wrap gap-2">
-                  <button type="button" :disabled="formFetching" @click="formFetch" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/75 hover:border-pen hover:text-pen transition-colors disabled:opacity-50">{{ formFetching ? 'Fetching…' : 'Fetch models' }}</button>
-                  <button type="button" @click="formSave" class="px-3.5 py-2 rounded-lg bg-pen text-white text-xs font-bold">{{ formEditingId ? 'Update provider' : 'Save provider' }}</button>
-                  <button type="button" @click="formOpen=false" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/60 hover:text-ink">Cancel</button>
-                </div>
-              </div>
-              <label v-if="formModels.length" class="block text-xs font-semibold text-ink/70">Default model
-                <select v-model="formModelPick" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
-                  <option v-for="m in formModels" :key="m" :value="m">{{ m }}</option>
+          <div class="space-y-4">
+            <!-- Provider + model pick -->
+            <div class="grid md:grid-cols-2 gap-3">
+              <label class="text-xs font-semibold text-ink/70">Provider
+                <select v-model="activeProviderId" @change="selectProvider(activeProviderId)" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
+                  <optgroup label="Preconfigured — providers.yaml">
+                    <option v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" :value="p.id">{{ p.name }}</option>
+                  </optgroup>
+                  <optgroup v-if="providerList.some(x => !x.isPreset)" label="Your local providers">
+                    <option v-for="p in providerList.filter(x => !x.isPreset)" :key="p.id" :value="p.id">{{ p.name }}</option>
+                  </optgroup>
                 </select>
               </label>
-              <label v-else class="block text-xs font-semibold text-ink/70">Model id
-                <input v-model="formManualModel" placeholder="type exact model id (e.g. llama-3.3-70b-versatile)" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
-              </label>
-              <p v-if="formStatus" class="text-[11px] font-medium" :class="formStatus.startsWith('Connected') || formStatus.includes('✓') ? 'text-green-700' : 'text-redmargin'">{{ formStatus }}</p>
-              <p class="text-[11px] text-ink/50">Any OpenAI-compatible endpoint works — Groq, Mistral, NVIDIA, OpenRouter, Together, Cerebras, xAI, Vercel AI Gateway, Ollama / LM Studio, or whatever free provider launches next.</p>
-            </div>
-
-            <!-- Active provider run row -->
-            <div class="grid md:grid-cols-2 gap-4 items-end">
               <label class="text-xs font-semibold text-ink/70">Model
                 <select v-if="activeProvider?.models?.length" v-model="activeModel" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
                   <option v-for="m in activeProvider.models" :key="m" :value="m">{{ m }}</option>
                 </select>
                 <input v-else v-model="activeModel" placeholder="model id" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
               </label>
-              <div class="font-mono text-[11px] text-ink/45 pb-2.5 truncate">
-                {{ activeProvider ? activeProvider.baseUrl : 'no provider selected' }}
-                · key: {{ keyMode }}
-              </div>
+            </div>
+            <div class="font-mono text-[11px] text-ink/45">
+              {{ activeProvider ? activeProvider.baseUrl : 'no provider selected' }}
+              · key: {{ keyMode }}
             </div>
             <p class="text-[11px] font-mono text-ink/45">Free-tier snapshot: {{ PROVIDER_LIMITS[activeProviderId] || 'depends on your endpoint' }}</p>
+
+            <!-- ⚙ Settings modal — preconfigured + local providers -->
+            <Teleport to="body">
+              <div v-if="showSettings" class="fixed inset-0 z-[200] bg-ink/50 backdrop-blur-sm grid place-items-center p-4" @click.self="showSettings=false">
+                <div class="w-full max-w-xl max-h-[85vh] overflow-auto rounded-2xl bg-white shadow-2xl ring-1 ring-ink/10 p-6 space-y-5">
+                  <div class="flex items-center justify-between">
+                    <div class="text-lg font-bold font-display tracking-tight">AI Providers</div>
+                    <button @click="showSettings=false" class="w-8 h-8 rounded-full hover:bg-ink/5 grid place-items-center text-ink/60">✕</button>
+                  </div>
+
+                  <div>
+                    <div class="font-mono text-[10px] font-bold tracking-[0.25em] text-ink/45 mb-2">PRECONFIGURED — src/config/providers.yaml</div>
+                    <div class="space-y-1.5">
+                      <button v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" @click="selectProvider(p.id); showSettings=false" :class="['w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-left transition-colors', activeProviderId===p.id ? 'border-pen bg-pen/[0.05]' : 'border-ink/10 hover:border-ink/25']">
+                        <span>
+                          <span class="block text-sm font-bold text-ink">{{ p.name }}</span>
+                          <span class="block font-mono text-[10px] text-ink/45 truncate">{{ p.baseUrl }}</span>
+                        </span>
+                        <span class="text-right shrink-0">
+                          <span class="block font-mono text-[10px] text-ink/60">{{ p.models.length }} models</span>
+                          <span class="block font-mono text-[9px] text-green-700">{{ p.envKey ? 'env: ' + p.envKey : 'BYOK' }}</span>
+                        </span>
+                      </button>
+                    </div>
+                    <p class="mt-2 text-[11px] text-ink/45">Controlled by the repo file <code class="bg-paper px-1 rounded border border-ink/10">providers.yaml</code> — edit it on GitHub and every user gets the update.</p>
+                  </div>
+
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <div class="font-mono text-[10px] font-bold tracking-[0.25em] text-ink/45">YOUR LOCAL PROVIDERS — THIS BROWSER ONLY</div>
+                      <button @click="openAdd" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-hlyellow text-ink hover:brightness-95">+ Add</button>
+                    </div>
+                    <div v-if="!providerList.some(x => !x.isPreset)" class="text-xs text-ink/45 py-2">None yet — add any OpenAI-compatible endpoint for your own session.</div>
+                    <div v-else class="space-y-1.5">
+                      <div v-for="p in providerList.filter(x => !x.isPreset)" :key="p.id" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-ink/10">
+                        <button class="text-left min-w-0" @click="selectProvider(p.id); showSettings=false">
+                          <span class="block text-sm font-bold text-ink">{{ p.name }}</span>
+                          <span class="block font-mono text-[10px] text-ink/45 truncate">{{ p.baseUrl }}</span>
+                        </button>
+                        <span class="flex gap-1 shrink-0">
+                          <button @click="openEdit(p)" title="Edit" class="w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/60">✎</button>
+                          <button @click="askDelete(p)" title="Remove" class="w-7 h-7 rounded-lg hover:bg-redmargin/10 grid place-items-center text-redmargin">✕</button>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Add / Edit local form -->
+                  <div v-if="formOpen" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3">
+                    <div class="grid md:grid-cols-2 gap-3">
+                      <label class="text-xs font-semibold text-ink/70">Name
+                        <input v-model="formName" placeholder="My free API / Ollama local" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                      </label>
+                      <label class="text-xs font-semibold text-ink/70">API endpoint (base URL)
+                        <input v-model="formUrl" placeholder="https://api.provider.com/v1" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                      </label>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-3">
+                      <label class="text-xs font-semibold text-ink/70">Response API
+                        <select v-model="formResponse" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
+                          <option value="openai-completions">OpenAI Chat Completions (/chat/completions)</option>
+                          <option value="openai-responses">OpenAI Responses (/responses)</option>
+                        </select>
+                      </label>
+                      <label class="text-xs font-semibold text-ink/70">API key <span class="font-normal text-ink/45">(blank = unauthenticated / local)</span>
+                        <input v-model="formKey" type="password" placeholder="sk-… or leave empty" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                      </label>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button" :disabled="formFetching" @click="formFetch" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/75 hover:border-pen hover:text-pen transition-colors disabled:opacity-50">{{ formFetching ? 'Fetching…' : 'Fetch models' }}</button>
+                      <button type="button" @click="formSave" class="px-3.5 py-2 rounded-lg bg-pen text-white text-xs font-bold">{{ formEditingId ? 'Update' : 'Save provider' }}</button>
+                      <button type="button" @click="formOpen=false" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/60 hover:text-ink">Cancel</button>
+                    </div>
+                    <label v-if="formModels.length" class="block text-xs font-semibold text-ink/70">Default model
+                      <select v-model="formModelPick" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
+                        <option v-for="m in formModels" :key="m" :value="m">{{ m }}</option>
+                      </select>
+                    </label>
+                    <label v-else class="block text-xs font-semibold text-ink/70">Model id
+                      <input v-model="formManualModel" placeholder="type exact model id" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                    </label>
+                    <p v-if="formStatus" class="text-[11px] font-medium" :class="formStatus.startsWith('Connected') || formStatus.includes('✓') ? 'text-green-700' : 'text-redmargin'">{{ formStatus }}</p>
+                  </div>
+                </div>
+              </div>
+            </Teleport>
 
             <div class="flex flex-wrap gap-3">
               <button :disabled="agentRunning" @click="startAgent(false)" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5"><Play class="w-4 h-4" /> {{ agentRunning ? 'Extracting…' : 'Start page-by-page extraction' }}</button>

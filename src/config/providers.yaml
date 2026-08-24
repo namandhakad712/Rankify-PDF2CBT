@@ -1,0 +1,145 @@
+# ── Preconfigured AI providers ────────────────────────────────────────────
+# This file ships to every user. Edit it here on GitHub → commit → all users
+# get the update on next deploy. No app code changes needed.
+#
+# Fields:
+#   id            unique slug
+#   name          display name
+#   endpoint      OpenAI-compatible base URL (no trailing slash)
+#   response      "openai-completions" (POST /chat/completions)
+#                 | "openai-responses"  (POST /responses — OpenAI Responses API)
+#   envKey        Vercel env variable name holding the SECRET key (server-side only).
+#                 Blank client key + envKey set → request routes via /api/agent/chat proxy.
+#   contextWindow provider-level FALLBACK context window (tokens)
+#   maxTokens     provider-level FALLBACK max output tokens
+#   models        list in PRIORITY order — first entry is the default pick.
+#
+# CONTEXT WINDOW & MAX TOKENS ARE PER MODEL.
+# A plain string model inherits the provider fallbacks. For exact control,
+# write the model as a map instead:
+#
+#   models:
+#     - llama-3.3-70b-versatile              # inherits fallbacks
+#     - id: openai/gpt-oss-120b
+#       contextWindow: 131072
+#       maxTokens: 65536
+#
+# Users can additionally add their own private providers from the browser
+# (Extract → AI Agent → Settings). Those live only in their localStorage.
+
+version: 1
+
+providers:
+  - id: groq
+    name: Groq
+    endpoint: https://api.groq.com/openai/v1
+    response: openai-completions
+    envKey: GROQ_API_KEY
+    docsUrl: https://console.groq.com/docs/rate-limits
+    models:
+      - id: llama-3.3-70b-versatile
+        contextWindow: 131072
+        maxTokens: 32768
+      - id: openai/gpt-oss-120b
+        contextWindow: 131072
+        maxTokens: 65536
+      - id: llama-3.1-8b-instant
+        contextWindow: 131072
+        maxTokens: 8192
+      - id: openai/gpt-oss-20b
+        contextWindow: 131072
+        maxTokens: 65536
+      - qwen/qwen3-32b
+
+  - id: mistral
+    name: Mistral
+    endpoint: https://api.mistral.ai/v1
+    response: openai-completions
+    envKey: MISTRAL_API_KEY
+    docsUrl: https://docs.mistral.ai/getting-started/models
+    contextWindow: 131072
+    maxTokens: 8192
+    models:
+      - mistral-medium-2508
+      - mistral-medium-2505
+      - id: ministral-8b-2512
+        contextWindow: 131072
+        maxTokens: 8192
+      - mistral-small-2603
+
+  - id: nvidia
+    name: NVIDIA NIM
+    endpoint: https://integrate.api.nvidia.com/v1
+    response: openai-completions
+    envKey: NVIDIA_API_KEY
+    docsUrl: https://build.nvidia.com/explore
+    models:
+      - id: meta/llama-3.3-70b-instruct
+        contextWindow: 131072
+        maxTokens: 16384
+      - meta/llama-3.1-8b-instruct
+      - id: deepseek-ai/deepseek-r1
+        contextWindow: 163840
+        maxTokens: 16384
+
+  - id: poolside
+    name: Poolside AI
+    endpoint: https://inference.poolside.ai/v1
+    response: openai-completions
+    envKey: POOLSIDE_API_KEY
+    docsUrl: https://docs.poolside.ai/
+    models:
+      - id: poolside/laguna-s-2.1
+        contextWindow: 1000000
+        maxTokens: 32000
+      - id: poolside/laguna-xs-2.1
+        contextWindow: 256000
+        maxTokens: 32000
+
+  - id: agnes
+    name: Agnes AI
+    endpoint: https://apihub.agnes-ai.com/v1/chat/completions
+    response: openai-completions
+    envKey: AGNES_API_KEY
+    docsUrl: https://docs.agnes-ai.com/
+    models:
+      - id: agnes-2.0-flash
+        contextWindow: 512000
+        maxTokens: 32000
+      - id: agnes-2.5-flash
+        contextWindow: 512000
+        maxTokens: 32000
+
+  - id: inferx
+    name: InferX
+    endpoint: https://model.inferx.net/endpoints/v1
+    response: openai-completions
+    envKey: INFERX_API_KEY
+    docsUrl: https://docs.inferx.ai/
+    models:
+      - id: Devstral-2-123B-Instruct-2512-int4-AutoRound
+        contextWindow: 128000
+        maxTokens: 65000
+      - id: Qwen3-Coder-Next-FP8
+        contextWindow: 256000
+        maxTokens: 65000
+      - id: Qwen3.6-35B-A3B-FP8
+        contextWindow: 256000
+        maxTokens: 65000
+      - id: Qwen3.8-27B-FP8
+        contextWindow: 256000
+        maxTokens: 65000
+    
+  - id: opencode_zen
+    name: OpenCode Zen
+    endpoint: https://opencode.ai/zen/v1
+    response: openai-completions
+    envKey: OPENCODE_CUSTOM_API_KEY
+    docsUrl: https://docs.opencode.ai/
+    models:
+      - id: big-pickle
+        contextWindow: 128000
+        maxTokens: 32000
+      - id: x-preview-f-free
+        contextWindow: 1000000
+        maxTokens: 128000

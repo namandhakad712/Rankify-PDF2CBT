@@ -1,26 +1,40 @@
 import { openAICompatibleChat, type ProviderMessage } from "./types"
+import YAML from "yaml"
+import providersYaml from "@/config/providers.yaml?raw"
 
 // ── GENERIC AI HARNESS ─────────────────────────────────────────────────────
-// One engine, infinite providers. No per-provider code files anymore.
-// A provider = { name, endpoint, apiKey } — add it at runtime from the UI,
-// hit "Fetch models", done. Works with ANY OpenAI-compatible endpoint:
-// Groq, Mistral, NVIDIA, OpenRouter, Together, Cerebras, xAI, Vercel AI
-// Gateway, Ollama/LM Studio, or whatever launches tomorrow.
+// Two sources of providers:
+//   1. PRECONFIGURED — src/config/providers.yaml (edit on GitHub, ships to all)
+//   2. LOCAL — user-added in browser, localStorage only, their session only
 //
-// Seeded presets ship ready-to-go — paste a key (or set the matching
-// server env var and leave the key blank to route via /api/<id>/chat).
+// Secret keys NEVER live in the client for presets: requests route through
+// /api/agent/chat which reads process.env[envKey] (Vercel env vars).
 
-export interface ProviderMessage0 extends ProviderMessage {}
 export type { ProviderMessage }
 
 export interface ProviderEntry {
   id: string
   name: string
   baseUrl: string
-  apiKey: string
+  response?: "openai-completions" | "openai-responses" | string
+  apiKey?: string // local providers only; presets use envKey via proxy
+  envKey?: string // presets: Vercel env var name
+  contextWindow?: number // FALLBACK context window (tokens) when a model has no override
+  maxTokens?: number // FALLBACK max output tokens when a model has no override
   models: string[]
-  model?: string // last used / default pick
+  modelParams?: Record<string, { contextWindow?: number; maxTokens?: number }> // per-model overrides
+  model?: string
   docsUrl?: string
+  isPreset?: boolean
+}
+
+/** Effective per-model limits — model override > provider fallback > sane default */
+export function limitsFor(entry: ProviderEntry, modelId: string): { contextWindow: number; maxTokens: number } {
+  const mp = entry.modelParams?.[modelId]
+  return {
+    contextWindow: mp?.contextWindow ?? entry.contextWindow ?? 131072,
+    maxTokens: mp?.maxTokens ?? entry.maxTokens ?? 6000,
+  }
 }
 
 export interface ChatOpts {
@@ -31,46 +45,54 @@ export interface ChatOpts {
   responseFormat?: { type: "json_object" } | { type: "text" }
 }
 
-const LS_KEY = "rpdf2cbt-providers-v1"
+const LS_KEY = "rpdf2cbt-custom-providers-v2"
 
-/** ids eligible for server-proxy routing (env keys on Vercel) */
-const PROXY_IDS = ["groq", "mistral", "nvidia"]
+interface YamlFile {
+  version: number
+  providers: {
+    id: string; name: string; endpoint: string; response?: string
+    envKey?: string; docsUrl?: string; contextWindow?: number; maxTokens?: number
+    models?: (string | { id: string; contextWindow?: number; maxTokens?: number })[]
+  }[]
+}
 
-export const SEED_PROVIDERS: ProviderEntry[] = [
-  {
-    id: "groq",
-    name: "Groq",
-    baseUrl: "https://api.groq.com/openai/v1",
-    apiKey: "",
-    model: "llama-3.3-70b-versatile",
-    models: [
-      "llama-3.3-70b-versatile",
-      "openai/gpt-oss-120b",
-      "llama-3.1-8b-instant",
-      "openai/gpt-oss-20b",
-      "qwen/qwen3-32b",
-    ],
-    docsUrl: "https://console.groq.com/docs/rate-limits",
-  },
-  {
-    id: "mistral",
-    name: "Mistral",
-    baseUrl: "https://api.mistral.ai/v1",
-    apiKey: "",
-    model: "mistral-medium-2508",
-    models: ["mistral-medium-2508", "mistral-medium-2505", "ministral-8b-2512", "mistral-small-2603"],
-    docsUrl: "https://docs.mistral.ai/getting-started/models",
-  },
-  {
-    id: "nvidia",
-    name: "NVIDIA NIM",
-    baseUrl: "https://integrate.api.nvidia.com/v1",
-    apiKey: "",
-    model: "meta/llama-3.3-70b-instruct",
-    models: ["meta/llama-3.3-70b-instruct", "meta/llama-3.1-8b-instruct", "deepseek-ai/deepseek-r1"],
-    docsUrl: "https://build.nvidia.com/explore",
-  },
-]
+function parsePresets(): ProviderEntry[] {
+  try {
+    const f = YAML.parse(providersYaml) as YamlFile
+    return (f.providers || []).map((p) => {
+      const models: string[] = []
+      const modelParams: Record<string, { contextWindow?: number; maxTokens?: number }> = {}
+      for (const m of p.models || []) {
+        if (typeof m === "string") {
+          models.push(m)
+        } else if (m && m.id) {
+          models.push(m.id)
+          if (m.contextWindow != null || m.maxTokens != null) {
+            modelParams[m.id] = { contextWindow: m.contextWindow, maxTokens: m.maxTokens }
+          }
+        }
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        baseUrl: p.endpoint.replace(/\/+$/, ""),
+        response: p.response || "openai-completions",
+        envKey: p.envKey || "",
+        docsUrl: p.docsUrl,
+        contextWindow: p.contextWindow,
+        maxTokens: p.maxTokens,
+        models,
+        modelParams: Object.keys(modelParams).length ? modelParams : undefined,
+        model: models[0] || "",
+        isPreset: true,
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
+export const PRESET_PROVIDERS: ProviderEntry[] = parsePresets()
 
 export function normalizeBaseUrl(raw: string): string {
   let u = raw.trim().replace(/\/+$/, "")
@@ -79,45 +101,29 @@ export function normalizeBaseUrl(raw: string): string {
 }
 
 export function loadProviders(): ProviderEntry[] {
+  let local: ProviderEntry[] = []
   try {
-    const raw = localStorage.getItem(LS_KEY)
-    if (!raw) {
-      localStorage.setItem(LS_KEY, JSON.stringify(SEED_PROVIDERS))
-      return structuredClone(SEED_PROVIDERS)
-    }
-    const list = JSON.parse(raw) as ProviderEntry[]
-    if (!Array.isArray(list)) throw new Error("bad shape")
-    return list.map((p) => ({ ...p, baseUrl: normalizeBaseUrl(p.baseUrl) }))
-  } catch {
-    return structuredClone(SEED_PROVIDERS)
-  }
+    local = JSON.parse(localStorage.getItem(LS_KEY) || "[]") as ProviderEntry[]
+    if (!Array.isArray(local)) local = []
+  } catch { local = [] }
+  return [...PRESET_PROVIDERS, ...local]
 }
 
-function persist(list: ProviderEntry[]): void {
-  localStorage.setItem(LS_KEY, JSON.stringify(list))
+function persistLocal(list: ProviderEntry[]): void {
+  localStorage.setItem(LS_KEY, JSON.stringify(list.filter((p) => !p.isPreset)))
 }
 
-export function saveProviders(list: ProviderEntry[]): void {
-  persist(list)
-}
-
-export function upsertProvider(entry: ProviderEntry): ProviderEntry[] {
-  const list = loadProviders()
+export function upsertProvider(entry: ProviderEntry): void {
+  if (entry.isPreset) return // presets are read-only, controlled by YAML
+  const list = loadProviders().filter((p) => !p.isPreset)
   const i = list.findIndex((p) => p.id === entry.id)
   if (i >= 0) list[i] = entry
   else list.push(entry)
-  persist(list)
-  return list
+  persistLocal(list)
 }
 
-export function deleteProvider(id: string): ProviderEntry[] {
-  const list = loadProviders().filter((p) => p.id !== id)
-  persist(list)
-  return list
-}
-
-export function getProvider(id: string): ProviderEntry | undefined {
-  return loadProviders().find((p) => p.id === id)
+export function deleteProvider(id: string): void {
+  persistLocal(loadProviders().filter((p) => !p.isPreset && p.id !== id))
 }
 
 /** Fetch model list — OpenAI shape {data:[{id}]} or Ollama shape {models:[{name}]} */
@@ -136,35 +142,29 @@ export async function fetchModels(baseUrl: string, apiKey?: string): Promise<str
 }
 
 /**
- * The ONE chat function. Routing:
- *  - key present            → direct browser call with Bearer key
- *  - key blank + seed id    → /api/<id>/chat proxy (server env var hides the key)
- *  - key blank + custom     → direct call unauthenticated (local Ollama etc.)
+ * The ONE chat function.
+ *  - preset + no client key → /api/agent/chat proxy (server reads envKey secret)
+ *  - everything else        → direct call with the key the user saved locally
  */
 export async function chat(entry: ProviderEntry, opts: ChatOpts): Promise<string> {
   const key = (entry.apiKey || "").trim()
-  const canProxy = !key && PROXY_IDS.includes(entry.id)
-  if (canProxy) {
-    const r = await fetch(`/api/${entry.id}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: opts.model,
-        messages: opts.messages,
-        temperature: opts.temperature ?? 0.2,
-        max_tokens: opts.maxTokens,
-        response_format: opts.responseFormat ?? { type: "json_object" },
-      }),
-    })
-    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 400)}`)
-    const j = (await r.json()) as { choices?: { message?: { content?: string } }[]; content?: string }
-    return j.content ?? j.choices?.[0]?.message?.content ?? ""
-  }
-  return openAICompatibleChat(normalizeBaseUrl(entry.baseUrl), key, {
+  const lim = limitsFor(entry, opts.model)
+  const body = {
     model: opts.model,
     messages: opts.messages,
     temperature: opts.temperature ?? 0.2,
-    max_tokens: opts.maxTokens,
+    max_tokens: opts.maxTokens ?? lim.maxTokens,
     response_format: opts.responseFormat ?? { type: "json_object" },
-  })
+  }
+  if (entry.isPreset && !key) {
+    const r = await fetch("/api/agent/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: entry.baseUrl, response: entry.response, envKey: entry.envKey, ...body }),
+    })
+    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 400)}`)
+    const j = (await r.json()) as { choices?: { message?: { content?: string } }[]; content?: string; output_text?: string }
+    return j.content ?? j.output_text ?? j.choices?.[0]?.message?.content ?? ""
+  }
+  return openAICompatibleChat(normalizeBaseUrl(entry.baseUrl), key, body)
 }

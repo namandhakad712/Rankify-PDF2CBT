@@ -1,5 +1,5 @@
 import type { UniversalPaper, UniversalQuestion } from "@/types"
-import { chat as providerChat, type ProviderEntry, type ProviderMessage } from "./providers"
+import { chat as providerChat, limitsFor, type ProviderEntry, type ProviderMessage } from "./providers"
 import { normalizeText, normalizeOptions } from "./normalize"
 import { validatePaper } from "./validate"
 import { jsonrepair } from "jsonrepair"
@@ -80,7 +80,7 @@ async function chatWithBackoff(
   for (let attempt = 1; attempt <= maxTries; attempt++) {
     if (signal.aborted) throw new Error("cancelled")
     try {
-      return await providerChat(entry, { ...opts, responseFormat: { type: "json_object" }, maxTokens: 6000 })
+      return await providerChat(entry, { ...opts, responseFormat: { type: "json_object" } })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
@@ -204,7 +204,10 @@ export async function runAgentExtract(opts: {
   for (let i = 0; i < pages.length; i++) {
     if (signalRef.aborted) break
     if (state.results[String(i)]) continue // checkpoint hit — resume
-    const pageText = pages[i].trim()
+    const rawPage = pages[i].trim()
+    // respect the SELECTED MODEL's context window — ~4 chars/token, 25% headroom for output
+    const charCap = Math.floor((limitsFor(entry, entry.model || "").contextWindow * 3) / 4)
+    const pageText = rawPage.length > charCap ? rawPage.slice(0, charCap) : rawPage
     if (!pageText) { progress[i] = { index: i, status: "done", note: "empty page" }; state.results[String(i)] = { questions: [], lastNum: 0 }; emit(); continue }
 
     progress[i] = { index: i, status: "running" }; emit()
