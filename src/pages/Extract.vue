@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppNav from '@/components/AppNav.vue'
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { useRouter } from "vue-router"
 import { parsePastedJSON, fetchAndParse } from "@/lib/parse"
 import { getDB } from "@/lib/db"
@@ -9,6 +9,7 @@ import {
   upsertProvider,
   deleteProvider as deleteProviderEntry,
   fetchModels as fetchProviderModels,
+  fetchEnvStatus,
   normalizeBaseUrl,
   type ProviderEntry,
 } from "@/lib/providers"
@@ -160,9 +161,20 @@ const formModelPick = ref("")
 const formManualModel = ref("")
 const formStatus = ref<string | null>(null)
 const formFetching = ref(false)
+const envStatus = ref<Record<string, boolean>>({})
+const envLoaded = ref(false)
+void fetchEnvStatus().then((s) => { envStatus.value = s; envLoaded.value = true })
 
 const activeProvider = computed(() => providerList.value.find((p) => p.id === activeProviderId.value))
-const ocrReady = computed(() => providerList.value.some((p) => p.id === "mistral"))
+const ocrReady = computed(() =>
+  providerList.value.some((p) => p.id === "mistral") && envStatus.value["MISTRAL_API_KEY"] === true,
+)
+/** preset usable = no envKey needed OR that env key exists server-side (strict once loaded) */
+function presetReady(p: ProviderEntry): boolean {
+  if (!p.isPreset || !p.envKey) return true
+  if (!envLoaded.value) return true // status fetch in flight — neutral
+  return envStatus.value[p.envKey] === true // blank/missing key = NOT available
+}
 const keyMode = computed(() => {
   const p = activeProvider.value
   if (!p) return "none"
@@ -366,6 +378,22 @@ function dismissResult() {
   resultInfo.value = null
   pipeStage.value = "idle"
 }
+
+/* ── Session persistence — refresh pe kuch loss nahi ── */
+const savedTab = localStorage.getItem("rpdf2cbt-extract-tab")
+if (savedTab === "gem" || savedTab === "agent") activeTab.value = savedTab
+pasteText.value = localStorage.getItem("rpdf2cbt-extract-paste") || ""
+watch(activeTab, (v) => localStorage.setItem("rpdf2cbt-extract-tab", v))
+watch(pasteText, (v) => { try { localStorage.setItem("rpdf2cbt-extract-paste", v) } catch { /* quota */ } })
+void (async () => {
+  try {
+    const cached = await getDB().pdfs.get("__pdf")
+    if (cached?.buffer && !pdfFile.value) {
+      pdfFile.value = new File([cached.buffer], cached.name || "paper.pdf", { type: "application/pdf" })
+      void checkResume()
+    }
+  } catch { /* no cache yet */ }
+})()
 </script>
 
 <template>
@@ -513,14 +541,17 @@ function dismissResult() {
                   <div>
                     <div class="font-mono text-[10px] font-bold tracking-[0.25em] text-ink/45 mb-2">PRECONFIGURED — src/config/providers.yaml</div>
                     <div class="grid sm:grid-cols-2 gap-2.5">
-                      <div v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" :class="['rounded-2xl border-2 p-3 transition-all', activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
-                        <button class="w-full flex items-center justify-between gap-2" @click="selectProvider(p.id)">
+                      <div v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" :class="['relative rounded-2xl border-2 p-3 transition-all overflow-hidden', !presetReady(p) ? 'border-ink/10 opacity-50 grayscale cursor-not-allowed' : activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
+                        <div v-if="!presetReady(p)" class="absolute inset-0 z-10 grid place-items-center">
+                          <span class="rotate-[-12deg] border-[3px] border-redmargin text-redmargin font-mono font-extrabold tracking-widest text-[10px] uppercase px-3 py-1 rounded-md bg-white/70">env not available</span>
+                        </div>
+                        <button class="w-full flex items-center justify-between gap-2" @click="presetReady(p) && selectProvider(p.id)">
                           <span class="text-sm font-extrabold font-display text-ink">{{ p.name }}</span>
-                          <span :class="['w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold', activeProviderId===p.id ? 'bg-pen text-white' : 'bg-ink/[0.06] text-transparent']">✓</span>
+                          <span :class="['w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold', presetReady(p) && activeProviderId===p.id ? 'bg-pen text-white' : 'bg-ink/[0.06] text-transparent']">✓</span>
                         </button>
-                        <div class="font-mono text-[9px] text-green-700 mt-0.5">{{ p.envKey ? 'env: ' + p.envKey + ' · owner 🗝️[FREE]' : 'BYOK' }}</div>
+                        <div class="font-mono text-[9px] mt-0.5" :class="presetReady(p) ? 'text-green-700' : 'text-redmargin'">{{ p.envKey ? (presetReady(p) ? 'env: ' + p.envKey + ' ✓ detected' : 'env: ' + p.envKey + ' ✗ missing') : 'BYOK' }}</div>
                         <div class="mt-2 flex flex-wrap gap-1">
-                          <button v-for="m in p.models" :key="m" @click="selectModel(p.id, m)" :class="['px-2 py-1 rounded-lg font-mono text-[9px] transition-colors', activeProviderId===p.id && activeModel===m ? 'bg-pen text-white' : 'bg-paper border border-ink/12 text-ink/60 hover:border-pen/50 hover:text-pen']" :title="'use ' + m">{{ m }}</button>
+                          <button v-for="m in p.models" :key="m" :disabled="!presetReady(p)" @click="presetReady(p) && selectModel(p.id, m)" :class="['px-2 py-1 rounded-lg font-mono text-[9px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed', presetReady(p) && activeProviderId===p.id && activeModel===m ? 'bg-pen text-white' : 'bg-paper border border-ink/12 text-ink/60 hover:border-pen/50 hover:text-pen']" :title="'use ' + m">{{ m }}</button>
                           <span v-if="!p.models.length" class="font-mono text-[9px] text-ink/35">no models listed</span>
                         </div>
                         <div v-if="PROVIDER_LIMITS[p.id]" class="mt-1.5 font-mono text-[8px] leading-snug text-ink/40">{{ PROVIDER_LIMITS[p.id] }}</div>

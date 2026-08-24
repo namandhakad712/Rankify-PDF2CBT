@@ -141,6 +141,18 @@ export async function fetchModels(baseUrl: string, apiKey?: string): Promise<str
   return (list as string[]).sort()
 }
 
+/** Which preset env keys exist server-side (true/false map; values never exposed) */
+export async function fetchEnvStatus(): Promise<Record<string, boolean>> {
+  try {
+    const r = await fetch("/api/agent/status")
+    if (!r.ok) return {}
+    const j = (await r.json()) as { envKeys?: Record<string, boolean> }
+    return j.envKeys || {}
+  } catch {
+    return {}
+  }
+}
+
 /**
  * The ONE chat function.
  *  - preset + no client key → /api/agent/chat proxy (server reads envKey secret)
