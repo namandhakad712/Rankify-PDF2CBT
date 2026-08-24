@@ -73,7 +73,6 @@ function submit() {
     createdAt: Date.now(),
   }
   localStorage.setItem("rpdf2cbt-last-result", JSON.stringify(result))
-  // also save to DB results — handle msq correctly
   const isCorrect = (qq: typeof paper.value.questions[number]) => {
     const a = answers.value[qq.id]
     if (qq.type === "msq") {
@@ -95,52 +94,87 @@ const fmt = computed(() => {
 </script>
 
 <template>
-  <div v-if="!paper" class="min-h-screen grid place-items-center"><div class="text-center"><div>No test data</div><button class="mt-3 px-4 py-2 rounded bg-zinc-900 text-white" @click="router.push('/review')">Go to Review</button></div></div>
-  <div v-else class="min-h-screen bg-zinc-50 flex flex-col">
-    <div class="bg-card border-b border-border px-4 py-2.5 flex items-center justify-between backdrop-blur sticky top-0 z-30">
-      <div class="font-semibold font-display flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-green-500"></span>
-        {{ paper.meta.title }}
-      </div>
-      <div class="font-mono text-sm font-bold px-3 py-1 rounded-full" :class="timeLeft < 300 ? 'bg-red-500/10 text-red-600 animate-pulse' : 'bg-purple-500/10 text-purple-500'">{{ fmt }}</div>
-      <button class="px-5 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition-colors" @click="submit">Submit</button>
+  <div v-if="!paper" class="min-h-screen grid place-items-center bg-paper text-ink">
+    <div class="text-center">
+      <p class="font-hand text-2xl text-ink/50 -rotate-2">kuch hai hi nahi…</p>
+      <div class="font-display font-bold text-2xl mt-1">No test data</div>
+      <button class="mt-4 px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/review')">Go to Review</button>
     </div>
-    <div class="flex-1 flex">
-      <div class="flex-1 p-4">
-        <div v-if="q" class="bg-card border border-border rounded-2xl p-6 shadow-sm">
-          <div class="text-xs text-muted-foreground font-mono">Q{{ q.number }} / {{ total }} · {{ q.type.toUpperCase() }} · {{ q.subject || 'General' }} <span v-if="q.hasDiagram" class="ml-2 bg-amber-500/10 text-amber-600 px-2 py-0.5 rounded-full font-sans font-semibold">diagram</span></div>
-          <div class="mt-2 text-sm whitespace-pre-wrap">{{ q.text }}</div>
-          <div v-if="q.diagrams?.length" class="mt-2 flex gap-2 flex-wrap"><img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-40 border rounded bg-white" /></div>
-          <div v-if="q.options" class="mt-4 grid gap-2">
-            <template v-if="q.type==='msq'">
-              <label v-for="(opt, oi) in q.options" :key="oi" :class="['flex items-center gap-2 text-left border rounded px-3 py-2 text-sm cursor-pointer', ((answers[q.id] as string[])||[]).includes(String(oi)) ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white']">
-                <input type="checkbox" :checked="((answers[q.id] as string[])||[]).includes(String(oi))" @change="selectOption(String(oi))" class="accent-zinc-900" />
-                <span class="font-mono text-xs">{{ String.fromCharCode(65+oi) }}.</span>{{ opt }}
-              </label>
-            </template>
-            <template v-else>
-              <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left border rounded px-3 py-2 text-sm', answers[q.id]===String(oi+1) ? 'bg-purple-600 text-white border-purple-600' : 'bg-white']">
-                <span class="font-mono text-xs mr-2">{{ String.fromCharCode(65+oi) }}.</span>{{ opt }}
-              </button>
-            </template>
-          </div>
-          <div v-if="q.type==='nat'" class="mt-4"><input :value="answers[q.id]||''" @input="answers[q.id]=($event.target as HTMLInputElement).value" placeholder="Enter numeric answer" class="border rounded px-3 py-2 w-48" /></div>
-          <div class="mt-4 flex gap-2">
-            <button class="px-4 py-2 rounded border text-sm" @click="mark">Mark for Review</button>
-            <button class="px-4 py-2 rounded bg-zinc-900 text-white text-sm ml-auto" @click="go(idx+1)" v-if="idx < total-1">Save & Next →</button>
-            <button class="px-4 py-2 rounded bg-violet-600 text-white text-sm ml-auto" @click="submit" v-else>Submit</button>
+  </div>
+  <div v-else class="min-h-screen bg-paper flex flex-col text-ink">
+    <!-- exam header -->
+    <div class="bg-white/90 backdrop-blur border-b-2 border-ink/[0.07] px-5 py-3 flex items-center justify-between sticky top-0 z-30">
+      <div class="font-display font-bold flex items-center gap-2.5 tracking-tight min-w-0">
+        <span class="w-2.5 h-2.5 rounded-full bg-correct shrink-0"></span>
+        <span class="truncate">{{ paper.meta.title }}</span>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse' : 'bg-paper text-ink/70 border border-ink/10'">{{ fmt }}</div>
+        <button class="px-5 py-2 rounded-xl bg-pen hover:bg-pen/90 text-white text-sm font-bold transition-colors" @click="submit">Submit</button>
+      </div>
+    </div>
+
+    <div class="flex-1 flex flex-col lg:flex-row">
+      <!-- question sheet -->
+      <div class="flex-1 p-4 md:p-6 lg:pr-3">
+        <div v-if="q" class="relative max-w-3xl mx-auto lg:mx-0 rounded-lg bg-white shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden">
+          <div class="pointer-events-none absolute inset-y-0 left-9 w-px bg-redmargin/40"></div>
+          <div class="px-5 pl-14 py-6">
+            <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-ink/50 uppercase">
+              <span>Q{{ q.number }} / {{ total }}</span><span class="text-ink/25">·</span>
+              <span>{{ q.type.toUpperCase() }}</span><span class="text-ink/25">·</span>
+              <span>{{ q.subject || 'General' }}</span>
+              <span v-if="q.hasDiagram" class="bg-hlyellow text-ink px-2 py-0.5 rounded-full font-sans font-bold normal-case tracking-normal">diagram below</span>
+            </div>
+            <div class="mt-3.5 text-[16px] leading-relaxed whitespace-pre-wrap">{{ q.text }}</div>
+            <div v-if="q.diagrams?.length" class="mt-3 flex gap-2.5 flex-wrap">
+              <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 rounded-lg border border-ink/10 bg-white" />
+            </div>
+
+            <div v-if="q.options" class="mt-5 grid gap-2.5">
+              <template v-if="q.type==='msq'">
+                <label v-for="(opt, oi) in q.options" :key="oi" :class="['flex items-center gap-3 text-left rounded-xl border-2 px-4 py-3 text-[15px] cursor-pointer transition-all', ((answers[q.id] as string[])||[]).includes(String(oi)) ? 'border-pen bg-pen/[0.05] font-medium' : 'border-ink/10 bg-paper hover:border-ink/25']">
+                  <input type="checkbox" :checked="((answers[q.id] as string[])||[]).includes(String(oi))" @change="selectOption(String(oi))" class="accent-pen w-4 h-4" />
+                  <span class="font-mono text-xs text-ink/50">{{ String.fromCharCode(65+oi) }}.</span>{{ opt }}
+                </label>
+              </template>
+              <template v-else>
+                <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left rounded-xl border-2 px-4 py-3 text-[15px] transition-all', answers[q.id]===String(oi+1) ? 'border-pen bg-pen text-white font-medium' : 'border-ink/10 bg-paper hover:border-ink/30']">
+                  <span class="font-mono text-xs mr-2.5" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span>{{ opt }}
+                </button>
+              </template>
+            </div>
+
+            <div v-if="q.type==='nat'" class="mt-5">
+              <input :value="answers[q.id]||''" @input="answers[q.id]=($event.target as HTMLInputElement).value" placeholder="Enter your numeric answer" class="border-2 border-ink/12 rounded-xl px-4 py-2.5 w-56 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 font-mono" />
+            </div>
+
+            <div class="mt-6 flex flex-wrap gap-2.5">
+              <button class="px-4 py-2.5 rounded-xl border-2 border-hlyellow bg-hlyellow/30 text-sm font-bold text-ink/80 hover:bg-hlyellow/50 transition-colors" @click="mark">Mark for review</button>
+              <button class="px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold ml-auto transition-transform hover:-translate-y-0.5" @click="go(idx+1)" v-if="idx < total-1">Save &amp; next →</button>
+              <button class="px-5 py-2.5 rounded-xl bg-correct text-white text-sm font-bold ml-auto" @click="submit" v-else>Submit test</button>
+            </div>
           </div>
         </div>
       </div>
-      <div class="w-64 bg-white border-l p-3">
-        <div class="text-xs font-semibold">Palette</div>
-        <div class="grid grid-cols-5 gap-2 mt-2">
-          <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-9 h-9 rounded-lg text-xs border font-semibold transition-all', idx===i ? 'ring-2 ring-purple-500 scale-110' : '', status[qq.id]==='answered' ? 'bg-green-500 text-white border-green-500' : status[qq.id]==='marked' ? 'bg-purple-500 text-white border-purple-500' : status[qq.id]==='markedAnswered' ? 'bg-purple-500 text-white border-purple-500 ring-1 ring-purple-300' : status[qq.id]==='answered' ? 'bg-green-500 text-white' : status[qq.id]==='notAnswered' ? 'bg-red-500/10 text-red-600 border-red-500/40' : 'bg-transparent border-dashed border-border text-muted-foreground']">{{ qq.number }}</button>
+
+      <!-- palette sidebar -->
+      <div class="lg:w-72 bg-white border-t-2 lg:border-t-0 lg:border-l-2 border-ink/[0.07] p-4">
+        <div class="text-xs font-bold uppercase tracking-[0.2em] text-ink/50">Palette</div>
+        <div class="grid grid-cols-6 lg:grid-cols-5 gap-2 mt-3">
+          <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-9 h-9 rounded-lg text-xs font-bold transition-all', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white scale-110' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='marked' ? 'bg-hlyellow text-ink' : status[qq.id]==='markedAnswered' ? 'bg-hlyellow text-ink ring-2 ring-correct' : status[qq.id]==='notAnswered' ? 'bg-redmargin/10 text-redmargin border border-redmargin/40' : 'border border-dashed border-ink/25 text-ink/45']">{{ qq.number }}</button>
         </div>
-        <div class="mt-4 flex gap-2">
-          <button class="flex-1 py-2 border rounded text-xs" @click="go(idx-1)" :disabled="idx===0">Prev</button>
-          <button class="flex-1 py-2 border rounded text-xs" @click="go(idx+1)" :disabled="idx===total-1">Next</button>
+        <div class="mt-5 grid grid-cols-2 gap-2">
+          <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx-1)" :disabled="idx===0">← Prev</button>
+          <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx+1)" :disabled="idx===total-1">Next →</button>
         </div>
+        <div class="mt-5 space-y-1.5 text-[11px] text-ink/55 font-medium">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-correct inline-block"></span> Answered</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-redmargin/30 border border-redmargin/50 inline-block"></span> Not answered</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-hlyellow inline-block"></span> Marked</div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded border border-dashed border-ink/30 inline-block"></span> Not visited</div>
+        </div>
+        <p class="font-hand text-lg text-ink/40 mt-5 -rotate-1">ek-ek karke, koi jaldi nahi</p>
       </div>
     </div>
   </div>

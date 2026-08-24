@@ -1,5 +1,5 @@
 // UNIVERSAL PDF → CBT JSON Schema — Generic for ANY exam
-// No JEE/NEET hardcoding. Inspired by AGENT.md:245 but made subject-agnostic.
+// Subject-agnostic no exam hardcoding.
 // Works for SSC, UPSC, Banking, GATE, School, Custom, any language.
 
 export type QuestionType =

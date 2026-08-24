@@ -75,31 +75,32 @@ async function doCrop() {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @click.self="emit('close')">
-    <div class="bg-white rounded-xl max-w-5xl w-full max-h-[90vh] overflow-auto">
-      <div class="sticky top-0 bg-white border-b px-4 py-2 flex items-center justify-between">
-        <div class="text-sm font-medium">Crop Diagram — Page {{ pageNum }}/{{ totalPages }} — drag on canvas</div>
+  <div class="fixed inset-0 z-50 bg-ink/45 backdrop-blur-sm flex items-center justify-center p-4" @click.self="emit('close')">
+    <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-auto shadow-[0_30px_80px_-30px_rgba(35,32,58,0.5)]">
+      <div class="sticky top-0 bg-white/95 backdrop-blur border-b border-ink/10 px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 rounded-t-2xl">
+        <div class="text-sm font-bold font-display tracking-tight">Crop diagram <span class="font-mono text-xs font-normal text-ink/50 ml-2">page {{ pageNum }}/{{ totalPages }} — drag on the sheet</span></div>
         <div class="flex gap-2">
-          <button class="px-3 py-1 border rounded text-xs" :disabled="pageNum<=1" @click="pageNum--">Prev</button>
-          <button class="px-3 py-1 border rounded text-xs" :disabled="pageNum>=totalPages" @click="pageNum++">Next</button>
-          <button class="px-3 py-1 rounded bg-zinc-900 text-white text-xs" @click="doCrop" :disabled="!sel">Crop →</button>
-          <button class="px-3 py-1 border rounded text-xs" @click="emit('close')">Close</button>
+          <button class="px-3.5 py-1.5 border-2 border-ink/12 rounded-lg text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors" :disabled="pageNum<=1" @click="pageNum--">← Prev</button>
+          <button class="px-3.5 py-1.5 border-2 border-ink/12 rounded-lg text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors" :disabled="pageNum>=totalPages" @click="pageNum++">Next →</button>
+          <button class="px-4 py-1.5 rounded-lg bg-pen text-white text-xs font-bold disabled:opacity-40" @click="doCrop" :disabled="!sel">Crop →</button>
+          <button class="px-3.5 py-1.5 border-2 border-ink/12 rounded-lg text-xs font-bold text-ink/70 hover:border-redmargin hover:text-redmargin transition-colors" @click="emit('close')">Close</button>
         </div>
       </div>
 
-      <div class="p-4 flex gap-4">
-        <div class="relative border bg-zinc-100 overflow-hidden flex-1" @mousedown="onDown" @mousemove="onMove" @mouseup="onUp" @mouseleave="onUp">
+      <div class="p-5 flex flex-col md:flex-row gap-5">
+        <div class="relative rounded-xl border border-ink/12 bg-paper overflow-hidden flex-1" @mousedown="onDown" @mousemove="onMove" @mouseup="onUp" @mouseleave="onUp">
           <canvas ref="canvasRef" class="max-w-full block"></canvas>
-          <div v-if="sel" class="absolute border-2 border-violet-600 bg-violet-200/30 pointer-events-none" :style="{ left: sel.x*100+'%', top: sel.y*100+'%', width: sel.w*100+'%', height: sel.h*100+'%' }"></div>
-          <div v-if="!pdfDocRef" class="absolute inset-0 grid place-items-center text-sm text-zinc-500">No PDF loaded — upload in Extract first</div>
+          <div v-if="sel" class="absolute border-2 border-pen bg-pen/15 pointer-events-none" :style="{ left: sel.x*100+'%', top: sel.y*100+'%', width: sel.w*100+'%', height: sel.h*100+'%' }"></div>
+          <div v-if="!pdfDocRef" class="absolute inset-0 grid place-items-center text-sm text-ink/50">No PDF loaded — upload in Extract first</div>
         </div>
-        <div class="w-64 shrink-0">
-          <div class="text-xs font-medium">Preview</div>
-          <div class="mt-2 border rounded bg-zinc-50 min-h-32 grid place-items-center p-2">
-            <img v-if="previewUrl" :src="previewUrl" class="max-w-full" />
-            <span v-else class="text-xs text-zinc-400">Cropped image appears here</span>
+        <div class="w-full md:w-64 shrink-0">
+          <div class="text-xs font-bold text-ink/70 uppercase tracking-wider">Preview</div>
+          <div class="mt-2 rounded-xl border border-dashed border-ink/15 bg-paper min-h-32 grid place-items-center p-2.5">
+            <img v-if="previewUrl" :src="previewUrl" class="max-w-full rounded" />
+            <span v-else class="text-xs text-ink/40 text-center px-4">your cropped figure lands here</span>
           </div>
-          <div class="text-[11px] text-zinc-400 mt-2">Drag rectangle → Crop → it auto-adds to question diagrams[]. Worker via pdfjs-dist + ?url.</div>
+          <p class="font-hand text-lg text-ink/45 mt-3 -rotate-1">drag a rectangle → crop → done</p>
+          <div class="text-[11px] text-ink/40 mt-1">pdfjs-dist worker · saves as dataURL</div>
         </div>
       </div>
     </div>

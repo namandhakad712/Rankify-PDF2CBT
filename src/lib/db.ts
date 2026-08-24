@@ -1,7 +1,7 @@
 import Dexie, { type Table } from "dexie"
 import type { UniversalPaper } from "@/types"
 
-// Single DB, 3 tables — generic universal, not Rankify-V1 8 tables db/index.ts:43
+// Single DB, 4 tables — papers, results, settings, pdfs
 export interface StoredPaper {
   id: string // "current" | uuid
   paper: UniversalPaper

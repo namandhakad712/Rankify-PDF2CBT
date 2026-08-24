@@ -10,7 +10,7 @@
   <em>The Light, Open-Source PDF → CBT Wrapper — for Every Exam, Every Subject</em>
 </p>
 
-[![Version](https://img.shields.io/badge/Version-1.0.0--light-7c3aed?style=for-the-badge&logo=semantic-release&logoColor=white)](https://github.com/TheMoonVyy/pdf2cbt)
+[![Version](https://img.shields.io/badge/Version-1.0.0--light-7c3aed?style=for-the-badge&logo=semantic-release&logoColor=white)](https://github.com/namandhakad712/Rankify-PDF2CBT)
 [![Tech Stack](https://img.shields.io/badge/Tech-Vite_+_Vue_3_+_Rolldown-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Platform](https://img.shields.io/badge/Platform-Web_Light-00DC82?style=for-the-badge&logo=vite&logoColor=white)](https://rankify.qzz.io)
 [![License](https://img.shields.io/badge/License-MIT-00D9FF?style=for-the-badge)](./LICENSE)
@@ -24,7 +24,7 @@
   <a href="#-quick-start">
     <img src="https://img.shields.io/badge/⚡_Light_Wrapper-Get_Started-7c3aed?style=for-the-badge" alt="Get Started">
   </a>
-  <a href="https://github.com/TheMoonVyy/pdf2cbt/issues">
+  <a href="https://github.com/namandhakad712/Rankify-PDF2CBT/issues">
     <img src="https://img.shields.io/badge/🐛_Report-Issues-FF5722?style=for-the-badge" alt="Issues">
   </a>
 </p>
@@ -440,7 +440,7 @@ graph LR
 
 ### 🌐 **Vite SPA + 3 Serverless Proxies**
 
-<a href="https://vercel.com/new/clone?repository-url=https://github.com/TheMoonVyy/pdf2cbt">
+<a href="https://vercel.com/new/clone?repository-url=https://github.com/namandhakad712/Rankify-PDF2CBT">
   <img src="https://vercel.com/button" alt="Deploy with Vercel" height="32">
 </a>
 
@@ -500,7 +500,6 @@ All docs = Vue SFC in `src/pages/`, routed via `src/router/index.ts:3`,SEO via `
 ```bash
 pnpm exec vue-tsc -b --noEmit  # typecheck
 pnpm build                     # 1711 modules, 110KB initial — must stay <350KB
-# Keep wrapper light: ~35 SFC target, no ogl/echarts/mupdf/gsap heavy set — see PLAN.md
 ```
 
 <br>
@@ -543,7 +542,7 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 <td align="center" width="33%">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Animals/Bug.png" alt="Bug" width="60" />
 <h3>🐛 Bug Reports</h3>
-<p><a href="https://github.com/TheMoonVyy/pdf2cbt/issues">GitHub Issues</a></p>
+<p><a href="https://github.com/namandhakad712/Rankify-PDF2CBT/issues">GitHub Issues</a></p>
 </td>
 <td align="center" width="33%">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Light%20Bulb.png" alt="Bulb" width="60" />
@@ -560,7 +559,7 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 
 </div>
 
-- **Light rule:** ~35 SFC, `initial <350KB` `pnpm build` must pass, no `echarts`/`mupdf`/`ogl`/`gsap` suite. See `PLAN.md:1`.
+- **Keep it light:** small component count, initial bundle under 350KB, no heavyweight chart/pdf/glsl suites unless truly needed.
 - **Providers:** one file per provider in `src/lib/providers/` + one line in `index.ts` + one `api/` proxy. See `providers/README.md:1`.
 - **Universal:** subjects/topics free strings — validator warns, not blocks. No vocab lock.
 - `pnpm exec vue-tsc -b --noEmit` before PR. One commit per feature.
@@ -603,10 +602,10 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 
 <br>
 
-**V1:** Private `C:\Projects\Rankify-V1` (AGPL) — reference only. **Light:** This repo MIT `LICENSE:1` — open-source. Based on `pdf2cbt` + GEM jugaad, rebuilt Vite Rolldown universal.
+**License:** MIT � open source, forever. Built with Vite, Vue and too much chai.
 
-[![GitHub](https://img.shields.io/badge/GitHub-TheMoonVyy-181717?style=for-the-badge&logo=github)](https://github.com/TheMoonVyy)
-[![Stars](https://img.shields.io/github/stars/TheMoonVyy/pdf2cbt?style=for-the-badge&logo=github&color=yellow)](https://github.com/TheMoonVyy/pdf2cbt/stargazers)
+[![GitHub](https://img.shields.io/badge/GitHub-namandhakad712-181717?style=for-the-badge&logo=github)](https://github.com/namandhakad712)
+[![Stars](https://img.shields.io/github/stars/namandhakad712/Rankify-PDF2CBT?style=for-the-badge&logo=github&color=yellow)](https://github.com/namandhakad712/Rankify-PDF2CBT/stargazers)
 
 <br>
 
@@ -615,10 +614,10 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 ### 🌟 **Show Your Support**
 
 <p>
-<a href="https://github.com/TheMoonVyy/pdf2cbt/stargazers">
+<a href="https://github.com/namandhakad712/Rankify-PDF2CBT/stargazers">
   <img src="https://img.shields.io/badge/⭐_Star_this_repo-7c3aed?style=for-the-badge&logo=github&logoColor=white" alt="Star" height="40">
 </a>
-<a href="https://github.com/TheMoonVyy/pdf2cbt/issues">
+<a href="https://github.com/namandhakad712/Rankify-PDF2CBT/issues">
   <img src="https://img.shields.io/badge/🐛_Report_Issues-FF5722?style=for-the-badge&logo=github&logoColor=white" alt="Issues" height="40">
 </a>
 </p>

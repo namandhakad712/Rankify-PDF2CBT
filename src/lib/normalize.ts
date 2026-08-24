@@ -32,7 +32,7 @@ export function normalizeText(s: string): string {
 
 export function normalizeOptions(opts: string[] | null): string[] | null {
   if (!opts) return opts
-  // options strictly single-line AGENT.md:442
+  // options strictly single-line
   return opts.map((o) => o.replace(/\n/g, " ").replace(/\s{2,}/g, " ").trim())
 }
 

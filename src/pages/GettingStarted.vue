@@ -5,81 +5,115 @@ useHead({ title: "Getting Started — Rankify PDF2CBT" })
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground font-sans pt-24 pb-16">
+  <div class="min-h-screen bg-paper text-ink font-sans pt-28 pb-16">
     <AppNav />
-    <div class="max-w-3xl mx-auto px-4 py-10">
-      <a href="/" class="text-sm underline">← Home</a>
-      <h1 class="text-3xl font-black tracking-tight mt-4">Getting Started</h1>
-      <p class="text-sm text-zinc-500 mt-2">GEM paste primary — no key. Fallback AI only for small PDFs.</p>
+    <div class="max-w-3xl mx-auto px-5">
+      <a href="/" class="text-sm font-medium text-ink/50 hover:text-ink transition-colors">← home</a>
 
-      <div class="mt-6 space-y-6">
-        <section class="border rounded-xl p-4">
-          <h2 class="font-bold">1. Get JSON from GEM (2 min)</h2>
-          <ol class="mt-2 list-decimal list-inside text-sm text-zinc-700 space-y-1">
-            <li>Open <a href="https://ishortn.ink/gemini-gem" target="_blank" class="underline text-violet-600">ishortn.ink/gemini-gem</a> — preset instructions.</li>
-            <li>Upload PDF there (GEM handles chunking, no 20MB worry).</li>
-            <li>Wait for JSON — copy. It is <code>UniversalPaper {meta, sections, questions}</code> or <code>{questions:[]}</code>.</li>
-            <li>Optional: If JSON is <code>```json fences</code>, our <code>stripFences()</code> <code>src/lib/parse.ts:8</code> handles it.</li>
+      <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2 mt-4">the guide</div>
+      <h1 class="text-4xl md:text-6xl font-display font-extrabold tracking-tight">Getting <span class="relative inline-block">started<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlblue"></span></span></h1>
+      <p class="mt-4 text-[16px] text-ink/60 leading-relaxed max-w-xl">Primary flow = GEM paste, no API key, 2 minutes. Fallback AI is optional, for small PDFs only.</p>
+      <p class="font-hand text-2xl text-pen mt-2 rotate-1">chai lo, 4 steps baaki hain</p>
+
+      <div class="mt-10 grid gap-6">
+        <section class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(-0.4deg)">
+          <div class="tape" aria-hidden="true"></div>
+          <div class="flex items-center gap-3">
+            <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin">1</span>
+            <h2 class="font-display font-bold text-xl tracking-tight">Get JSON from GEM</h2>
+          </div>
+          <ol class="mt-4 list-decimal list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
+            <li>Open <a href="https://ishortn.ink/gemini-gem" target="_blank" class="text-pen underline decoration-wavy underline-offset-2">ishortn.ink/gemini-gem</a> — preset instructions ready.</li>
+            <li>Upload your PDF there (GEM handles big files — no 20MB worry).</li>
+            <li>Wait for the JSON, copy it. Format: <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">UniversalPaper</code> or plain <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">{questions:[]}</code>.</li>
+            <li>Markdown fences? Our <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">stripFences()</code> handles those.</li>
           </ol>
         </section>
 
-        <section class="border rounded-xl p-4">
-          <h2 class="font-bold">2. Paste in /extract + Upload PDF</h2>
-          <ol class="mt-2 list-decimal list-inside text-sm text-zinc-700 space-y-1">
-            <li>Go <a href="/extract" class="underline">/extract</a> → Step 2: drop PDF &lt;20MB (cached to Dexie <code>pdfs.__pdf</code> for crop).</li>
-            <li>Step 3: paste JSON → <code>Parse & Go to Review</code>. We <code>normalizeText</code> per <code>AGENT.md:440</code>, <code>validatePaper()</code> — errors block, warnings yellow.</li>
-            <li>Or paste JSON URL → <code>Fetch URL</code> (handles CORS via <code>fetch()</code>).</li>
+        <section class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(0.3deg)">
+          <div class="tape" aria-hidden="true"></div>
+          <div class="flex items-center gap-3">
+            <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin">2</span>
+            <h2 class="font-display font-bold text-xl tracking-tight">Paste in /extract + upload PDF</h2>
+          </div>
+          <ol class="mt-4 list-decimal list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
+            <li><a href="/extract" class="text-pen underline decoration-wavy underline-offset-2">/extract</a> → drop your PDF (&lt;20MB — cached locally for diagram crops).</li>
+            <li>Paste the JSON → <b>Parse &amp; go to Review</b>. Errors block, warnings show yellow.</li>
+            <li>Got the JSON at a URL? Paste the link → Fetch URL.</li>
           </ol>
         </section>
 
-        <section class="border rounded-xl p-4">
-          <h2 class="font-bold">3. Review & Crop Diagrams per Question</h2>
-          <ol class="mt-2 list-decimal list-inside text-sm text-zinc-700 space-y-1">
-            <li>Edit <code>text / options / answer / marks</code> inline. <code>hasDiagram</code> checkbox.</li>
-            <li>Click <code>Crop Diagram</code> → pdfjs canvas (1.5x) → drag rect → <code>Crop</code> → saves <code>dataURL</code> to <code>diagrams[]</code>.</li>
-            <li>Page nav Prev/Next, delete × on image. <code>Save & Start Test</code> → writes <code>localStorage rpdf2cbt-current</code> + Dexie <code>papers:current</code>.</li>
+        <section class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(-0.3deg)">
+          <div class="tape" aria-hidden="true"></div>
+          <div class="flex items-center gap-3">
+            <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin">3</span>
+            <h2 class="font-display font-bold text-xl tracking-tight">Review &amp; crop diagrams</h2>
+          </div>
+          <ol class="mt-4 list-decimal list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
+            <li>Edit text / options / answer / marks inline — everything is editable.</li>
+            <li><b>Crop diagram</b> → the PDF opens → drag a rectangle → crop. Saved to that question.</li>
+            <li>Happy? <b>Save &amp; start test</b>.</li>
+          </ol>
+          <p class="font-hand text-xl text-ink/50 mt-3 -rotate-1">AI galat figure bheje toh yahi par theek karo</p>
+        </section>
+
+        <section class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(0.4deg)">
+          <div class="tape" aria-hidden="true"></div>
+          <div class="flex items-center gap-3">
+            <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin">4</span>
+            <h2 class="font-display font-bold text-xl tracking-tight">Take the test &amp; see results</h2>
+          </div>
+          <ol class="mt-4 list-decimal list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
+            <li>Real CBT shell: palette (5 states), countdown timer, mark-for-review.</li>
+            <li>Submit → report card: score, per-subject bars, question-by-question verdicts.</li>
           </ol>
         </section>
 
-        <section class="border rounded-xl p-4">
-          <h2 class="font-bold">4. Take CBT & Results</h2>
-          <ol class="mt-2 list-decimal list-inside text-sm text-zinc-700 space-y-1">
-            <li><code>/test</code> single shell: palette 5 states (<code>notVisited/notAnswered/answered/marked/markedAnswered</code>), timer <code>durationMinutes*60</code>, autosave, <code>MSQ</code> uses checkbox <code>answers[] 0-index</code>.</li>
-            <li>Diagrams show as <code>&lt;img&gt;</code>, not span. Submit → <code>localStorage rpdf2cbt-last-result</code> + Dexie <code>results</code>.</li>
-            <li><code>/results</code> simple bars (no echarts) + per-Q <code>You vs Ans</code> (MSQ join). Export JSON via browser devtools or future button.</li>
+        <section class="rounded-lg bg-hlblue/30 border-2 border-hlblue p-7">
+          <h2 class="font-display font-bold text-xl tracking-tight">Optional: Fallback AI</h2>
+          <ol class="mt-3 list-decimal list-inside text-[15px] text-ink/70 space-y-1.5 leading-relaxed">
+            <li>In <b>/extract</b> toggle "Fallback AI" → pick Mistral / Groq / NVIDIA + model + your key.</li>
+            <li><code class="bg-white/70 px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">viaProxy</code> keeps the key server-side on Vercel. Uncheck for direct API calls in local dev.</li>
+            <li>Add your own provider = one file + one line. Docs in <code class="bg-white/70 px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">providers/README.md</code>.</li>
           </ol>
+          <p class="text-xs text-ink/55 mt-3">Docs: <a href="https://docs.mistral.ai/api/endpoint/chat" class="underline">Mistral</a> · <a href="https://console.groq.com/docs/api-reference" class="underline">Groq</a> · <a href="https://docs.api.nvidia.com/nim/reference/create_chat_completion_v1_chat_completions_post-1" class="underline">NVIDIA NIM</a></p>
         </section>
 
-        <section class="border rounded-xl p-4 bg-violet-50 border-violet-200">
-          <h2 class="font-bold text-violet-900">Fallback AI (for &lt;10 Q PDFs, optional)</h2>
-          <ol class="mt-2 list-decimal list-inside text-sm text-violet-900/80 space-y-1">
-            <li>In <code>/extract</code> toggle “Fallback” → pick Provider <code>Mistral/Groq/NVIDIA</code> (from <code>src/lib/providers/index.ts</code>) + model + BYOK key.</li>
-            <li><code>viaProxy:true</code> → <code>POST /api/&lt;id&gt;/chat</code> hides key (Vercel env <code>MISTRAL_API_KEY</code>). Uncheck for direct <code>https://api.../v1/chat/completions</code> (local dev).</li>
-            <li>We <code>extractPdfText()</code> first 4 pages 15k → provider <code>response_format: json_object</code> → <code>parsePastedJSON()</code>. Add provider: see <code>providers/README.md</code>.</li>
-          </ol>
-          <p class="text-xs text-violet-700 mt-2">Docs: Mistral <a href="https://docs.mistral.ai/api/endpoint/chat" class="underline">chat</a> · Groq <a href="https://console.groq.com/docs/api-reference" class="underline">api</a> · NVIDIA <a href="https://docs.api.nvidia.com/nim/reference/create_chat_completion_v1_chat_completions_post-1" class="underline">NIM</a></p>
-        </section>
-
-        <section class="border rounded-xl p-4">
-          <h2 class="font-bold">Keys & Privacy</h2>
-          <ul class="mt-2 list-disc list-inside text-sm text-zinc-700 space-y-1">
-            <li>Primary GEM: <strong>no key</strong> — nothing leaves device except PDF you upload to Gemini chat.</li>
-            <li>Fallback: BYOK in input (not stored) OR Vercel env <code>MISTRAL_API_KEY</code> etc (server-only, no <code>VITE_</code> prefix). See <code>.env.example</code>.</li>
-            <li>All PDF + JSON local: Dexie single DB <code>RankifyPDF2CBT</code> + <code>localStorage rpdf2cbt-*</code>. No tracking. <a href="/privacy" class="underline">Privacy →</a></li>
+        <section class="rounded-lg bg-white p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)]">
+          <h2 class="font-display font-bold text-xl tracking-tight">Keys &amp; privacy</h2>
+          <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
+            <li>Primary GEM: <b>no key</b> — the only thing leaving your device is the PDF you upload to Gemini chat yourself.</li>
+            <li>Fallback keys are never stored (memory only), or live in Vercel env vars server-side.</li>
+            <li>Everything else stays in your browser. <a href="/privacy" class="text-pen underline decoration-wavy underline-offset-2">Full privacy policy →</a></li>
           </ul>
         </section>
 
-        <section class="border rounded-xl p-4">
-          <h2 class="font-bold">Troubleshooting</h2>
-          <ul class="mt-2 list-disc list-inside text-sm text-zinc-700 space-y-1">
-            <li><code>Invalid JSON</code> → strip fences, ensure JSON starts <code>{</code> or <code>[</code>. Check gemini output copied fully.</li>
-            <li><code>PDF &gt;20MB</code> → compress or use GEM (handles large). Fallback caps 15k text.</li>
-            <li><code>No crop</code> → upload PDF in Extract first, then Review loads <code>pdfs.__pdf</code>. Worker 1.2MB lazy.</li>
-            <li><code>MSQ wrong</code> → ensure <code>answers: ["0","2"]</code> 0-index sorted, <code>answer:""</code>.</li>
-            <li><code>401 Missing API key</code> → add key in fallback input or set Vercel env + use viaProxy.</li>
+        <section class="rounded-lg bg-white p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)]">
+          <h2 class="font-display font-bold text-xl tracking-tight">Fatafat fixes <span class="font-hand text-xl text-ink/45 font-normal">(troubleshooting)</span></h2>
+          <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
+            <li><b>Invalid JSON</b> → make sure you copied the whole output; fences are stripped automatically.</li>
+            <li><b>PDF &gt;20MB</b> → use the GEM flow (it handles large files); fallback caps at 15k chars.</li>
+            <li><b>Crop not working</b> → upload the PDF in Extract first, then Review finds it.</li>
+            <li><b>MSQ scoring wrong</b> → answers must be 0-indexed &amp; sorted, e.g. <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">["0","2"]</code> with <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">answer:""</code>.</li>
+            <li><b>401 missing key</b> → paste key in the fallback input, or set Vercel env + viaProxy.</li>
           </ul>
         </section>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 92px;
+  height: 26px;
+  transform: translateX(-50%) rotate(-2deg);
+  background: rgba(251, 248, 241, 0.7);
+  border-left: 1px dashed rgba(35, 32, 58, 0.12);
+  border-right: 1px dashed rgba(35, 32, 58, 0.12);
+  box-shadow: 0 2px 6px rgba(35, 32, 58, 0.08);
+}
+</style>
