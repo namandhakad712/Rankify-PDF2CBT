@@ -276,14 +276,12 @@ Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4"
 }
 .tape {
   position: absolute;
-  top: -12px;
+  top: -26px;
   left: 50%;
-  width: 92px;
-  height: 26px;
-  transform: translateX(-50%) rotate(-2deg);
-  background: rgba(255, 255, 255, 0.55);
-  border-left: 1px dashed rgba(35, 32, 58, 0.12);
-  border-right: 1px dashed rgba(35, 32, 58, 0.12);
-  box-shadow: 0 2px 6px rgba(35, 32, 58, 0.08);
+  width: 260px;
+  height: 66px;
+  transform: translateX(-50%) rotate(-1.8deg);
+  background: url('/images/notebook/tape-washi.png') center/contain no-repeat;
+  filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
 }
 </style>

@@ -1,6 +1,7 @@
 <template>
-  <div class="nb-root">
-    <!-- Ink trail canvas -->
+  <div ref="root" class="nb-root">
+    <div ref="progressBar" class="fixed top-0 left-0 h-[3px] w-full bg-pen origin-left scale-x-0 z-[70] pointer-events-none"></div>
+    <!-- Ink trail canvas — whole page, pencil texture -->
     <canvas ref="inkCanvas" class="ink-canvas" aria-hidden="true"></canvas>
 
     <!-- ═══════════ NAV ═══════════ -->
@@ -44,7 +45,7 @@
               <span class="block overflow-hidden pb-2"><span ref="hLine2" class="block">Now it's a
                 <span class="relative inline-block whitespace-nowrap">
                   <span ref="hl1" class="hl-block absolute inset-x-[-6px] inset-y-[8%] -z-0 rounded-sm bg-hlyellow origin-left scale-x-0"></span>
-                  <span class="font-hand relative z-10 font-semibold text-[1.12em] tracking-normal">real</span>
+                  <span data-scramble class="font-hand relative z-10 font-semibold text-[1.12em] tracking-normal">real</span>
                 </span>
                 exam.
               </span></span>
@@ -58,6 +59,7 @@
             <div ref="heroCtas" class="opacity-0 mt-9 flex flex-wrap items-center gap-4">
               <RouterLink
                 to="/extract"
+                data-sticker-trigger
                 class="group relative inline-flex items-center gap-2.5 rounded-2xl bg-pen px-7 py-4 text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(47,95,224,0.55)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(47,95,224,0.6)]"
               >
                 <span class="relative z-10 flex items-center gap-2">Make my first test
@@ -73,7 +75,8 @@
 
           <!-- Interactive mini exam sheet -->
           <div class="relative">
-            <img src="/images/notebook/floating-notebook-pdf.png" alt="" class="hidden lg:block absolute -top-12 -right-10 w-48 pointer-events-none select-none" style="filter: drop-shadow(0 16px 32px rgba(35,32,58,0.15));" ref="heroFloat" />
+            <img src="/images/notebook/hero-stack.png" alt="" class="hidden lg:block absolute -top-10 -right-8 w-52 pointer-events-none select-none z-20" style="filter: drop-shadow(0 16px 32px rgba(35,32,58,0.15));" ref="heroFloat" />
+            <img src="/images/notebook/floating-notebook-pdf.png" alt="" class="hidden lg:block absolute -bottom-8 -left-6 w-32 pointer-events-none select-none opacity-90 rotate-3 z-20" style="filter: drop-shadow(0 10px 20px rgba(35,32,58,0.12));" />
             <div ref="examSheet" class="relative mx-auto max-w-md rotate-[1.2deg] rounded-xl bg-white shadow-[0_24px_60px_-24px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07]">
               <!-- sheet margin -->
               <div class="pointer-events-none absolute inset-y-0 left-11 w-px bg-redmargin/40"></div>
@@ -118,7 +121,7 @@
               <div class="grid h-16 w-16 rotate-6 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-2xl font-bold text-redmargin bg-white/80">A+</div>
             </div>
             <div ref="stk3" class="absolute -bottom-6 left-8 opacity-0">
-              <svg width="72" height="40" viewBox="0 0 72 40" fill="none"><path d="M2 30 C 18 8, 40 6, 58 14" stroke="#2F5FE0" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="1 7"/><path d="M52 8 l8 5 -9 4" stroke="#2F5FE0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+              <img src="/images/notebook/doodle-arrow.png" alt="" class="w-20 pointer-events-none select-none" style="filter: drop-shadow(0 4px 10px rgba(35,32,58,0.08));" />
             </div>
             <span ref="note2" class="absolute -bottom-9 right-2 font-hand text-xl text-pen rotate-2 opacity-0">↑ your exam, in ~40 seconds</span>
           </div>
@@ -138,8 +141,9 @@
       </section>
 
       <!-- ═══════════ HOW IT WORKS ═══════════ -->
-      <section id="how" class="paper relative py-24 md:py-32">
-        <div class="mx-auto max-w-6xl px-5">
+      <section id="how" class="paper relative py-24 md:py-32 overflow-hidden">
+        <StickerDrop confineTo="#how" />
+        <div class="mx-auto max-w-6xl px-5 relative">
           <div class="max-w-xl">
             <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">instructions</div>
             <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl leading-[1.05]">Three steps.<br />That's the <span class="relative inline-block"><span class="hl absolute inset-x-[-5px] inset-y-[12%] -z-0 rounded-sm bg-hlpink origin-left scale-x-0"></span><span class="relative z-10">whole</span></span> syllabus.</h2>
@@ -147,7 +151,7 @@
           </div>
 
           <div class="mt-14 grid md:grid-cols-3 gap-7 md:gap-6">
-            <div v-for="(s, i) in steps" :key="'step' + i" class="tape-card group relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] transition-transform duration-300 hover:-translate-y-1.5" :style="{ transform: `rotate(${s.tilt}deg)` }">
+            <div v-for="(s, i) in steps" :key="'step' + i" data-sticker-trigger class="tape-card group relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] transition-transform duration-300 hover:-translate-y-1.5" :style="{ transform: `rotate(${s.tilt}deg)` }">
               <div class="tape" aria-hidden="true"></div>
               <div class="flex items-start justify-between">
                 <span class="font-display text-5xl font-extrabold text-ink/10 group-hover:text-hlyellow transition-colors">{{ s.roman }}</span>
@@ -177,6 +181,7 @@
             <div
               v-for="(f, i) in features"
               :key="'feat' + i"
+              data-sticker-trigger
               class="sticky-note relative rounded-[4px] p-6 pt-8 shadow-[0_16px_36px_-16px_rgba(35,32,58,0.35)] transition-all duration-300 hover:!rotate-0 hover:-translate-y-2 hover:shadow-[0_24px_48px_-16px_rgba(35,32,58,0.4)]"
               :class="f.cls"
               :style="{ transform: `rotate(${f.tilt}deg)` }"
@@ -282,7 +287,8 @@
 
     <!-- ═══════════ FOOTER ═══════════ -->
     <footer class="relative overflow-hidden bg-[#F4EFE3] border-t-2 border-ink/[0.07]">
-      <div class="mx-auto max-w-6xl px-5 pt-16 pb-8">
+      <img src="/images/notebook/footer-doodle.png" alt="" class="hidden lg:block absolute right-8 -top-10 w-44 pointer-events-none select-none opacity-90 rotate-3" style="filter: drop-shadow(0 8px 20px rgba(35,32,58,0.1));" />
+      <div class="mx-auto max-w-6xl px-5 pt-16 pb-8 relative">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-10">
           <div>
             <div class="flex items-baseline gap-2">
@@ -297,9 +303,9 @@
             <RouterLink to="/about" class="hover:text-pen transition-colors">About</RouterLink>
             <RouterLink to="/privacy" class="hover:text-pen transition-colors">Privacy</RouterLink>
           </div>
-          <button class="relative h-24 w-24 shrink-0 text-ink/70 hover:text-pen transition-colors" aria-label="Back to top" @click="toTop">
-            <CircularText text="BACK TO TOP · BACK TO TOP · " :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
-            <ArrowUp class="absolute inset-0 m-auto w-5 h-5" />
+          <button class="relative h-36 w-36 md:h-40 md:w-40 shrink-0 text-ink/70 hover:text-pen transition-colors" aria-label="Back to top" @click="toTop">
+            <CircularText text="BACK TO TOP  •  BACK TO TOP  •  " :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
+            <ArrowUp class="absolute inset-0 m-auto w-6 h-6" />
           </button>
         </div>
         <div class="mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent" style="-webkit-text-stroke: 2px rgba(35,32,58,0.14)" aria-hidden="true">RANKIFY</div>
@@ -319,12 +325,17 @@ import { useHead } from '@vueuse/head'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
+import { Flip } from 'gsap/Flip'
+import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin'
+import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin'
 import Lenis from 'lenis'
 import { ArrowRight, ArrowUp, Plus } from 'lucide-vue-next'
 import CircularText from '@/components/CircularText.vue'
+import StickerDrop from '@/components/StickerDrop.vue'
 
-gsap.registerPlugin(ScrollTrigger, SplitText)
+gsap.registerPlugin(ScrollTrigger, SplitText, Flip, ScrambleTextPlugin, DrawSVGPlugin)
 
+const openFaq = ref(-1)
 const picked1 = ref('')
 const q1opts = [
   { k: 'A', t: 'Equal to its velocity' },
@@ -381,7 +392,9 @@ const faqs = [
 ]
 
 /* refs */
+const root = ref(null)
 const navEl = ref(null)
+const progressBar = ref(null)
 const inkCanvas = ref(null)
 const heroBadge = ref(null)
 const hLine1 = ref(null)
@@ -399,6 +412,9 @@ const stk3 = ref(null)
 const marqueeTrack = ref(null)
 
 let lenis = null
+let homeCtx = null
+let tick = null
+let mqTick = null
 let mqX = 0
 let inkRaf = 0
 let inkCtx = null
@@ -410,7 +426,13 @@ function toTop () {
   else window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-/* ── ink trail ── */
+function scrambleEl(el, original) {
+  if (!el || reduced) return
+  gsap.killTweensOf(el)
+  gsap.to(el, { duration: 0.72, scrambleText: { text: original, chars: 'upperCase', speed: 0.85, revealDelay: 0.18 }, ease: 'none', overwrite: true })
+}
+
+/* ── pencil trail — smooth, single stroke, no dots ── */
 function inkLoop (now) {
   inkRaf = requestAnimationFrame(inkLoop)
   const c = inkCanvas.value
@@ -423,27 +445,38 @@ function inkLoop (now) {
   }
   const w = c.offsetWidth, h = c.offsetHeight
   inkCtx.clearRect(0, 0, w, h)
-  const life = 900
+  const life = 1100
   inkPts = inkPts.filter(p => now - p.t < life)
+  if (inkPts.length < 2) return
+  // pencil texture: slightly grainy, uniform, no per-segment dots
   inkCtx.lineCap = 'round'
   inkCtx.lineJoin = 'round'
-  for (let i = 1; i < inkPts.length; i++) {
-    const a = inkPts[i - 1], b = inkPts[i]
-    const age = (now - b.t) / life
-    inkCtx.strokeStyle = `rgba(35,32,58,${(0.28 * (1 - age)).toFixed(3)})`
-    inkCtx.lineWidth = 2.4 * (1 - age * 0.6)
-    inkCtx.beginPath()
-    inkCtx.moveTo(a.x, a.y)
-    inkCtx.lineTo(b.x, b.y)
-    inkCtx.stroke()
+  inkCtx.strokeStyle = 'rgba(35,32,58,0.42)'
+  inkCtx.lineWidth = 1.55
+  inkCtx.shadowBlur = 0.6
+  inkCtx.shadowColor = 'rgba(35,32,58,0.12)'
+  inkCtx.beginPath()
+  inkCtx.moveTo(inkPts[0].x, inkPts[0].y)
+  for (let i = 1; i < inkPts.length - 1; i++) {
+    const p = inkPts[i]
+    const n = inkPts[i + 1]
+    const mx = (p.x + n.x) / 2
+    const my = (p.y + n.y) / 2
+    inkCtx.quadraticCurveTo(p.x, p.y, mx, my)
   }
+  const last = inkPts[inkPts.length - 1]
+  inkCtx.lineTo(last.x, last.y)
+  inkCtx.stroke()
+  inkCtx.shadowBlur = 0
+  // fade tail softly via overlay — older points naturally expire, no dotted alpha steps
 }
 
 onMounted(() => {
+  homeCtx = gsap.context(() => {
   /* Lenis */
   lenis = new Lenis({ duration: reduced ? 0 : 1.1, smoothWheel: !reduced })
   lenis.on('scroll', ScrollTrigger.update)
-  const tick = t => lenis.raf(t * 1000)
+  tick = t => lenis.raf(t * 1000)
   gsap.ticker.add(tick)
   gsap.ticker.lagSmoothing(0)
 
@@ -471,8 +504,8 @@ onMounted(() => {
     inkRaf = requestAnimationFrame(inkLoop)
   }
 
-  /* marquee: base drift + scroll-velocity skew */
-  const mqTick = () => {
+  /* marquee: base drift + scroll-velocity skew — docs: velocity via ScrollTrigger.getVelocity */
+  mqTick = () => {
     if (!marqueeTrack.value) return
     const v = Math.min(Math.abs(lenis.velocity || 0), 60) / 60
     mqX -= 0.04 + v * 0.45
@@ -542,17 +575,57 @@ onMounted(() => {
         scrollTrigger: { trigger: el.closest('ul'), start: 'top 80%', once: true }
       })
     })
-    document.querySelectorAll('.tape-card, .sticky-note').forEach(el => {
-      gsap.from(el, {
-        y: 40, opacity: 0, duration: 0.7, ease: 'power3.out',
-        scrollTrigger: { trigger: el, start: 'top 88%', once: true }
-      })
+  }
+
+  /* ── micro-orchestra ── */
+  // progress bar
+  if (progressBar.value) {
+    ScrollTrigger.create({
+      trigger: document.body,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 0.3,
+      onUpdate: self => gsap.set(progressBar.value, { scaleX: self.progress })
     })
   }
+  // nav hide on scroll down
+  let lastY = window.scrollY
+  ScrollTrigger.create({
+    start: 'top top',
+    end: 99999,
+    onUpdate: self => {
+      const y = self.scroll()
+      const dir = y > lastY ? 1 : -1
+      if (y > 120) gsap.to(navEl.value, { y: dir === 1 ? -90 : 0, duration: 0.4, ease: 'power3.out', overwrite: true })
+      else gsap.to(navEl.value, { y: 0, duration: 0.4 })
+      lastY = y
+    }
+  })
+  // scramble hover
+  document.querySelectorAll('[data-scramble]').forEach(el => {
+    const orig = el.textContent || ''
+    el.addEventListener('pointerenter', () => scrambleEl(el, orig))
+  })
+  // highlighter scrub (replaces once trigger with scrub)
+  document.querySelectorAll('.hl').forEach(el => {
+    gsap.fromTo(el, { scaleX: 0 }, {
+      scaleX: 1, ease: 'none',
+      scrollTrigger: { trigger: el.parentElement, start: 'top 85%', end: 'top 45%', scrub: 0.8 }
+    })
+  })
+  // subtle batch reveal — no click bounce
+  ScrollTrigger.batch('.tape-card, .sticky-note', {
+    onEnter: batch => gsap.from(batch, { y: 28, opacity: 0, duration: 0.6, stagger: 0.08, ease: 'power3.out', overwrite: true }),
+    start: 'top 88%',
+    once: true
+  })
+  }, root.value)
 })
 
 onBeforeUnmount(() => {
-  ScrollTrigger.getAll().forEach(t => t.kill())
+  homeCtx?.revert()
+  if (tick) gsap.ticker.remove(tick)
+  if (mqTick) gsap.ticker.remove(mqTick)
   cancelAnimationFrame(inkRaf)
   if (lenis) lenis.destroy()
 })
@@ -603,24 +676,22 @@ useHead({
   .ink-canvas { display: none; }
 }
 
-/* tape strip */
+/* tape strip — washi only, no rectangle */
 .tape {
   position: absolute;
-  top: -12px;
+  top: -26px;
   left: 50%;
-  width: 92px;
-  height: 26px;
-  transform: translateX(-50%) rotate(-2deg);
-  background: rgba(255,255,255,0.55);
-  border-left: 1px dashed rgba(35,32,58,0.12);
-  border-right: 1px dashed rgba(35,32,58,0.12);
-  box-shadow: 0 2px 6px rgba(35,32,58,0.08);
-  backdrop-filter: blur(1px);
+  width: 260px;
+  height: 66px;
+  transform: translateX(-50%) rotate(-1.8deg);
+  background: url('/images/notebook/tape-washi.png') center/contain no-repeat;
+  filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
 }
 
 .sticky-note .tape {
-  width: 74px;
-  height: 22px;
+  width: 190px;
+  height: 50px;
+  top: -22px;
 }
 
 /* highlighter */

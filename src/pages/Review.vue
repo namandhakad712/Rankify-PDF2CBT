@@ -92,7 +92,7 @@ function onCropped(url: string) {
 
       <div v-if="!paper" class="mt-8 relative rounded-lg bg-white p-10 text-center shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
         <div class="tape" aria-hidden="true"></div>
-        <img src="/images/notebook/empty-state-mascot.png" alt="" class="w-36 mx-auto mb-4" loading="lazy" />
+        <img src="/images/notebook/empty-extract.png" alt="" class="w-40 mx-auto mb-4" loading="lazy" />
         <p class="font-display font-bold text-xl">No paper here yet.</p>
         <p class="text-ink/55 mt-1.5 text-[15px]">Paste your JSON in Extract first — takes 20 seconds.</p>
         <button class="mt-5 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">Go to Extract</button>
@@ -179,14 +179,12 @@ function onCropped(url: string) {
 }
 .tape {
   position: absolute;
-  top: -12px;
+  top: -26px;
   left: 50%;
-  width: 92px;
-  height: 26px;
-  transform: translateX(-50%) rotate(-2deg);
-  background: rgba(255, 255, 255, 0.7);
-  border-left: 1px dashed rgba(35, 32, 58, 0.12);
-  border-right: 1px dashed rgba(35, 32, 58, 0.12);
-  box-shadow: 0 2px 6px rgba(35, 32, 58, 0.08);
+  width: 260px;
+  height: 66px;
+  transform: translateX(-50%) rotate(-1.8deg);
+  background: url('/images/notebook/tape-washi.png') center/contain no-repeat;
+  filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
 }
 </style>
