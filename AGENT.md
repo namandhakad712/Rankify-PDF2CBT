@@ -1,6 +1,6 @@
 # Rankify PDF2CBT — GEM Extraction Prompt (AGENT.md)
 
-> **Purpose:** Instruct the Gemini GEM ( `ishortn.ink/gemini-gem` ) and any fallback AI to extract a **valid `UniversalPaper` JSON** from an educational PDF. This is the *single source of truth* for extraction. The app's parser (`src/lib/parse.ts`), normalizer (`src/lib/normalize.ts`) and validator (`src/lib/validate.ts`) are built around this spec.
+> **Purpose:** Instruction for the Gemini GEM and any fallback AI to extract a **valid `UniversalPaper` JSON** from an educational PDF. This is the *single source of truth* for extraction. The app's parser (`src/lib/parse.ts`), normalizer (`src/lib/normalize.ts`) and validator (`src/lib/validate.ts`) are built around this spec.
 
 ---
 
@@ -279,20 +279,3 @@ The app's `parsePastedJSON` also: accepts both full `UniversalPaper` and minimal
   ]
 }
 ```
-
----
-
-## 10. Fallback AI (Mistral / Groq / NVIDIA) note
-
-Fallback providers receive only the **first ~15k chars of extracted PDF text** (4 pages) with a system prompt mirroring this spec, and are asked for `response_format: { type: "json_object" }`. Same `UniversalPaper` rules apply. Client auto-parses via `parsePastedJSON` either way.
-
----
-
-## 11. References
-
-- `src/types/index.ts` — `UniversalPaper` / `UniversalQuestion` (source of truth)
-- `src/types/schema.json` — JSON Schema (draft-07)
-- `src/lib/parse.ts:15` — `stripFences` + both shape branches
-- `src/lib/normalize.ts` — math tokenization (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`, `\begin...\end`) preserved
-- `src/lib/validate.ts` — error vs warning severities
-- `src/lib/pdf.ts` — `extractPdfText(buf,4)` + `renderPageToCanvas(doc, page, 1.5)` for cropping

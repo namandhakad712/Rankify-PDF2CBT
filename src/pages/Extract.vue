@@ -410,7 +410,7 @@ void (async () => {
       <h1 class="ex-title text-4xl md:text-6xl font-display font-extrabold tracking-tight mt-3">
         Extract — <span class="relative inline-block">paste JSON<span class="absolute inset-x-[-4px] inset-y-[14%] -z-10 rounded-sm bg-hlyellow"></span></span>
       </h1>
-      <p class="ex-sub text-ink/60 mt-3 max-w-xl text-[16px] leading-relaxed">Primary flow: GEM chat → copy JSON → paste here. Fallback AI only for small PDFs.</p>
+      <p class="ex-sub text-ink/60 mt-3 max-w-xl text-[16px] leading-relaxed">Primary: Gemini GEM paste — free, no key. Or run the built-in AI Agent on any free provider: page-by-page, checkpoints, Mistral OCR for scans.</p>
 
       <div class="mt-10 grid gap-8">
         <!-- Step I — GEM -->

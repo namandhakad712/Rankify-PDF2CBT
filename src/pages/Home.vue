@@ -376,7 +376,7 @@ const ic = {
 
 const steps = [
   { roman: 'I', tilt: -1.2, icon: ic.upload, title: 'Feed it a PDF', desc: 'Any question paper up to 20MB — class test, board exam, semester paper. It opens right in your browser.', note: 'nothing gets uploaded!' },
-  { roman: 'II', tilt: 0.8, icon: ic.wand, title: 'Let AI do the typing', desc: 'Paste the JSON from our Gemini GEM — free, no key. Or switch on fallback extraction with Mistral, Groq or NVIDIA.', note: 'you check every line after' },
+  { roman: 'II', tilt: 0.8, icon: ic.wand, title: 'Let AI do the typing', desc: 'Paste the JSON from our Gemini GEM — free, no key. Or let the built-in AI Agent read the PDF page-by-page on any free provider.', note: 'you check every line after' },
   { roman: 'III', tilt: -0.6, icon: ic.timer, title: 'Sit the exam', desc: 'A real CBT: question palette, countdown timer, mark-for-review. Submit and see your per-section report instantly.', note: 'feel of the real hall' }
 ]
 

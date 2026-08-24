@@ -12,8 +12,8 @@ useHead({ title: "Getting Started — Rankify PDF2CBT" })
 
       <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2 mt-4">the guide</div>
       <h1 class="text-4xl md:text-6xl font-display font-extrabold tracking-tight">Getting <span class="relative inline-block">started<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlblue"></span></span></h1>
-      <p class="mt-4 text-[16px] text-ink/60 leading-relaxed max-w-xl">Primary flow = GEM paste, no API key, 2 minutes. Fallback AI is optional, for small PDFs only.</p>
-      <p class="font-hand text-2xl text-pen mt-2 rotate-1">chai lo, 4 steps baaki hain</p>
+      <p class="mt-4 text-[16px] text-ink/60 leading-relaxed max-w-xl">Two ways in: the <b>Gemini GEM flow</b> (paste JSON, free, no key) or the built-in <b>AI Agent</b> — any free provider, page-by-page, scanned PDFs via Mistral OCR.</p>
+      <p class="font-hand text-2xl text-pen mt-2 rotate-1">grab a chai — 4 steps to your first test</p>
 
       <div class="mt-10 grid gap-6">
         <section class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(-0.4deg)">
@@ -70,13 +70,14 @@ useHead({ title: "Getting Started — Rankify PDF2CBT" })
         </section>
 
         <section class="rounded-lg bg-hlblue/30 border-2 border-hlblue p-7">
-          <h2 class="font-display font-bold text-xl tracking-tight">Optional: Fallback AI</h2>
+          <h2 class="font-display font-bold text-xl tracking-tight">Optional: AI Agent mode (free models)</h2>
           <ol class="mt-3 list-decimal list-inside text-[15px] text-ink/70 space-y-1.5 leading-relaxed">
-            <li>In <b>/extract</b> toggle "Fallback AI" → pick Mistral / Groq / NVIDIA + model + your key.</li>
-            <li><code class="bg-white/70 px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">viaProxy</code> keeps the key server-side on Vercel. Uncheck for direct API calls in local dev.</li>
-            <li>Add your own provider = one file + one line. Docs in <code class="bg-white/70 px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">providers/README.md</code>.</li>
+            <li>In <b>/extract</b> switch to the <b>AI Agent</b> tab → upload PDF → hit Start. Pages go one-by-one with automatic retries, checkpoints and resume.</li>
+            <li>Providers come preconfigured from <code class="bg-white/70 px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">providers.yaml</code> — the ⚙ <b>Settings</b> button shows each provider, its models and whether its server key is live.</li>
+            <li>Priority fallback: if a model fails or rate-limits, the next model in YAML order takes over — then the next provider.</li>
+            <li>Scanned / image-only PDF? Toggle <b>Force Mistral OCR</b> — 625 pages/min on the free tier.</li>
+            <li>Add your own endpoint anytime via Settings → <b>+ Add custom provider</b> (name + URL + key → Fetch models). It stays in your browser only.</li>
           </ol>
-          <p class="text-xs text-ink/55 mt-3">Docs: <a href="https://docs.mistral.ai/api/endpoint/chat" class="underline">Mistral</a> · <a href="https://console.groq.com/docs/api-reference" class="underline">Groq</a> · <a href="https://docs.api.nvidia.com/nim/reference/create_chat_completion_v1_chat_completions_post-1" class="underline">NVIDIA NIM</a></p>
         </section>
 
         <section class="rounded-lg bg-white p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)]">
@@ -92,10 +93,10 @@ useHead({ title: "Getting Started — Rankify PDF2CBT" })
           <h2 class="font-display font-bold text-xl tracking-tight">Fatafat fixes <span class="font-hand text-xl text-ink/45 font-normal">(troubleshooting)</span></h2>
           <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed">
             <li><b>Invalid JSON</b> → make sure you copied the whole output; fences are stripped automatically.</li>
-            <li><b>PDF &gt;20MB</b> → use the GEM flow (it handles large files); fallback caps at 15k chars.</li>
+            <li><b>PDF &gt;20MB</b> → use the GEM flow (it handles large files); the AI Agent reads big PDFs too but OCR caps at ~4.5MB.</li>
             <li><b>Crop not working</b> → upload the PDF in Extract first, then Review finds it.</li>
             <li><b>MSQ scoring wrong</b> → answers must be 0-indexed &amp; sorted, e.g. <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">["0","2"]</code> with <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">answer:""</code>.</li>
-            <li><b>401 missing key</b> → paste key in the fallback input, or set Vercel env + viaProxy.</li>
+            <li><b>401 missing key</b> → owner sets provider keys as Vercel env vars (e.g. <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">GROQ_API_KEY</code>); Settings shows which are live.</li>
           </ul>
         </section>
       </div>

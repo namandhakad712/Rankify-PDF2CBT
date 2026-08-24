@@ -41,7 +41,8 @@ RULES:
 - text/options preserve LaTeX verbatim $...$ \\(...\\) $$...$$ — NEVER unicode-convert math.
 - options are single-line strings; answer mcq="1"-"4" 1-indexed as displayed; msq answer="" and answers=["0","2"] 0-indexed sorted; nat answer=numeric string; unknown answer="".
 - If the first visible question is CONTINUED from the previous page (see CONTEXT_START), emit the continuation part anyway with its number — a later merge step reconciles duplicates.
-- Do NOT invent questions. No commentary outside JSON. lastCompleteQuestionNumber = number of the last FULLY visible question on this page.`
+- Do NOT invent questions. No commentary outside JSON. lastCompleteQuestionNumber = number of the last FULLY visible question on this page.
+- NEVER return an empty questions array when PAGE_TEXT contains question-like content (numbered items, stems, options). If unsure, extract your best reading of the visible questions.`
 
 function userPrompt(chunkText: string, contextStart: string, expectNext: number): string {
   return `Expected next question number: ${expectNext}
@@ -91,37 +92,48 @@ export function buildFallbackChain(primary: ProviderEntry, model: string, all: P
   return out
 }
 
-async function chatWithBackoff(
-  chain: ChainLink[],
-  opts: { messages: ProviderMessage[] },
-  signal: AbortSignal,
-  maxTriesPerModel = 2,
-): Promise<string> {
-  let wait = 4000
-  let lastErr: unknown = new Error("no models configured")
-  for (const link of chain) {
-    for (let attempt = 1; attempt <= maxTriesPerModel; attempt++) {
-      if (signal.aborted) throw new Error("cancelled")
-      try {
-        return await providerChat(link.entry, { model: link.model, ...opts, responseFormat: { type: "json_object" } })
-      } catch (e: unknown) {
-        lastErr = e
-        const msg = e instanceof Error ? e.message : String(e)
-        const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
-        const rateLimited = /\b429\b|rate.?limit|too many requests/i.test(msg)
-        const serverBlip = /\b5\d\d\b/.test(msg)
-        if (!rateLimited && !serverBlip) throw e // hard error — no fallback on bad request
-        if (attempt === maxTriesPerModel) break // exhausted this model → next link
-        wait = retryAfter ? Number(retryAfter) * 1000 : wait * 2
-        await new Promise((r) => setTimeout(r, Math.min(wait, 60_000)))
-      }
+/** Tolerant question extraction — accepts many LLM shapes */
+function extractQuestions(j: unknown): UniversalQuestion[] {
+  if (Array.isArray(j)) return j as UniversalQuestion[]
+  if (j && typeof j === "object") {
+    const o = j as Record<string, unknown>
+    const candidates = [o.questions, (o.paper as any)?.questions, (o.data as any)?.questions, o.output]
+    for (const c of candidates) if (Array.isArray(c)) return c as UniversalQuestion[]
+    // first array-of-objects key wins
+    for (const v of Object.values(o)) {
+      if (Array.isArray(v) && v.length && typeof v[0] === "object") return v as UniversalQuestion[]
     }
-    if (signal.aborted) throw new Error("cancelled")
   }
-  throw lastErr
+  return []
 }
 
-/** Process one chunk; on truncation/parse failure recursively split big chunks */
+async function chatOnce(
+  entry: ProviderEntry,
+  model: string,
+  messages: ProviderMessage[],
+  signal: AbortSignal,
+): Promise<string> {
+  let wait = 4000
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (signal.aborted) throw new Error("cancelled")
+    try {
+      return await providerChat(entry, { model, messages, responseFormat: { type: "json_object" } })
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
+      const retryable = /\b429\b|rate.?limit|too many requests/i.test(msg) || /\b5\d\d\b/.test(msg)
+      if (!retryable || attempt === 3) throw e
+      wait = retryAfter ? Number(retryAfter) * 1000 : wait * 2
+      await sleep(Math.min(wait, 60_000))
+    }
+  }
+  throw new Error("unreachable")
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** Walk the WHOLE priority chain per page. Every failure is collected as a
+ *  diagnostic instead of aborting, so we always know WHY nothing extracted. */
 async function processChunk(
   chain: ChainLink[],
   chunkText: string,
@@ -129,30 +141,57 @@ async function processChunk(
   expectNext: number,
   signal: AbortSignal,
 ): Promise<ChunkResult> {
-  const content = await chatWithBackoff(chain, {
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: userPrompt(chunkText, contextStart, expectNext) },
-    ],
-  }, signal)
-  try {
-    const j = parseChunkJSON(content)
-    const qs = Array.isArray(j.questions) ? (j.questions as UniversalQuestion[]) : []
-    return { questions: qs, lastNum: Number(j.lastCompleteQuestionNumber) || expectNext - 1 }
-  } catch {
-    // likely output-truncation on a dense page → split & conquer
-    if (chunkText.length > 4000) {
-      const mid = chunkText.lastIndexOf("\n", Math.floor(chunkText.length / 2))
-      const cut = mid > 1000 ? mid : Math.floor(chunkText.length / 2)
-      const a = await processChunk(chain, chunkText.slice(0, cut), contextStart, expectNext, signal)
-      const b = await processChunk(chain, chunkText.slice(cut), chunkText.slice(Math.max(0, cut - 700)), a.lastNum + 1, signal)
-      return { questions: [...a.questions, ...b.questions], lastNum: Math.max(a.lastNum, b.lastNum) }
-    }
-    throw new Error("Chunk unparseable even after repair")
-  }
-}
+  const messages: ProviderMessage[] = [
+    { role: "system", content: SYSTEM_PROMPT },
+    { role: "user", content: userPrompt(chunkText, contextStart, expectNext) },
+  ]
+  const diag: string[] = []
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+  const tryParse = (content: string): ChunkResult | null => {
+    let j: unknown
+    try {
+      j = parseChunkJSON(content)
+    } catch {
+      diag.push(`✗ unparseable reply [:120]=${content.slice(0, 120).replace(/\s+/g, " ")}`)
+      return null
+    }
+    const qs = extractQuestions(j)
+    if (!qs.length) {
+      diag.push(`✗ 0 questions · reply[:140]=${content.slice(0, 140).replace(/\s+/g, " ")}`)
+      return null
+    }
+    const lcn = (j as { lastCompleteQuestionNumber?: unknown }).lastCompleteQuestionNumber
+    return { questions: qs, lastNum: Number(lcn) || expectNext - 1 }
+  }
+
+  for (const link of chain) {
+    if (signal.aborted) throw new Error("cancelled")
+    let content: string
+    try {
+      content = await chatOnce(link.entry, link.model, messages, signal)
+    } catch (e: unknown) {
+      const msg = (e instanceof Error ? e.message : String(e)).slice(0, 140).replace(/\s+/g, " ")
+      diag.push(`✗ ${link.entry.name}/${link.model}: ${msg}`)
+      continue // next provider/model in priority chain
+    }
+    const res = tryParse(content)
+    if (res) return res
+    // empty/unparseable → next link carries on
+  }
+
+  // Whole chain dry — dense page? split & conquer once with same chain.
+  if (chunkText.length > 4000) {
+    const mid = chunkText.lastIndexOf("\n", Math.floor(chunkText.length / 2))
+    const cut = mid > 1000 ? mid : Math.floor(chunkText.length / 2)
+    const a = await processChunk(chain.slice(0, 1).concat(chain), chunkText.slice(0, cut), contextStart, expectNext, signal)
+    const b = await processChunk(chain, chunkText.slice(cut), chunkText.slice(Math.max(0, cut - 700)), a.lastNum + 1, signal)
+    return { questions: [...a.questions, ...b.questions], lastNum: Math.max(a.lastNum, b.lastNum) }
+  }
+  throw new Error(
+    `All ${chain.length} provider-model pairs failed on this page:\n` +
+      [...new Set(diag)].slice(0, 6).join("\n"),
+  )
+}
 
 /** stem-prefix similarity for boundary duplicate detection */
 function sameStem(a: UniversalQuestion, b: UniversalQuestion): boolean {
@@ -217,6 +256,7 @@ export async function runAgentExtract(opts: {
   const { jobId, pages, entry, allProviders = [], delayMs = 1500, resumeState, onProgress, onCheckpoint, signal } = opts
   const chain = buildFallbackChain(entry, entry.model || "", [entry, ...allProviders])
   const signalRef = signal ?? new AbortController().signal
+  const failedPages: { index: number; error: string }[] = []
 
   const state: AgentJobState = resumeState?.pages.length === pages.length
     ? { ...resumeState, updatedAt: Date.now(), done: false }
@@ -242,16 +282,24 @@ export async function runAgentExtract(opts: {
       const prevTail = i > 0 ? state.pages[i - 1].slice(-800) : ""
       const knownMax = Object.values(state.results).reduce((m, r) => Math.max(m, r.lastNum), 0)
       const res = await processChunk(chain, pageText, prevTail, knownMax + 1, signalRef)
-      if (!res.questions.length && pageText.length > 200) throw new Error("No questions found on this page")
+      if (!res.questions.length) {
+        // genuinely no question-like content on this page — skip it, keep pipeline moving
+        progress[i] = { index: i, status: "done", note: "no question-like text" }
+        state.results[String(i)] = res
+        emit()
+        continue
+      }
       state.results[String(i)] = res
       progress[i] = { index: i, status: "done" }
     } catch (e: unknown) {
       if (signalRef.aborted) { progress[i] = { index: i, status: "pending" }; break }
-      progress[i] = { index: i, status: "failed", note: e instanceof Error ? e.message.slice(0, 140) : String(e) }
+      const msg = (e instanceof Error ? e.message : String(e)).slice(0, 400)
+      progress[i] = { index: i, status: "failed", note: msg.split("\n")[0].slice(0, 140) }
+      failedPages.push({ index: i, error: msg })
       state.updatedAt = Date.now()
       await onCheckpoint?.({ ...state, results: { ...state.results } })
       emit()
-      throw e // stop — checkpoint preserved, Resume continues from here
+      // DON'T abort — keep extracting remaining pages; summary thrown at end
     }
     state.updatedAt = Date.now()
     await onCheckpoint?.({ ...state, results: { ...state.results } })
@@ -260,8 +308,15 @@ export async function runAgentExtract(opts: {
   }
 
   const allDone = pages.every((_, i) => state.results[String(i)])
-  state.done = allDone
+  state.done = allDone && !failedPages.length
   await onCheckpoint?.({ ...state, results: { ...state.results } })
+
+  if (failedPages.length) {
+    throw new Error(
+      `${failedPages.length}/${pages.length} page(s) failed — Resume checkpoint retries just these.\n` +
+        failedPages.map((f) => `Page ${f.index + 1}: ${f.error}`).join("\n"),
+    )
+  }
 
   const questions = mergeChunkResults(state.results)
   if (!questions.length && allDone) throw new Error("Extraction finished but 0 questions found — scanned PDF? Use GEM vision flow.")
