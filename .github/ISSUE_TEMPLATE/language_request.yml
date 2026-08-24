@@ -1,5 +1,5 @@
 name: "🌐 Language request"
-description: Request a new language for the Rankify interface
+description: Request a new language for the Website interface
 title: "[i18n] New language request"
 labels: ["i18n"]
 body:
@@ -25,6 +25,8 @@ body:
         - Kannada
         - Malayalam
         - Punjabi
+        - French
+        - Gujarati
         - Other (tell us below)
     validations:
       required: true

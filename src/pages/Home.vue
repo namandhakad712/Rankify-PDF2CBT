@@ -40,23 +40,22 @@
           <div>
             <div ref="heroBadge" class="opacity-0 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-1.5 text-[13px] font-semibold text-ink/70 mb-7">
               <span class="h-2 w-2 rounded-full bg-correct"></span>
-              Free · open-source · runs in your browser
+              {{ t('hero.badge') }}
             </div>
 
             <h1 class="font-display font-extrabold tracking-[-0.03em] text-ink leading-[1.02] text-[clamp(2.7rem,6.2vw,5.2rem)]">
-              <span class="block overflow-hidden"><span ref="hLine1" class="block">Any question paper.</span></span>
-              <span class="block overflow-hidden pb-2"><span ref="hLine2" class="block">Now it's a
+              <span class="block overflow-hidden"><span ref="hLine1" class="block">{{ t('hero.headline.1') }}</span></span>
+              <span class="block overflow-hidden pb-2"><span ref="hLine2" class="block">{{ t('hero.headline.2a') }}
                 <span class="relative inline-block whitespace-nowrap">
                   <span ref="hl1" class="hl-block absolute inset-x-[-6px] inset-y-[8%] -z-0 rounded-sm bg-hlyellow origin-left scale-x-0"></span>
-                  <span data-scramble class="font-hand relative z-10 font-semibold text-[1.12em] tracking-normal">real</span>
+                  <span data-scramble class="font-hand relative z-10 font-semibold text-[1.12em] tracking-normal">{{ t('hero.headline.2b') }}</span>
                 </span>
-                exam.
+                {{ t('hero.headline.2c') }}
               </span></span>
             </h1>
 
             <p ref="heroSub" class="opacity-0 mt-6 max-w-md text-[17px] leading-relaxed text-ink/60">
-              Drop a PDF of any test, mock or past paper. Get back a full computer-based exam —
-              timer, question palette, marks. Nothing to install, nothing uploaded, ever.
+              {{ t('hero.sub') }}
             </p>
 
             <div ref="heroCtas" class="opacity-0 mt-9 flex flex-wrap items-center gap-4">
@@ -65,14 +64,14 @@
                 data-sticker-trigger
                 class="group relative inline-flex items-center gap-2.5 rounded-2xl bg-pen px-7 py-4 text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(47,95,224,0.55)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(47,95,224,0.6)]"
               >
-                <span class="relative z-10 flex items-center gap-2">Make my first test
+                <span class="relative z-10 flex items-center gap-2">{{ t('hero.cta1') }}
                   <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               </RouterLink>
               <a href="#how" class="nb-anchor inline-flex items-center gap-2 rounded-2xl border-2 border-ink/12 px-7 py-[14px] text-base font-bold text-ink/75 hover:border-ink/30 hover:text-ink transition-colors">
-                See how it works
+                {{ t('hero.cta2') }}
               </a>
-              <span ref="note1" class="font-hand text-xl text-ink/55 -rotate-3 opacity-0 inline-block">no signups, promise!</span>
+              <span ref="note1" class="font-hand text-xl text-ink/55 -rotate-3 opacity-0 inline-block">{{ t('hero.note') }}</span>
             </div>
           </div>
 
@@ -148,9 +147,9 @@
         <ImageTrail :items="trailImages" :threshold="70" class="z-10" />
         <div class="mx-auto max-w-6xl px-5 relative z-20">
           <div class="max-w-xl">
-            <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">instructions</div>
-            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl leading-[1.05]">Three steps.<br />That's the <span class="relative inline-block"><span class="hl absolute inset-x-[-5px] inset-y-[12%] -z-0 rounded-sm bg-hlpink origin-left scale-x-0"></span><span class="relative z-10">whole</span></span> syllabus.</h2>
-            <p class="mt-4 font-hand text-2xl text-ink/50 -rotate-1">easier than your morning alarm, trust</p>
+            <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">{{ t('how.instructions') }}</div>
+            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl leading-[1.05]">{{ t('how.headline') }}</h2>
+            <p class="mt-4 font-hand text-2xl text-ink/50 -rotate-1">{{ t('how.sub') }}</p>
           </div>
 
           <div class="mt-14 grid md:grid-cols-3 gap-7 md:gap-6">
@@ -202,19 +201,19 @@
       <section class="paper relative py-24 md:py-36">
         <div class="mx-auto max-w-4xl px-5 text-center">
           <p class="font-hand text-3xl text-ink/50 -rotate-1 mb-6">grown-ups ask this constantly ↓</p>
-          <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl">What you'll <span class="relative inline-block"><span class="hl absolute inset-x-[-5px] inset-y-[14%] -z-0 rounded-sm bg-hlblue origin-left scale-x-0"></span><span class="relative z-10">never</span></span> find here</h2>
+          <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl">{{ t('nolist.headline') }}</h2>
           <div class="mt-12 grid sm:grid-cols-2 gap-x-12 gap-y-6 text-left max-w-2xl mx-auto">
             <div v-for="(n, i) in noList" :key="'no' + i" class="flex items-center gap-4">
               <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-redmargin/10">
                 <svg class="w-4.5 h-4.5 text-redmargin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </span>
               <span class="relative font-display font-bold text-ink/80 text-xl md:text-2xl tracking-tight">
-                {{ n }}
+                {{ t('nolist.' + (i+1)) }}
                 <span class="strike absolute left-[-2%] top-1/2 h-[3px] w-[104%] origin-left scale-x-0 rounded bg-redmargin/80"></span>
               </span>
             </div>
           </div>
-          <p class="mt-10 font-hand text-2xl text-correct rotate-1">your laptop, your papers, your business.</p>
+          <p class="mt-10 font-hand text-2xl text-correct rotate-1">{{ t('nolist.subtitle') }}</p>
         </div>
       </section>
 
@@ -227,11 +226,11 @@
             <p class="mt-5 text-[16px] leading-relaxed text-ink/60 max-w-sm">School unit tests, board papers, university semesters, entrance mocks — the schema doesn't care. Text stays exactly in your language.</p>
           </div>
           <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-4">
-            <li v-for="(t, i) in qtypes" :key="'qt' + i" class="check-row flex items-center gap-3.5 border-b border-dashed border-ink/10 pb-3.5">
+            <li v-for="(qt, i) in qtypes" :key="'qt' + i" class="check-row flex items-center gap-3.5 border-b border-dashed border-ink/10 pb-3.5">
               <span class="check-box grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-ink/25 bg-paper">
                 <svg class="check-tick w-4 h-4 text-correct" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               </span>
-              <span class="font-semibold text-ink/80 text-[15px]">{{ t }}</span>
+              <span class="font-semibold text-ink/80 text-[15px]">{{ t('qtype.' + (i+1)) }}</span>
             </li>
           </ul>
         </div>
@@ -243,10 +242,10 @@
           <div ref="reportCardRef" class="relative overflow-hidden rounded-2xl bg-white p-8 md:p-12 shadow-[0_30px_70px_-30px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07] rotate-[-0.6deg]">
             <div class="flex items-center justify-between border-b-2 border-ink/10 pb-5">
               <div>
-                <div class="font-mono text-[10px] uppercase tracking-[0.3em] text-ink/45">term report · 2026</div>
-                <h2 class="font-display font-extrabold text-ink text-3xl md:text-4xl tracking-tight mt-1">Rankify, graded</h2>
+                <div class="font-mono text-[10px] uppercase tracking-[0.3em] text-ink/45">{{ t('report.term') }}</div>
+                <h2 class="font-display font-extrabold text-ink text-3xl md:text-4xl tracking-tight mt-1">{{ t('report.headline') }}</h2>
               </div>
-              <div class="font-hand text-2xl text-ink/40 -rotate-3 hidden sm:block">no red marks, only red circles</div>
+              <div class="font-hand text-2xl text-ink/40 -rotate-3 hidden sm:block">{{ t('report.subtitle') }}</div>
             </div>
             <div class="divide-y divide-dashed divide-ink/10">
               <div v-for="(r, i) in report" :key="'rc' + i" class="flex items-center gap-4 py-5">
@@ -256,7 +255,7 @@
                 <span class="grade grid h-11 w-11 shrink-0 rotate-6 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin bg-redmargin/[0.04]">{{ r.grade }}</span>
               </div>
             </div>
-            <p class="mt-6 font-hand text-2xl text-pen rotate-[-1deg] text-right">teacher's signature: <span class="border-b-2 border-dashed border-ink/30 px-6">yours</span></p>
+            <p class="mt-6 font-hand text-2xl text-pen rotate-[-1deg] text-right">{{ t('report.signature') }}: <span class="border-b-2 border-dashed border-ink/30 px-6">{{ t('report.signature.yours') }}</span></p>
           </div>
         </div>
       </section>
@@ -283,7 +282,7 @@
               </div>
             </div>
           </div>
-          <p class="mt-10 text-center font-hand text-2xl text-ink/45 -rotate-1">Still have doubts? <RouterLink to="/getting-started" class="text-pen underline decoration-wavy underline-offset-4">full guide padh le</RouterLink></p>
+          <p class="mt-10 text-center font-hand text-2xl text-ink/45 -rotate-1">{{ t('faq.subtitle') }}</p>
         </div>
       </section>
     </main>
@@ -301,23 +300,23 @@
               <span class="font-display font-extrabold text-cream text-3xl tracking-tight">Rankify</span>
               <span class="font-hand text-xl text-hlyellow -rotate-6">pdf→cbt</span>
             </div>
-            <p class="mt-3 max-w-xs text-[15px] leading-relaxed text-cream/60">The free bridge between dead question papers and living practice exams.</p>
+            <p class="mt-3 max-w-xs text-[15px] leading-relaxed text-cream/60">{{ t('footer.subtitle') }}</p>
           </div>
           <nav class="flex flex-col items-start md:items-end gap-3.5" aria-label="Footer">
-            <RouterLink to="/extract" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">Extract</RouterLink>
-            <RouterLink to="/getting-started" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">Guide</RouterLink>
-            <RouterLink to="/about" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">About</RouterLink>
-            <RouterLink to="/privacy" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">Privacy</RouterLink>
+            <RouterLink to="/extract" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.extract') }}</RouterLink>
+            <RouterLink to="/getting-started" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.gettingStarted') }}</RouterLink>
+            <RouterLink to="/about" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.about') }}</RouterLink>
+            <RouterLink to="/privacy" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.privacy') }}</RouterLink>
           </nav>
           <button class="relative h-36 w-36 md:h-40 md:w-40 shrink-0 text-cream/75 hover:text-hlyellow transition-colors" aria-label="Back to top" @click="toTop">
-            <CircularText text="BACK TO TOP  •  BACK TO TOP  •  " :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
+            <CircularText text="{{ t('footer.back') }}  •  {{ t('footer.back') }}  •  " :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
             <ArrowUp class="absolute inset-0 m-auto w-6 h-6" />
           </button>
         </div>
         <div class="mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent" style="-webkit-text-stroke: 2px rgba(251,248,241,0.28)" aria-hidden="true">RANKIFY</div>
         <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 border-cream/[0.12] pt-6 font-mono text-[10px] uppercase tracking-[0.25em] text-cream/45">
-          <span>© 2026 rankify-pdf2cbt · PolyForm NC</span>
-          <span class="font-hand text-lg normal-case tracking-normal text-hlyellow" style="text-shadow: 0 0 14px rgba(255,216,77,0.6), 0 0 38px rgba(255,216,77,0.3);">made for students, by people who remember roll numbers</span>
+          <span>{{ t('footer.copyright') }}</span>
+          <span class="font-hand text-lg normal-case tracking-normal text-hlyellow" style="text-shadow: 0 0 14px rgba(255,216,77,0.6), 0 0 38px rgba(255,216,77,0.3);">{{ t('footer.students') }}</span>
         </div>
       </div>
     </footer>
@@ -336,6 +335,7 @@ import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin'
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin'
 import Lenis from 'lenis'
 import { ArrowRight, ArrowUp, Plus } from 'lucide-vue-next'
+import { t } from '@/lib/i18n'
 import CircularText from '@/components/CircularText.vue'
 import ImageTrail from '@/components/ImageTrail.vue'
 import Crosshair from '@/components/Crosshair.vue'
@@ -375,18 +375,18 @@ const ic = {
 }
 
 const steps = [
-  { roman: 'I', tilt: -1.2, icon: ic.upload, title: 'Feed it a PDF', desc: 'Any question paper up to 20MB — class test, board exam, semester paper. It opens right in your browser.', note: 'nothing gets uploaded!' },
-  { roman: 'II', tilt: 0.8, icon: ic.wand, title: 'Let AI do the typing', desc: 'Paste the JSON from our Gemini GEM — free, no key. Or let the built-in AI Agent read the PDF page-by-page on any free provider.', note: 'you check every line after' },
-  { roman: 'III', tilt: -0.6, icon: ic.timer, title: 'Sit the exam', desc: 'A real CBT: question palette, countdown timer, mark-for-review. Submit and see your per-section report instantly.', note: 'feel of the real hall' }
+  { roman: 'I', tilt: -1.2, icon: ic.upload, title: t('how.step1.title'), desc: t('how.step1.desc'), note: t('how.step1.note') },
+  { roman: 'II', tilt: 0.8, icon: ic.wand, title: t('how.step2.title'), desc: t('how.step2.desc'), note: t('how.step2.note') },
+  { roman: 'III', tilt: -0.6, icon: ic.timer, title: t('how.step3.title'), desc: t('how.step3.desc'), note: t('how.step3.note') }
 ]
 
 const features = [
-  { icon: ic.lock, title: 'Your files stay yours', desc: 'Papers, answers, results — everything is stored inside your own browser. There is no server to leak.', cls: 'bg-hlyellow', tilt: -1.6 },
-  { icon: ic.crop, title: 'Diagrams? Crop them yourself', desc: 'AI misreads figures; you don\'t. Drag a box on the PDF and the exact figure ships with the question.', cls: 'bg-hlpink', tilt: 1.2 },
-  { icon: ic.timer, title: 'The real exam feel', desc: 'Timer ticking, palette switching, mark-for-review — so test day feels like just another practice.', cls: 'bg-hlgreen', tilt: -0.8 },
-  { icon: ic.chart, title: 'Marks like school', desc: 'Per-section analytics right after submit. See exactly which chapter betrayed you.', cls: 'bg-hlblue', tilt: 1.4 },
-  { icon: ic.lang, title: 'Any language, any subject', desc: 'Hindi, English, Tamil, Bangla — text is just text. Nothing is hardcoded to one exam.', cls: 'bg-hlyellow', tilt: 0.9 },
-  { icon: ic.upload, title: 'Nothing to install', desc: 'It\'s a website. Chrome, Firefox, Edge, even your school laptop. That\'s the whole checklist.', cls: 'bg-hlpink', tilt: -1.1 }
+  { icon: ic.lock, title: t('feat.files'), desc: t('feat.files.desc'), cls: 'bg-hlyellow', tilt: -1.6 },
+  { icon: ic.crop, title: t('feat.crop'), desc: t('feat.crop.desc'), cls: 'bg-hlpink', tilt: 1.2 },
+  { icon: ic.timer, title: t('feat.real'), desc: t('feat.real.desc'), cls: 'bg-hlgreen', tilt: -0.8 },
+  { icon: ic.chart, title: t('feat.marks'), desc: t('feat.marks.desc'), cls: 'bg-hlblue', tilt: 1.4 },
+  { icon: ic.lang, title: t('feat.lang'), desc: t('feat.lang.desc'), cls: 'bg-hlyellow', tilt: 0.9 },
+  { icon: ic.upload, title: t('feat.install'), desc: t('feat.install.desc'), cls: 'bg-hlpink', tilt: -1.1 }
 ]
 
 const noList = ['Ads', 'Signups', 'Uploads', 'Fees', 'Tracking', 'Data selling']
@@ -394,19 +394,19 @@ const noList = ['Ads', 'Signups', 'Uploads', 'Fees', 'Tracking', 'Data selling']
 const qtypes = ['MCQ — single correct', 'MSQ — multiple correct', 'Numeric answer', 'True / False', 'Fill in the blank', 'Match the following', 'Assertion – Reason', 'Passage based', 'Long answer']
 
 const report = [
-  { subject: 'Privacy', detail: '0 bytes uploaded', grade: 'A+' },
-  { subject: 'Simplicity', detail: '3 steps, zero setup', grade: 'A+' },
-  { subject: 'Coverage', detail: '9 question types', grade: 'A' },
-  { subject: 'Price', detail: 'free for learners', grade: 'A+' }
+  { subject: t('report.privacy'), detail: t('report.privacy.detail'), grade: 'A+' },
+  { subject: t('report.simplicity'), detail: t('report.simplicity.detail'), grade: 'A+' },
+  { subject: t('report.coverage'), detail: t('report.coverage.detail'), grade: 'A' },
+  { subject: t('report.price'), detail: t('report.price.detail'), grade: 'A+' }
 ]
 
 const faqs = [
-  { q: 'Is it actually free?', a: 'Yes — PolyForm Noncommercial licensed and free for personal, research & education. The primary extraction uses our public Gemini GEM, which costs you nothing. Optional fallback AI providers are yours (your key, your quota).' },
-  { q: 'Will my teacher\'s/coaching\'s PDF work?', a: 'If a human can read it, Rankify can. Scanned papers, typed papers, two-column layouts — the AI reads the text and you review every question before the test, so nothing sneaks past you.' },
-  { q: 'Where do my files go?', a: 'Nowhere. The PDF and your results live in your browser\'s own storage (IndexedDB). Clear your browser data and they\'re gone — that\'s the deal, and honestly the feature.' },
-  { q: 'What about diagrams and figures?', a: 'You crop them by hand from the actual PDF — drag a rectangle around the figure and it gets attached to that question. No AI-hallucinated images, ever.' },
-  { q: 'Can I use it for any subject or language?', a: 'Any. Physics formula sheets, history chapters, vocabulary lists, coding theory — questions are just text. The interface follows your language, not the other way round.' },
-  { q: 'Do I need to create an account?', a: 'No accounts, no emails, no OTPs. Open the site, drop a PDF, start. That entire sentence was longer than the signup process (which doesn\'t exist).' }
+  { q: t('faq.q1'), a: t('faq.a1') },
+  { q: t('faq.q2'), a: t('faq.a2') },
+  { q: t('faq.q3'), a: t('faq.a3') },
+  { q: t('faq.q4'), a: t('faq.a4') },
+  { q: t('faq.q5'), a: t('faq.a5') },
+  { q: t('faq.q6'), a: t('faq.a6') }
 ]
 
 /* refs */

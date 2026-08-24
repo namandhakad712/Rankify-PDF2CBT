@@ -13,7 +13,14 @@ export async function loadPdfFromFile(file: File) {
 }
 
 export async function loadPdfFromBuffer(buf: ArrayBuffer) {
-  const doc = await pdfjs.getDocument({ data: buf }).promise
+  if (!buf || buf.byteLength === 0) {
+    throw new Error("PDF buffer is empty (detached or never loaded) — re-upload the PDF in Extract")
+  }
+  // pdf.js may transfer/detach the underlying ArrayBuffer to its worker —
+  // hand it a private copy made WITHOUT slice() (slice throws on detached).
+  const copy = new Uint8Array(buf.byteLength)
+  copy.set(new Uint8Array(buf))
+  const doc = await pdfjs.getDocument({ data: copy }).promise
   return doc
 }
 

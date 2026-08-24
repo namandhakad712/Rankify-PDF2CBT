@@ -113,6 +113,8 @@ async function handlePasteParse() {
     localStorage.setItem("rpdf2cbt-review", JSON.stringify(r.paper))
     await getDB().papers.put({ id: "review", paper: r.paper!, updatedAt: Date.now() })
     issuesText.value = r.issues?.length ? r.issues.map((x) => `[${x.severity}] ${x.field}: ${x.message}`).join("\n") : null
+    // brief pause so the loader is visible before handoff
+    await new Promise((r) => setTimeout(r, 650))
     router.push("/review")
   } finally {
     parsing.value = false
@@ -662,6 +664,19 @@ void (async () => {
 
   <!-- 🎉 Extraction complete popup -->
   <Teleport to="body">
+    <!-- Parse → Review loader -->
+    <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0" leave-active-class="transition duration-200" leave-to-class="opacity-0">
+      <div v-if="parsing" class="fixed inset-0 z-[230] bg-white/85 backdrop-blur-sm grid place-items-center">
+        <div class="flex flex-col items-center gap-4">
+          <span class="relative w-14 h-14">
+            <span class="absolute inset-0 rounded-full border-[3px] border-pen/15"></span>
+            <span class="absolute inset-0 rounded-full border-[3px] border-transparent border-t-pen animate-spin"></span>
+          </span>
+          <div class="text-sm font-bold font-display text-ink/70">Rendering your paper…</div>
+          <div class="font-hand text-lg text-ink/45 -rotate-1">red pen incoming…</div>
+        </div>
+      </div>
+    </Transition>
     <Transition enter-active-class="transition duration-300" enter-from-class="opacity-0" leave-active-class="transition duration-200" leave-to-class="opacity-0">
       <div v-if="resultInfo" class="fixed inset-0 z-[220] bg-ink/60 backdrop-blur-sm grid place-items-center p-4">
         <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-ink/10 p-8 text-center space-y-4 relative overflow-hidden">
