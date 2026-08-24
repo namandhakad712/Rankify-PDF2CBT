@@ -34,3 +34,13 @@ export const providerOptions = providers.map((p) => ({
 
 // Re-export types
 export type { ProviderDef, ProviderChatOpts, ProviderMessage } from "./types"
+// Generic harness — any OpenAI-compatible provider via Base URL + key
+export {
+  createCustomProvider,
+  loadCustomConfig,
+  saveCustomConfig,
+  clearCustomConfig,
+  normalizeBaseUrl,
+  CUSTOM_PRESETS,
+  type CustomProviderConfig,
+} from "./custom"

@@ -5,6 +5,13 @@ import { useRouter } from "vue-router"
 import { parsePastedJSON, fetchAndParse } from "@/lib/parse"
 import { getDB } from "@/lib/db"
 import { providers, providerOptions } from "@/lib/providers"
+import {
+  createCustomProvider,
+  loadCustomConfig,
+  saveCustomConfig,
+  clearCustomConfig,
+  CUSTOM_PRESETS,
+} from "@/lib/providers"
 import { extractPdfText } from "@/lib/pdf"
 import gsap from "gsap"
 import { Sparkles, UploadCloud, ClipboardPaste, Cpu, ArrowRight } from "lucide-vue-next"
@@ -111,7 +118,63 @@ const fallbackViaProxy = ref(true)
 const fallbackLoading = ref(false)
 const fallbackPdfText = ref<string | null>(null)
 
-const selectedProvider = computed(() => providers.find((p) => p.id === fallbackProviderId.value))
+/* generic custom provider harness */
+const customVersion = ref(0)
+const customBaseUrl = ref("")
+const customApiKey = ref("")
+const customModelInput = ref("")
+const customModels = ref<string[]>([])
+const customStatus = ref<string | null>(null)
+
+const allProviders = computed(() => {
+  void customVersion.value
+  const cfg = loadCustomConfig()
+  return cfg ? [...providers, createCustomProvider(cfg)] : providers
+})
+const allOptions = computed(() =>
+  allProviders.value.map((p) => ({ value: p.id, label: p.label, defaultModel: p.defaultModel, docsUrl: p.docsUrl })),
+)
+const customConfigured = computed(() => {
+  void customVersion.value
+  return !!loadCustomConfig()
+})
+
+async function fetchCustomModels() {
+  customStatus.value = null
+  if (!customBaseUrl.value.trim()) { customStatus.value = "Base URL required"; return }
+  try {
+    const prov = createCustomProvider({ baseUrl: customBaseUrl.value, apiKey: customApiKey.value, model: "" })
+    const list = await (prov.listModels as (k?: string) => Promise<string[]>)(customApiKey.value.trim() || undefined)
+    customModels.value = list
+    if (!list.length) customStatus.value = "Connected — no models listed, type model name manually"
+    else customStatus.value = `Connected — ${list.length} models`
+    if (list.length && !customModelInput.value) customModelInput.value = list.find(m => m.includes("free")) || list[0]
+  } catch (e: unknown) {
+    customStatus.value = e instanceof Error ? e.message : String(e)
+  }
+}
+
+function saveCustomProvider() {
+  if (!customBaseUrl.value.trim()) { customStatus.value = "Base URL required"; return }
+  saveCustomConfig({ baseUrl: customBaseUrl.value, apiKey: customApiKey.value.trim(), model: customModelInput.value.trim() })
+  customVersion.value++
+  fallbackProviderId.value = "custom"
+  fallbackModel.value = customModelInput.value.trim()
+  fallbackViaProxy.value = false
+  fallbackKey.value = customApiKey.value.trim()
+  onProviderChange()
+  customStatus.value = "Saved ✓ Custom provider active"
+}
+
+function removeCustomProvider() {
+  clearCustomConfig()
+  customVersion.value++
+  customBaseUrl.value = ""; customApiKey.value = ""; customModelInput.value = ""; customModels.value = []
+  if (fallbackProviderId.value === "custom") { fallbackProviderId.value = providerOptions[0]?.value || "mistral"; onProviderChange() }
+  customStatus.value = "Removed"
+}
+
+const selectedProvider = computed(() => allProviders.value.find((p) => p.id === fallbackProviderId.value))
 const selectedModels = computed(() => selectedProvider.value?.models || [])
 
 function onProviderChange() {
@@ -233,9 +296,10 @@ Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4"
             <div class="grid md:grid-cols-3 gap-4">
               <label class="text-xs font-semibold text-ink/70">Provider
                 <select :value="fallbackProviderId" @change="(e)=>{fallbackProviderId=(e.target as HTMLSelectElement).value; onProviderChange()}" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
-                  <option v-for="o in providerOptions" :key="o.value" :value="o.value">{{ o.label }} — {{ o.defaultModel }}</option>
+                  <option v-for="o in allOptions.filter(x => x.value !== 'custom')" :key="o.value" :value="o.value">{{ o.label }} — {{ o.defaultModel || 'set below' }}</option>
+                  <option value="custom">{{ customConfigured ? 'Custom — saved ✓' : 'Custom — any OpenAI-compatible URL' }}</option>
                 </select>
-                <a v-if="selectedProvider" :href="selectedProvider.docsUrl" target="_blank" class="text-[11px] underline text-pen mt-1 inline-block">{{ selectedProvider.docsUrl }}</a>
+                <a v-if="selectedProvider && fallbackProviderId !== 'custom'" :href="selectedProvider.docsUrl" target="_blank" class="text-[11px] underline text-pen mt-1 inline-block">{{ selectedProvider.docsUrl }}</a>
               </label>
               <label class="text-xs font-semibold text-ink/70">Model
                 <select v-model="fallbackModel" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
@@ -246,6 +310,33 @@ Rules: text preserve LaTeX $...$, options single-line, answer for mcq is "1"-"4"
                 <input v-model="fallbackKey" type="password" placeholder="sk-… / gsk_… / nvapi-…" class="mt-1.5 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-paper text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
               </label>
             </div>
+
+            <!-- Custom provider harness — any OpenAI-compatible endpoint -->
+            <div v-if="fallbackProviderId === 'custom'" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3">
+              <div class="flex flex-wrap gap-1.5">
+                <button v-for="pr in CUSTOM_PRESETS" :key="pr.label" type="button" @click="customBaseUrl = pr.baseUrl; if (!customApiKey) customStatus = pr.label + ': ' + pr.hint" class="px-2.5 py-1 rounded-full border border-ink/15 bg-paper text-[11px] font-semibold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ pr.label }}</button>
+              </div>
+              <div class="grid md:grid-cols-2 gap-3">
+                <label class="text-xs font-semibold text-ink/70">Base URL
+                  <input v-model="customBaseUrl" :placeholder="CUSTOM_PRESETS[0].baseUrl" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                </label>
+                <label class="text-xs font-semibold text-ink/70">API key (empty for local)
+                  <input v-model="customApiKey" type="password" placeholder="sk-or-… / gsk_… / none" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                </label>
+              </div>
+              <div class="flex flex-wrap items-end gap-2">
+                <label class="text-xs font-semibold text-ink/70 grow">Model
+                  <input v-model="customModelInput" list="custom-models" placeholder="fetch below or type exact model id" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                  <datalist id="custom-models"><option v-for="m in customModels" :key="m" :value="m" /></datalist>
+                </label>
+                <button type="button" @click="fetchCustomModels" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/75 hover:border-pen hover:text-pen transition-colors">Fetch models</button>
+                <button type="button" @click="saveCustomProvider" class="px-3.5 py-2 rounded-lg bg-pen text-white text-xs font-bold">Save &amp; use</button>
+                <button v-if="customConfigured" type="button" @click="removeCustomProvider" class="px-3.5 py-2 rounded-lg border border-redmargin/40 text-redmargin text-xs font-bold hover:bg-redmargin/[0.06]">Remove</button>
+              </div>
+              <p v-if="customStatus" class="text-[11px]" :class="customStatus.startsWith('Connected') || customStatus.includes('✓') ? 'text-green-700' : 'text-redmargin'">{{ customStatus }}</p>
+              <p class="text-[11px] text-ink/50">Works with any OpenAI-compatible <code class="bg-paper px-1 rounded border border-ink/10">POST {base}/chat/completions</code> — OpenRouter, Groq, Together, Cerebras, xAI, Vercel AI Gateway, Ollama/LM Studio, naya free provider — bas URL paste karo. Key browser-local rehti hai.</p>
+            </div>
+
             <label class="flex items-start gap-2 text-xs text-ink/65"><input type="checkbox" v-model="fallbackViaProxy" class="accent-pen mt-0.5" /> <span>viaProxy <code class="bg-paper px-1 rounded border border-ink/10">/api/{{ fallbackProviderId }}/chat</code> (hides key on Vercel) — uncheck for direct <code class="bg-paper px-1 rounded border border-ink/10">{{ selectedProvider?.baseUrl }}/chat/completions</code></span></label>
             <button :disabled="fallbackLoading" @click="handleFallbackExtract" class="px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50">{{ fallbackLoading ? 'Extracting…' : 'Fallback extract with ' + (selectedProvider?.label || '') + ' → Review' }}</button>
             <div v-if="fallbackPdfText" class="text-xs bg-paper border border-ink/10 rounded-xl p-3 max-h-32 overflow-auto whitespace-pre-wrap text-ink/60">PDF text (first 15k): {{ fallbackPdfText.slice(0, 800) }}…</div>
