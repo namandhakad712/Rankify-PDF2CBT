@@ -1,4 +1,4 @@
-// Universal content normalize — light port of AGENT.md:440 normalizeLatex
+// Universal content normalize
 // Generic, no JEE lock. Rules: math preserve, options single-line, no blank runs.
 
 export function normalizeText(s: string): string {
@@ -36,7 +36,7 @@ export function normalizeOptions(opts: string[] | null): string[] | null {
   return opts.map((o) => o.replace(/\n/g, " ").replace(/\s{2,}/g, " ").trim())
 }
 
-// passage-aware: keep single \n for assertion-reason / match-list AGENT.md:450 — we don't strip intentionally
+// passage-aware: keep single \n for assertion-reason / match-list — we don't strip intentionally
 export function normalizeQuestionText(text: string): string {
   return normalizeText(text)
 }

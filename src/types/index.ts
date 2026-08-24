@@ -24,7 +24,7 @@ export interface UniversalQuestion {
   topic: string | null // free — "Kinematics", "Profit-Loss", "Constitution" — no vocab lock
   chapter?: string | null
   type: QuestionType
-  text: string // markdown + LaTeX $...$ / $$...$$ — preserve as-is AGENT.md:347
+  text: string // markdown + LaTeX, preserved as-is
   textAlt?: string | null // second language e.g. Hindi
   options: string[] | null // MCQ/MSQ/Match: ["Opt A", ...], null for NAT/essay/fill-blank
   answer: string // MCQ "1"-"4" (1-indexed as displayed), NAT "42", fill "answer text", essay ""

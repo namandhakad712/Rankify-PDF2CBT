@@ -59,7 +59,7 @@ useHead({ title: "Privacy — Rankify PDF2CBT" })
 
         <section class="rounded-lg bg-white p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)]">
           <h2 class="font-display font-bold text-xl tracking-tight">5 · Contact</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">Open an issue at <a href="https://github.com/TheMoonVyy/pdf2cbt/issues" class="text-pen underline decoration-wavy underline-offset-2">pdf2cbt/issues</a>.</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">Open an issue at <a href="https://github.com/namandhakad712/Rankify-PDF2CBT/issues" class="text-pen underline decoration-wavy underline-offset-2">Rankify-PDF2CBT/issues</a>.</p>
         </section>
       </div>
     </div>

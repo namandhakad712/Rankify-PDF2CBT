@@ -12,7 +12,7 @@ useHead({ title: "About — Rankify PDF2CBT" })
 
       <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2 mt-4">the story</div>
       <h1 class="text-4xl md:text-6xl font-display font-extrabold tracking-tight">Why we <span class="relative inline-block">rebuilt<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlyellow"></span></span> everything</h1>
-      <p class="mt-4 text-[16px] text-ink/60 leading-relaxed max-w-xl">Rankify started as a heavy hackathon monster — 273 components, 3 databases, 4 AI clients. It won prizes. It also broke a lot. So we kept only the parts that never failed, and made them feel like a notebook.</p>
+      <p class="mt-4 text-[16px] text-ink/60 leading-relaxed max-w-xl">Question papers deserve better than copy-paste. Rankify turns any PDF — a class test, a coaching sheet, last year's board paper — into a real mock exam you can actually attempt.</p>
 
       <div class="mt-10 grid gap-6">
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(-0.4deg)">
@@ -30,13 +30,13 @@ useHead({ title: "About — Rankify PDF2CBT" })
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(-0.3deg)">
           <div class="tape" aria-hidden="true"></div>
           <h2 class="font-display font-bold text-xl tracking-tight">The stack (nerd corner)</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">Vite 8 (Rolldown) · Vue 3.5 · Tailwind 4 · Dexie (one DB) · pdfjs-dist 5 · GSAP + Lenis for the notebook feel. Fallback AI is a modular registry: <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">src/lib/providers/</code> — one file = one provider. Base: <a href="https://github.com/TheMoonVyy/pdf2cbt" class="text-pen underline decoration-wavy underline-offset-2">pdf2cbt</a>.</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">Vite 8 (Rolldown) · Vue 3.5 · Tailwind 4 · Dexie (one DB) · pdfjs-dist 5 · GSAP + Lenis for the notebook feel. Fallback AI is a modular registry: <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px]">src/lib/providers/</code> — one file = one provider. Open on <a href="https://github.com/namandhakad712/Rankify-PDF2CBT" class="text-pen underline decoration-wavy underline-offset-2">GitHub</a>.</p>
         </div>
 
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(0.5deg)">
           <div class="tape" aria-hidden="true"></div>
-          <h2 class="font-display font-bold text-xl tracking-tight">License & the private twin</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">This repo is <b>MIT</b> — fork it, ship it, sell it, whatever helps students. The original V1 stays private under AGPL and is not included here.</p>
+          <h2 class="font-display font-bold text-xl tracking-tight">Free &amp; open</h2>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">This repo is <b>MIT</b> — fork it, ship it, remix it however helps students. No accounts, no paywalls, no asterisks.</p>
         </div>
       </div>
 

@@ -55,7 +55,7 @@ export function parsePastedJSON(raw: string): ParseResult {
     return { ok: false, error: "JSON must be {meta,sections,questions} or {questions:[]}" }
   }
 
-  // Light normalize per AGENT.md:440 — options single-line, text preserve math
+  // normalize — options single-line, text preserve math
   paper.questions = paper.questions.map((q) => ({
     ...q,
     text: normalizeText(q.text),

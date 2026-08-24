@@ -39,9 +39,6 @@ dist-ssr
 # OS
 Thumbs.db
 
-# Keep Rankify-V1 private — do not add as submodule or copy its secrets
-# If you work on both repos locally, never `git add` ../Rankify-V1
-
 # Optional local notes
 temp.md
 tmp.md

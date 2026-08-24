@@ -1,4 +1,4 @@
-// Light validator — generic, not JEE 33-check heavy AGENT.md:1173
+// Light generic validator — warns, never blocks
 import type { UniversalPaper } from "@/types"
 
 export interface ValidationIssue {
