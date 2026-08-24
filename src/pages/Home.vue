@@ -142,8 +142,8 @@
 
       <!-- ═══════════ HOW IT WORKS ═══════════ -->
       <section id="how" class="paper relative py-24 md:py-32 overflow-hidden">
-        <StickerDrop confineTo="#how" />
-        <div class="mx-auto max-w-6xl px-5 relative">
+        <ImageTrail :items="trailImages" :threshold="70" class="z-10" />
+        <div class="mx-auto max-w-6xl px-5 relative z-20">
           <div class="max-w-xl">
             <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">instructions</div>
             <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl leading-[1.05]">Three steps.<br />That's the <span class="relative inline-block"><span class="hl absolute inset-x-[-5px] inset-y-[12%] -z-0 rounded-sm bg-hlpink origin-left scale-x-0"></span><span class="relative z-10">whole</span></span> syllabus.</h2>
@@ -331,9 +331,18 @@ import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin'
 import Lenis from 'lenis'
 import { ArrowRight, ArrowUp, Plus } from 'lucide-vue-next'
 import CircularText from '@/components/CircularText.vue'
-import StickerDrop from '@/components/StickerDrop.vue'
+import ImageTrail from '@/components/ImageTrail.vue'
 
 gsap.registerPlugin(ScrollTrigger, SplitText, Flip, ScrambleTextPlugin, DrawSVGPlugin)
+
+const trailImages = [
+  '/images/notebook/stickers/heart-red.png',
+  '/images/notebook/stickers/star-yellow.png',
+  '/images/notebook/stickers/plane-blue.png',
+  '/images/notebook/stickers/pencil-yellow.png',
+  '/images/notebook/stickers/aplus-red.png',
+  '/images/notebook/stickers/heart-pink.png'
+]
 
 const openFaq = ref(-1)
 const picked1 = ref('')
