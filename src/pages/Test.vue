@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { useRouter } from "vue-router"
 import type { UniversalPaper } from "@/types"
 import { getDB } from "@/lib/db"
+import MathText from "@/components/MathText.vue"
 
 const router = useRouter()
 const paper = ref<UniversalPaper | null>(null)
@@ -127,7 +128,7 @@ const fmt = computed(() => {
               <span>{{ q.subject || 'General' }}</span>
               <span v-if="q.hasDiagram" class="bg-hlyellow text-ink px-2 py-0.5 rounded-full font-sans font-bold normal-case tracking-normal">diagram below</span>
             </div>
-            <div class="mt-3.5 text-[16px] leading-relaxed whitespace-pre-wrap">{{ q.text }}</div>
+            <div class="mt-3.5 text-[16px] leading-relaxed whitespace-pre-wrap"><MathText :text="q.text" /></div>
             <div v-if="q.diagrams?.length" class="mt-3 flex gap-2.5 flex-wrap">
               <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 rounded-lg border border-ink/10 bg-white" />
             </div>
@@ -136,12 +137,12 @@ const fmt = computed(() => {
               <template v-if="q.type==='msq'">
                 <label v-for="(opt, oi) in q.options" :key="oi" :class="['flex items-center gap-3 text-left rounded-xl border-2 px-4 py-3 text-[15px] cursor-pointer transition-all', ((answers[q.id] as string[])||[]).includes(String(oi)) ? 'border-pen bg-pen/[0.05] font-medium' : 'border-ink/10 bg-paper hover:border-ink/25']">
                   <input type="checkbox" :checked="((answers[q.id] as string[])||[]).includes(String(oi))" @change="selectOption(String(oi))" class="accent-pen w-4 h-4" />
-                  <span class="font-mono text-xs text-ink/50">{{ String.fromCharCode(65+oi) }}.</span>{{ opt }}
+                  <span class="font-mono text-xs text-ink/50">{{ String.fromCharCode(65+oi) }}.</span><MathText :text="opt" />
                 </label>
               </template>
               <template v-else>
                 <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left rounded-xl border-2 px-4 py-3 text-[15px] transition-all', answers[q.id]===String(oi+1) ? 'border-pen bg-pen text-white font-medium' : 'border-ink/10 bg-paper hover:border-ink/30']">
-                  <span class="font-mono text-xs mr-2.5" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span>{{ opt }}
+                  <span class="font-mono text-xs mr-2.5" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span><MathText :text="opt" />
                 </button>
               </template>
             </div>

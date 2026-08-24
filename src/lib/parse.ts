@@ -2,6 +2,7 @@
 // User gets JSON from Gemini GEM (ishortn.ink/gemini-gem) and pastes here
 
 import type { UniversalPaper } from "@/types"
+import { jsonrepair } from "jsonrepair"
 import { validatePaper } from "./validate"
 import { normalizeText, normalizeOptions } from "./normalize"
 
@@ -13,7 +14,7 @@ export interface ParseResult {
 }
 
 function stripFences(s: string): string {
-  let t = s.trim()
+  let t = s.replace(/^\uFEFF/, "").trim()
   // ```json ... ``` or ``` ... ```
   t = t.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim()
   // if LLM added prose, extract first {...} or [...]
@@ -29,9 +30,14 @@ export function parsePastedJSON(raw: string): ParseResult {
   let json: unknown
   try {
     json = JSON.parse(stripped)
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e)
-    return { ok: false, error: `Invalid JSON: ${msg}` }
+  } catch {
+    // LLM output often has trailing commas / single quotes / smart quotes / truncation — repair then retry
+    try {
+      json = JSON.parse(jsonrepair(stripped))
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      return { ok: false, error: `Invalid JSON: ${msg}` }
+    }
   }
 
   // Support both {questions:[]} and full UniversalPaper {meta, sections, questions}

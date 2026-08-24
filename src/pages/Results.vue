@@ -11,7 +11,7 @@ const scoreDisplay = ref(0)
 
 onMounted(async () => {
   const raw = localStorage.getItem("rpdf2cbt-last-result")
-  if (raw) result.value = JSON.parse(raw)
+  if (raw) { try { result.value = JSON.parse(raw) } catch {} }
   if (!result.value) return
   await nextTick()
   gsap.from(".res-hero", { y: 40, opacity: 0, duration: 0.9, ease: "power4.out" })
