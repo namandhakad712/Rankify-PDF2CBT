@@ -95,7 +95,8 @@ const fmt = computed(() => {
 
 <template>
   <div v-if="!paper" class="min-h-screen grid place-items-center bg-paper text-ink">
-    <div class="text-center">
+    <div class="text-center px-5">
+      <img src="/images/notebook/empty-state-mascot.png" alt="" class="w-36 mx-auto mb-4" loading="lazy" />
       <p class="font-hand text-2xl text-ink/50 -rotate-2">kuch hai hi nahi…</p>
       <div class="font-display font-bold text-2xl mt-1">No test data</div>
       <button class="mt-4 px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/review')">Go to Review</button>

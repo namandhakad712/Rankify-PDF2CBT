@@ -78,6 +78,7 @@ const grade = computed(() => {
 
       <div v-if="!result" class="mt-8 relative rounded-lg bg-white p-10 text-center shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
         <div class="tape" aria-hidden="true"></div>
+        <img src="/images/notebook/empty-state-mascot.png" alt="" class="w-36 mx-auto mb-4" loading="lazy" />
         <p class="font-display font-bold text-xl">No result yet.</p>
         <p class="text-ink/55 mt-1.5 text-[15px]">Take a test first — the red pen is waiting.</p>
         <button class="mt-5 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">Start</button>

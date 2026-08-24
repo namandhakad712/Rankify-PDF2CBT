@@ -73,6 +73,7 @@
 
           <!-- Interactive mini exam sheet -->
           <div class="relative">
+            <img src="/images/notebook/floating-notebook-pdf.png" alt="" class="hidden lg:block absolute -top-12 -right-10 w-48 pointer-events-none select-none" style="filter: drop-shadow(0 16px 32px rgba(35,32,58,0.15));" ref="heroFloat" />
             <div ref="examSheet" class="relative mx-auto max-w-md rotate-[1.2deg] rounded-xl bg-white shadow-[0_24px_60px_-24px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07]">
               <!-- sheet margin -->
               <div class="pointer-events-none absolute inset-y-0 left-11 w-px bg-redmargin/40"></div>
@@ -161,8 +162,9 @@
       </section>
 
       <!-- ═══════════ FEATURES · STICKY NOTES ═══════════ -->
-      <section id="features" class="relative bg-[#F4EFE3] border-y-2 border-ink/[0.07] py-24 md:py-32">
-        <div class="mx-auto max-w-6xl px-5">
+      <section id="features" class="relative bg-[#F4EFE3] border-y-2 border-ink/[0.07] py-24 md:py-32 overflow-hidden">
+        <img src="/images/notebook/sticker-pack.png" alt="" class="hidden lg:block absolute -top-6 right-6 w-56 pointer-events-none select-none opacity-90 rotate-2" style="filter: drop-shadow(0 12px 24px rgba(35,32,58,0.12));" />
+        <div class="mx-auto max-w-6xl px-5 relative">
           <div class="flex flex-wrap items-end justify-between gap-6">
             <div class="max-w-xl">
               <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">stuck to the fridge</div>
@@ -302,7 +304,7 @@
         </div>
         <div class="mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent" style="-webkit-text-stroke: 2px rgba(35,32,58,0.14)" aria-hidden="true">RANKIFY</div>
         <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 border-ink/[0.07] pt-6 font-mono text-[10px] uppercase tracking-[0.25em] text-ink/40">
-          <span>© 2026 rankify-pdf2cbt · MIT</span>
+          <span>© 2026 rankify-pdf2cbt · PolyForm NC</span>
           <span class="font-hand text-base normal-case tracking-normal text-ink/50">made for students, by people who remember roll numbers</span>
         </div>
       </div>
@@ -366,11 +368,11 @@ const report = [
   { subject: 'Privacy', detail: '0 bytes uploaded', grade: 'A+' },
   { subject: 'Simplicity', detail: '3 steps, zero setup', grade: 'A+' },
   { subject: 'Coverage', detail: '9 question types', grade: 'A' },
-  { subject: 'Price', detail: 'free, MIT licensed', grade: 'A+' }
+  { subject: 'Price', detail: 'free for learners', grade: 'A+' }
 ]
 
 const faqs = [
-  { q: 'Is it actually free?', a: 'Yes — MIT licensed and free forever. The primary extraction uses our public Gemini GEM, which costs you nothing. Optional fallback AI providers are yours (your key, your quota).' },
+  { q: 'Is it actually free?', a: 'Yes — PolyForm Noncommercial licensed and free for personal, research & education. The primary extraction uses our public Gemini GEM, which costs you nothing. Optional fallback AI providers are yours (your key, your quota).' },
   { q: 'Will my teacher\'s/coaching\'s PDF work?', a: 'If a human can read it, Rankify can. Scanned papers, typed papers, two-column layouts — the AI reads the text and you review every question before the test, so nothing sneaks past you.' },
   { q: 'Where do my files go?', a: 'Nowhere. The PDF and your results live in your browser\'s own storage (IndexedDB). Clear your browser data and they\'re gone — that\'s the deal, and honestly the feature.' },
   { q: 'What about diagrams and figures?', a: 'You crop them by hand from the actual PDF — drag a rectangle around the figure and it gets attached to that question. No AI-hallucinated images, ever.' },
@@ -390,6 +392,7 @@ const heroCtas = ref(null)
 const note1 = ref(null)
 const note2 = ref(null)
 const examSheet = ref(null)
+const heroFloat = ref(null)
 const stk1 = ref(null)
 const stk2 = ref(null)
 const stk3 = ref(null)
@@ -493,8 +496,9 @@ onMounted(() => {
   tl.to(note1.value, { opacity: 1, x: 0, rotate: -3, duration: 0.5, ease: 'back.out(2)' }, 0.85)
   /* highlighter sweep */
   tl.to(hl1.value, { scaleX: 1, duration: 0.55, ease: 'power3.inOut' }, 0.75)
-  /* exam sheet + stickers */
+  /* exam sheet + stickers + notebook art */
   tl.from(examSheet.value, { y: 60, opacity: 0, rotate: 4, duration: 1 }, 0.4)
+  if (heroFloat.value) tl.from(heroFloat.value, { y: 40, opacity: 0, rotate: -4, duration: 0.9, ease: 'power3.out' }, 0.5)
   tl.to([stk1.value, stk2.value, stk3.value], { opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(2.2)', stagger: 0.12 }, 0.9)
   tl.to(note2.value, { opacity: 1, duration: 0.5 }, 1.2)
   gsap.set([stk1.value, stk2.value, stk3.value], { scale: 0.4, transformOrigin: 'center' })
@@ -504,9 +508,10 @@ onMounted(() => {
     gsap.set(examSheet.value, { opacity: 1 })
   }
 
-  /* sheet idle float */
+  /* sheet + notebook art idle float */
   if (!reduced) {
     gsap.to(examSheet.value, { y: -10, rotate: 0.4, duration: 3.4, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 2 })
+    if (heroFloat.value) gsap.to(heroFloat.value, { y: -8, rotate: 2, duration: 3.8, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 1.2 })
   }
 
   /* generic reveals */
