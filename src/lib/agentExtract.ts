@@ -70,41 +70,66 @@ function parseChunkJSON(raw: string): { questions?: unknown[]; lastCompleteQuest
   }
 }
 
-async function chatWithBackoff(
-  entry: ProviderEntry,
-  opts: { model: string; messages: ProviderMessage[] },
-  signal: AbortSignal,
-  maxTries = 4,
-): Promise<string> {
-  let wait = 4000
-  for (let attempt = 1; attempt <= maxTries; attempt++) {
-    if (signal.aborted) throw new Error("cancelled")
-    try {
-      return await providerChat(entry, { ...opts, responseFormat: { type: "json_object" } })
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
-      const rateLimited = /\b429\b|rate.?limit|too many requests/i.test(msg)
-      const serverBlip = /\b5\d\d\b/.test(msg)
-      if (!rateLimited && !serverBlip) throw e
-      if (attempt === maxTries) throw e
-      wait = retryAfter ? Number(retryAfter) * 1000 : wait * 2
-      await new Promise((r) => setTimeout(r, Math.min(wait, 60_000)))
+export interface ChainLink { entry: ProviderEntry; model: string }
+
+/** Cross-provider priority chain: chosen provider+model first → its other
+ *  models top-to-bottom → next providers by their YAML priority (1 first). */
+export function buildFallbackChain(primary: ProviderEntry, model: string, all: ProviderEntry[]): ChainLink[] {
+  const out: ChainLink[] = []
+  const seen = new Set<string>()
+  const ordered = [primary, ...all.filter((p) => p.id !== primary.id)]
+  for (const e of ordered) {
+    if (!e.baseUrl || !e.models?.length) continue
+    const head = e.id === primary.id ? model || e.models[0] || "" : e.model || e.models[0] || ""
+    const ms = [head, ...e.models.filter((m) => m && m !== head)]
+    for (const m of ms) {
+      if (!m) continue
+      const k = `${e.id}::${m}`
+      if (!seen.has(k)) { seen.add(k); out.push({ entry: e, model: m }) }
     }
   }
-  throw new Error("unreachable")
+  return out
+}
+
+async function chatWithBackoff(
+  chain: ChainLink[],
+  opts: { messages: ProviderMessage[] },
+  signal: AbortSignal,
+  maxTriesPerModel = 2,
+): Promise<string> {
+  let wait = 4000
+  let lastErr: unknown = new Error("no models configured")
+  for (const link of chain) {
+    for (let attempt = 1; attempt <= maxTriesPerModel; attempt++) {
+      if (signal.aborted) throw new Error("cancelled")
+      try {
+        return await providerChat(link.entry, { model: link.model, ...opts, responseFormat: { type: "json_object" } })
+      } catch (e: unknown) {
+        lastErr = e
+        const msg = e instanceof Error ? e.message : String(e)
+        const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
+        const rateLimited = /\b429\b|rate.?limit|too many requests/i.test(msg)
+        const serverBlip = /\b5\d\d\b/.test(msg)
+        if (!rateLimited && !serverBlip) throw e // hard error — no fallback on bad request
+        if (attempt === maxTriesPerModel) break // exhausted this model → next link
+        wait = retryAfter ? Number(retryAfter) * 1000 : wait * 2
+        await new Promise((r) => setTimeout(r, Math.min(wait, 60_000)))
+      }
+    }
+    if (signal.aborted) throw new Error("cancelled")
+  }
+  throw lastErr
 }
 
 /** Process one chunk; on truncation/parse failure recursively split big chunks */
 async function processChunk(
-  entry: ProviderEntry,
+  chain: ChainLink[],
   chunkText: string,
   contextStart: string,
   expectNext: number,
   signal: AbortSignal,
 ): Promise<ChunkResult> {
-  const content = await chatWithBackoff(entry, {
-    model: entry.model || "",
+  const content = await chatWithBackoff(chain, {
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userPrompt(chunkText, contextStart, expectNext) },
@@ -119,8 +144,8 @@ async function processChunk(
     if (chunkText.length > 4000) {
       const mid = chunkText.lastIndexOf("\n", Math.floor(chunkText.length / 2))
       const cut = mid > 1000 ? mid : Math.floor(chunkText.length / 2)
-      const a = await processChunk(entry, chunkText.slice(0, cut), contextStart, expectNext, signal)
-      const b = await processChunk(entry, chunkText.slice(cut), chunkText.slice(Math.max(0, cut - 700)), a.lastNum + 1, signal)
+      const a = await processChunk(chain, chunkText.slice(0, cut), contextStart, expectNext, signal)
+      const b = await processChunk(chain, chunkText.slice(cut), chunkText.slice(Math.max(0, cut - 700)), a.lastNum + 1, signal)
       return { questions: [...a.questions, ...b.questions], lastNum: Math.max(a.lastNum, b.lastNum) }
     }
     throw new Error("Chunk unparseable even after repair")
@@ -182,13 +207,15 @@ export async function runAgentExtract(opts: {
   jobId: string
   pages: string[]
   entry: ProviderEntry
+  allProviders?: ProviderEntry[]
   delayMs?: number
   resumeState?: AgentJobState | null
   onProgress?: (p: AgentProgress[]) => void
   onCheckpoint?: (state: AgentJobState) => Promise<void> | void
   signal?: AbortSignal
 }): Promise<{ paper: UniversalPaper; progress: AgentProgress[] }> {
-  const { jobId, pages, entry, delayMs = 1500, resumeState, onProgress, onCheckpoint, signal } = opts
+  const { jobId, pages, entry, allProviders = [], delayMs = 1500, resumeState, onProgress, onCheckpoint, signal } = opts
+  const chain = buildFallbackChain(entry, entry.model || "", [entry, ...allProviders])
   const signalRef = signal ?? new AbortController().signal
 
   const state: AgentJobState = resumeState?.pages.length === pages.length
@@ -214,7 +241,7 @@ export async function runAgentExtract(opts: {
     try {
       const prevTail = i > 0 ? state.pages[i - 1].slice(-800) : ""
       const knownMax = Object.values(state.results).reduce((m, r) => Math.max(m, r.lastNum), 0)
-      const res = await processChunk(entry, pageText, prevTail, knownMax + 1, signalRef)
+      const res = await processChunk(chain, pageText, prevTail, knownMax + 1, signalRef)
       if (!res.questions.length && pageText.length > 200) throw new Error("No questions found on this page")
       state.results[String(i)] = res
       progress[i] = { index: i, status: "done" }

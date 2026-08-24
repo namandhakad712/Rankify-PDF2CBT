@@ -5,6 +5,7 @@
 # Fields:
 #   id            unique slug
 #   name          display name
+#   priority      1 = default provider, 2+ = fallback order
 #   endpoint      OpenAI-compatible base URL (no trailing slash)
 #   response      "openai-completions" (POST /chat/completions)
 #                 | "openai-responses"  (POST /responses — OpenAI Responses API)
@@ -24,14 +25,24 @@
 #       contextWindow: 131072
 #       maxTokens: 65536
 #
+# PROVIDER-level "priority" (explicit number):
+#   priority: 1  → DEFAULT provider (used first)
+#   priority: 2+ → fallback order when ALL models of a higher-priority
+#                  provider fail (429/5xx exhausted).
+#
+# MODELS within a provider: TOP-TO-BOTTOM list order.
+#   1st model  → default model of that provider
+#   next model → next fallback (same provider)
+#
 # Users can additionally add their own private providers from the browser
 # (Extract → AI Agent → Settings). Those live only in their localStorage.
 
-version: 1
+version: 2
 
 providers:
   - id: groq
     name: Groq
+    priority: 6
     endpoint: https://api.groq.com/openai/v1
     response: openai-completions
     envKey: GROQ_API_KEY
@@ -53,6 +64,7 @@ providers:
 
   - id: mistral
     name: Mistral
+    priority: 3
     endpoint: https://api.mistral.ai/v1
     response: openai-completions
     envKey: MISTRAL_API_KEY
@@ -69,6 +81,7 @@ providers:
 
   - id: nvidia
     name: NVIDIA NIM
+    priority: 4
     endpoint: https://integrate.api.nvidia.com/v1
     response: openai-completions
     envKey: NVIDIA_API_KEY
@@ -84,6 +97,7 @@ providers:
 
   - id: poolside
     name: Poolside AI
+    priority: 1
     endpoint: https://inference.poolside.ai/v1
     response: openai-completions
     envKey: POOLSIDE_API_KEY
@@ -98,6 +112,7 @@ providers:
 
   - id: agnes
     name: Agnes AI
+    priority: 2
     endpoint: https://apihub.agnes-ai.com/v1/chat/completions
     response: openai-completions
     envKey: AGNES_API_KEY
@@ -112,6 +127,7 @@ providers:
 
   - id: inferx
     name: InferX
+    priority: 5
     endpoint: https://model.inferx.net/endpoints/v1
     response: openai-completions
     envKey: INFERX_API_KEY
@@ -132,6 +148,7 @@ providers:
     
   - id: opencode_zen
     name: OpenCode Zen
+    priority: 7
     endpoint: https://opencode.ai/zen/v1
     response: openai-completions
     envKey: OPENCODE_CUSTOM_API_KEY

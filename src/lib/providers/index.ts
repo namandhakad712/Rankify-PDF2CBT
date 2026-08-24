@@ -15,6 +15,7 @@ export type { ProviderMessage }
 export interface ProviderEntry {
   id: string
   name: string
+  priority?: number // provider-level — 1 = default, then fallback order
   baseUrl: string
   response?: "openai-completions" | "openai-responses" | string
   apiKey?: string // local providers only; presets use envKey via proxy
@@ -50,7 +51,7 @@ const LS_KEY = "rpdf2cbt-custom-providers-v2"
 interface YamlFile {
   version: number
   providers: {
-    id: string; name: string; endpoint: string; response?: string
+    id: string; name: string; endpoint: string; response?: string; priority?: number
     envKey?: string; docsUrl?: string; contextWindow?: number; maxTokens?: number
     models?: (string | { id: string; contextWindow?: number; maxTokens?: number })[]
   }[]
@@ -59,34 +60,34 @@ interface YamlFile {
 function parsePresets(): ProviderEntry[] {
   try {
     const f = YAML.parse(providersYaml) as YamlFile
-    return (f.providers || []).map((p) => {
+    const out = (f.providers || []).map((p) => {
       const models: string[] = []
       const modelParams: Record<string, { contextWindow?: number; maxTokens?: number }> = {}
       for (const m of p.models || []) {
-        if (typeof m === "string") {
-          models.push(m)
-        } else if (m && m.id) {
+        if (typeof m === "string") { models.push(m); continue }
+        if (m && m.id) {
           models.push(m.id)
-          if (m.contextWindow != null || m.maxTokens != null) {
-            modelParams[m.id] = { contextWindow: m.contextWindow, maxTokens: m.maxTokens }
-          }
+          if (m.contextWindow != null || m.maxTokens != null) modelParams[m.id] = { contextWindow: m.contextWindow, maxTokens: m.maxTokens }
         }
       }
       return {
         id: p.id,
         name: p.name,
+        priority: p.priority ?? 999, // explicit provider priority — 1 = default
         baseUrl: p.endpoint.replace(/\/+$/, ""),
         response: p.response || "openai-completions",
         envKey: p.envKey || "",
         docsUrl: p.docsUrl,
         contextWindow: p.contextWindow,
         maxTokens: p.maxTokens,
-        models,
+        models, // top-to-bottom = default → fallbacks within provider
         modelParams: Object.keys(modelParams).length ? modelParams : undefined,
         model: models[0] || "",
         isPreset: true,
       }
     })
+    out.sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999))
+    return out
   } catch {
     return []
   }

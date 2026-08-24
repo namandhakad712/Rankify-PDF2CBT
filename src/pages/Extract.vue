@@ -341,6 +341,7 @@ async function startAgent(resume = false) {
       jobId: id,
       pages,
       entry: { ...prov, model: activeModel.value },
+      allProviders: providerList.value.map((p) => ({ ...p, model: p.id === prov.id ? activeModel.value : (p.model || p.models[0] || "") })),
       delayMs: 1500,
       resumeState,
       onProgress: (p) => { agentProgress.value = p },
