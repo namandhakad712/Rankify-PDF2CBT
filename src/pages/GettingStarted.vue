@@ -111,7 +111,7 @@ useHead({ title: "Getting Started — Rankify PDF2CBT" })
   width: 260px;
   height: 66px;
   transform: translateX(-50%) rotate(-1.8deg);
-  background: url('/images/notebook/tape-washi.png') center/contain no-repeat;
+  background: url('/images/notebook/tape-washi.webp') center/contain no-repeat;
   filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
 }
 </style>

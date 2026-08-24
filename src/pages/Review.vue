@@ -92,7 +92,7 @@ function onCropped(url: string) {
 
       <div v-if="!paper" class="mt-8 relative rounded-lg bg-white p-10 text-center shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
         <div class="tape" aria-hidden="true"></div>
-        <img src="/images/notebook/empty-extract.png" alt="" class="w-40 mx-auto mb-4" loading="lazy" />
+        <img src="/images/notebook/empty-extract.webp" alt="" class="w-40 mx-auto mb-4" loading="lazy" />
         <p class="font-display font-bold text-xl">No paper here yet.</p>
         <p class="text-ink/55 mt-1.5 text-[15px]">Paste your JSON in Extract first — takes 20 seconds.</p>
         <button class="mt-5 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">Go to Extract</button>
@@ -142,7 +142,7 @@ function onCropped(url: string) {
                 <div class="text-xs font-bold text-ink/70">Diagram — manual crop</div>
                 <div v-if="q.diagrams?.length" class="mt-2.5 flex gap-2.5 flex-wrap">
                   <div v-for="(d,didx) in q.diagrams" :key="didx" class="relative group">
-                    <img :src="d" class="w-28 rounded-lg border border-ink/10" />
+                    <img :src="d" class="w-28 rounded-lg border border-ink/10" loading="lazy" decoding="async" />
                     <button class="absolute -top-1.5 -right-1.5 bg-redmargin text-white rounded-full w-5.5 h-5.5 grid place-items-center text-xs shadow" @click="q.diagrams!.splice(didx,1)">×</button>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ function onCropped(url: string) {
   width: 260px;
   height: 66px;
   transform: translateX(-50%) rotate(-1.8deg);
-  background: url('/images/notebook/tape-washi.png') center/contain no-repeat;
+  background: url('/images/notebook/tape-washi.webp') center/contain no-repeat;
   filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
 }
 </style>

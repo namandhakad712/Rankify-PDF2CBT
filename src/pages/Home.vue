@@ -78,8 +78,8 @@
 
           <!-- Interactive mini exam sheet -->
           <div class="relative">
-            <img src="/images/notebook/hero-stack.png" alt="" class="hidden lg:block absolute -top-10 -right-8 w-52 pointer-events-none select-none z-20" style="filter: drop-shadow(0 16px 32px rgba(35,32,58,0.15));" ref="heroFloat" />
-            <img src="/images/notebook/floating-notebook-pdf.png" alt="" class="hidden lg:block absolute -bottom-8 -left-6 w-32 pointer-events-none select-none opacity-90 rotate-3 z-20" style="filter: drop-shadow(0 10px 20px rgba(35,32,58,0.12));" />
+            <img src="/images/notebook/hero-stack.webp" alt="" fetchpriority="high" decoding="async" class="hidden lg:block absolute -top-10 -right-8 w-52 pointer-events-none select-none z-20" style="filter: drop-shadow(0 16px 32px rgba(35,32,58,0.15));" ref="heroFloat" />
+            <img src="/images/notebook/floating-notebook-pdf.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute -bottom-8 -left-6 w-32 pointer-events-none select-none opacity-90 rotate-3 z-20" style="filter: drop-shadow(0 10px 20px rgba(35,32,58,0.12));" />
             <div ref="examSheet" class="relative mx-auto max-w-md rotate-[1.2deg] rounded-xl bg-white shadow-[0_24px_60px_-24px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07]">
               <!-- sheet margin -->
               <div class="pointer-events-none absolute inset-y-0 left-11 w-px bg-redmargin/40"></div>
@@ -124,7 +124,7 @@
               <div class="grid h-16 w-16 rotate-6 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-2xl font-bold text-redmargin bg-white/80">A+</div>
             </div>
             <div ref="stk3" class="absolute -bottom-6 left-8 opacity-0">
-              <img src="/images/notebook/doodle-arrow.png" alt="" class="w-20 pointer-events-none select-none" style="filter: drop-shadow(0 4px 10px rgba(35,32,58,0.08));" />
+              <img src="/images/notebook/doodle-arrow.webp" alt="" loading="lazy" decoding="async" class="w-20 pointer-events-none select-none" style="filter: drop-shadow(0 4px 10px rgba(35,32,58,0.08));" />
             </div>
             <span ref="note2" class="absolute -bottom-9 right-2 font-hand text-xl text-pen rotate-2 opacity-0">↑ your exam, in ~40 seconds</span>
           </div>
@@ -170,7 +170,7 @@
 
       <!-- ═══════════ FEATURES · STICKY NOTES ═══════════ -->
       <section id="features" class="relative bg-[#F4EFE3] border-y-2 border-ink/[0.07] py-24 md:py-32 overflow-hidden">
-        <img src="/images/notebook/sticker-pack.png" alt="" class="hidden lg:block absolute -top-6 right-6 w-56 pointer-events-none select-none opacity-90 rotate-2" style="filter: drop-shadow(0 12px 24px rgba(35,32,58,0.12));" />
+        <img src="/images/notebook/sticker-pack.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute -top-6 right-6 w-56 pointer-events-none select-none opacity-90 rotate-2" style="filter: drop-shadow(0 12px 24px rgba(35,32,58,0.12));" />
         <div class="mx-auto max-w-6xl px-5 relative">
           <div class="flex flex-wrap items-end justify-between gap-6">
             <div class="max-w-xl">
@@ -293,7 +293,7 @@
       <div class="absolute inset-0">
         <Dither :wave-speed="0" :wave-frequency="1.9" :wave-amplitude="0.26" :color-num="4" :pixel-size="2" :mouse-radius="0.3" />
       </div>
-      <img src="/images/notebook/footer-doodle.png" alt="" class="hidden lg:block absolute right-8 -top-10 w-44 pointer-events-none select-none invert opacity-20 rotate-3" />
+      <img src="/images/notebook/footer-doodle.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute right-8 -top-10 w-44 pointer-events-none select-none invert opacity-20 rotate-3" />
       <div class="mx-auto max-w-6xl px-5 pt-16 pb-8 relative z-10">
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-10">
           <div>
@@ -344,12 +344,12 @@ import Crosshair from '@/components/Crosshair.vue'
 gsap.registerPlugin(ScrollTrigger, SplitText, Flip, ScrambleTextPlugin, DrawSVGPlugin)
 
 const trailImages = [
-  '/images/notebook/stickers/heart-red.png',
-  '/images/notebook/stickers/star-yellow.png',
-  '/images/notebook/stickers/plane-blue.png',
-  '/images/notebook/stickers/pencil-yellow.png',
-  '/images/notebook/stickers/aplus-red.png',
-  '/images/notebook/stickers/heart-pink.png'
+  '/images/notebook/stickers/heart-red.webp',
+  '/images/notebook/stickers/star-yellow.webp',
+  '/images/notebook/stickers/plane-blue.webp',
+  '/images/notebook/stickers/pencil-yellow.webp',
+  '/images/notebook/stickers/aplus-red.webp',
+  '/images/notebook/stickers/heart-pink.webp'
 ]
 
 const openFaq = ref(-1)
@@ -491,6 +491,8 @@ function inkLoop (now) {
 
 onMounted(() => {
   homeCtx = gsap.context(() => {
+  /* GSAP best practice: mobile browser chrome resize se trigger refresh skip */
+  ScrollTrigger.config({ ignoreMobileResize: true })
   /* Lenis */
   lenis = new Lenis({ duration: reduced ? 0 : 1.1, smoothWheel: !reduced })
   lenis.on('scroll', ScrollTrigger.update)
@@ -728,7 +730,7 @@ useHead({
   width: 260px;
   height: 66px;
   transform: translateX(-50%) rotate(-1.8deg);
-  background: url('/images/notebook/tape-washi.png') center/contain no-repeat;
+  background: url('/images/notebook/tape-washi.webp') center/contain no-repeat;
   filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
 }
 
