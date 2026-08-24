@@ -18,7 +18,7 @@ useHead({ title: "About — Rankify PDF2CBT" })
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(-0.4deg)">
           <div class="tape" aria-hidden="true"></div>
           <h2 class="font-display font-bold text-xl tracking-tight">Why "light"?</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">By the end of V1, only one flow was 100% reliable: the <a href="https://ishortn.ink/gemini-gem" class="text-pen underline decoration-wavy underline-offset-2">GEM JSON paste</a>. And the only 100% accurate way to handle diagrams was cropping them by hand. Light keeps exactly those — plus one clean exam shell. 110KB initial bundle instead of a small country.</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">The core flow is simple: <a href="https://ishortn.ink/gemini-gem" class="text-pen underline decoration-wavy underline-offset-2">GEM JSON paste</a> for extraction, hand-cropped diagrams for accuracy, and one clean exam shell to attempt. Everything stays in your browser.</p>
         </div>
 
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(0.4deg)">
@@ -35,8 +35,8 @@ useHead({ title: "About — Rankify PDF2CBT" })
 
         <div class="relative rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]" style="transform: rotate(0.5deg)">
           <div class="tape" aria-hidden="true"></div>
-          <h2 class="font-display font-bold text-xl tracking-tight">Free &amp; open</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">This repo is <b>MIT</b> — fork it, ship it, remix it however helps students. No accounts, no paywalls, no asterisks.</p>
+          <h2 class="font-display font-bold text-xl tracking-tight">Free for learning</h2>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed">This repo is <a href="https://polyformproject.org/licenses/noncommercial/1.0.0" class="text-pen underline decoration-wavy underline-offset-2">PolyForm Noncommercial 1.0.0</a> — free for personal, research &amp; education. Commercial use needs separate permission. No accounts, no paywalls.</p>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="public/readme-bg.webp" alt="Rankify Background" width="100%" style="border-radius: 20px;" />
 
@@ -13,7 +13,7 @@
 [![Version](https://img.shields.io/badge/Version-1.0.0--light-7c3aed?style=for-the-badge&logo=semantic-release&logoColor=white)](https://github.com/namandhakad712/Rankify-PDF2CBT)
 [![Tech Stack](https://img.shields.io/badge/Tech-Vite_+_Vue_3_+_Rolldown-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Platform](https://img.shields.io/badge/Platform-Web_Light-00DC82?style=for-the-badge&logo=vite&logoColor=white)](https://rankify.qzz.io)
-[![License](https://img.shields.io/badge/License-MIT-00D9FF?style=for-the-badge)](./LICENSE)
+[![License](https://img.shields.io/badge/License-PolyForm--Noncommercial-4a4a4a?style=for-the-badge)](https://polyformproject.org/licenses/noncommercial/1.0.0)
 
 <a href="https://www.producthunt.com/products/rankify-2?utm_source=badge-featured&utm_medium=badge&utm_source=badge-rankify-2" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1034991&theme=light" alt="Rankify - Turn PDF to Live Test Interface | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 
@@ -602,7 +602,7 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 
 <br>
 
-**License:** MIT � open source, forever. Built with Vite, Vue and too much chai.
+**License:** [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0) — free for personal, research, education & nonprofits; commercial use requires separate permission. See `LICENSE`.
 
 [![GitHub](https://img.shields.io/badge/GitHub-namandhakad712-181717?style=for-the-badge&logo=github)](https://github.com/namandhakad712)
 [![Stars](https://img.shields.io/github/stars/namandhakad712/Rankify-PDF2CBT?style=for-the-badge&logo=github&color=yellow)](https://github.com/namandhakad712/Rankify-PDF2CBT/stargazers)
