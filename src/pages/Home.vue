@@ -325,7 +325,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useHead } from '@vueuse/head'
 import gsap from 'gsap'
@@ -338,8 +338,9 @@ import Lenis from 'lenis'
 import { ArrowRight, ArrowUp, Plus } from 'lucide-vue-next'
 import CircularText from '@/components/CircularText.vue'
 import ImageTrail from '@/components/ImageTrail.vue'
-import Dither from '@/components/Dither.vue'
 import Crosshair from '@/components/Crosshair.vue'
+
+const Dither = defineAsyncComponent(() => import('@/components/Dither.vue'))
 
 gsap.registerPlugin(ScrollTrigger, SplitText, Flip, ScrambleTextPlugin, DrawSVGPlugin)
 
@@ -451,6 +452,7 @@ function scrambleEl(el, original) {
 }
 
 /* ── pencil trail — smooth, single stroke, no dots ── */
+let inkNeedsClear = false
 function inkLoop (now) {
   inkRaf = requestAnimationFrame(inkLoop)
   const c = inkCanvas.value
@@ -462,10 +464,17 @@ function inkLoop (now) {
     inkCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
   }
   const w = c.offsetWidth, h = c.offsetHeight
-  inkCtx.clearRect(0, 0, w, h)
-  const life = 1100
+  const life = 620
   inkPts = inkPts.filter(p => now - p.t < life)
-  if (inkPts.length < 2) return
+  if (!inkPts.length) {
+    // idle: ek final clear, phir rAF free — GSAP perf: pause dead work
+    if (inkNeedsClear) {
+      inkCtx.clearRect(0, 0, w, h)
+      inkNeedsClear = false
+    }
+    return
+  }
+  inkNeedsClear = true
   // pencil texture: slightly grainy, uniform, no per-segment dots
   inkCtx.lineCap = 'round'
   inkCtx.lineJoin = 'round'
@@ -508,7 +517,7 @@ onMounted(() => {
       {
         width: '100%',
         ease: 'none',
-        scrollTrigger: { trigger: footerEl, start: 'top 98%', end: 'top 12%', scrub: 0.5 }
+        scrollTrigger: { trigger: footerEl, start: 'top 98%', end: 'top 25%', scrub: 0.5 }
       }
     )
   }
@@ -542,7 +551,7 @@ onMounted(() => {
         return
       }
       const now = performance.now()
-      if (now - last < 16) return
+      if (now - last < 8) return
       last = now
       inkPts.push({ x: e.clientX, y: e.clientY, t: now })
       if (inkPts.length > 120) inkPts.shift()
@@ -551,8 +560,14 @@ onMounted(() => {
   }
 
   /* marquee: base drift + scroll-velocity skew — docs: velocity via ScrollTrigger.getVelocity */
+  // perf: section viewport se bahar → tick free (skill: pause off-screen work)
+  let mqVisible = true
+  const mqEl = marqueeTrack.value?.closest('section')
+  if (mqEl && 'IntersectionObserver' in window) {
+    new IntersectionObserver(es => { mqVisible = es[0].isIntersecting }, { rootMargin: '120px' }).observe(mqEl)
+  }
   mqTick = () => {
-    if (!marqueeTrack.value) return
+    if (!mqVisible || !marqueeTrack.value) return
     const v = Math.min(Math.abs(lenis.velocity || 0), 60) / 60
     mqX -= 0.04 + v * 0.45
     if (mqX <= -50) mqX += 50

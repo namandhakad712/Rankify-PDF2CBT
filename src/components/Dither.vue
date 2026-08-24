@@ -39,6 +39,7 @@ let program: Program | null = null;
 let mesh: Mesh | null = null;
 let animationId: number | null = null;
 let resizeObserver: ResizeObserver | null = null;
+let io: IntersectionObserver | null = null;
 let currentMouse = [0, 0];
 let targetMouse = [0, 0];
 
@@ -280,19 +281,18 @@ const update = (t: number) => {
     program.uniforms.time.value = t * 0.001;
   }
 
-  program.uniforms.waveSpeed.value = props.waveSpeed;
-  program.uniforms.waveFrequency.value = props.waveFrequency;
-  program.uniforms.waveAmplitude.value = props.waveAmplitude;
-  program.uniforms.waveColor.value.r = props.waveColor[0];
-  program.uniforms.waveColor.value.g = props.waveColor[1];
-  program.uniforms.waveColor.value.b = props.waveColor[2];
-  program.uniforms.enableMouseInteraction.value = props.enableMouseInteraction ? 1 : 0;
-  program.uniforms.mouseRadius.value = props.mouseRadius;
-  program.uniforms.colorNum.value = props.colorNum;
-  program.uniforms.pixelSize.value = props.pixelSize;
-
   renderer.render({ scene: mesh });
   animationId = requestAnimationFrame(update);
+};
+
+// perf: footer viewport se bahar → WebGL rAF pause (skill: pause off-screen work)
+const setRunning = (running: boolean) => {
+  if (running && animationId === null) {
+    animationId = requestAnimationFrame(update);
+  } else if (!running && animationId !== null) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
 };
 
 const initializeScene = () => {
@@ -343,7 +343,10 @@ const initializeScene = () => {
   }
 
   resize();
-  animationId = requestAnimationFrame(update);
+
+  if (io) io.disconnect();
+  io = new IntersectionObserver(entries => setRunning(entries[0].isIntersecting));
+  io.observe(container);
 };
 
 const cleanup = () => {
@@ -355,6 +358,11 @@ const cleanup = () => {
   if (resizeObserver) {
     resizeObserver.disconnect();
     resizeObserver = null;
+  }
+
+  if (io) {
+    io.disconnect();
+    io = null;
   }
 
   if (containerRef.value) {

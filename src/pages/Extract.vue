@@ -262,62 +262,80 @@ function cancelAgent() { abortCtl?.abort() }
 
       <div class="mt-10 grid gap-8">
         <!-- Step I — GEM -->
-        <div class="tape-card relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" style="transform: rotate(-0.5deg)" @mousemove="handleSpotlight">
-          <div class="tape" aria-hidden="true"></div>
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="w-9 h-9 rounded-xl bg-pen/10 grid place-items-center"><Sparkles class="w-4.5 h-4.5 text-pen" /></span>
-            <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-pen">STEP I</span>
-          </div>
-          <div class="text-xl font-bold font-display tracking-tight">Get JSON from GEM</div>
-          <p class="text-[15px] text-ink/60 mt-1.5 leading-relaxed">Open the preset GEM, upload your PDF there, copy the JSON it returns.</p>
-          <a href="https://ishortn.ink/gemini-gem" target="_blank" @mousemove="handleMagnetic" @mouseleave="resetMagnetic" class="magnetic-btn group inline-flex items-center gap-2 mt-5 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5">
-            Open GEM Chat <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
-          <span class="font-hand text-xl text-ink/50 -rotate-2 inline-block ml-4">free, no key needed</span>
-        </div>
-
-        <!-- Step II — PDF -->
-        <div class="tape-card relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" style="transform: rotate(0.4deg)" @mousemove="handleSpotlight">
-          <div class="tape" aria-hidden="true"></div>
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="w-9 h-9 rounded-xl bg-hlgreen grid place-items-center"><UploadCloud class="w-4.5 h-4.5 text-ink" /></span>
-            <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">STEP II</span>
-          </div>
-          <div class="text-xl font-bold font-display tracking-tight">Upload the PDF — for diagram crops in Review</div>
-          <label class="mt-4 block border-2 border-dashed border-ink/15 rounded-2xl p-7 text-center cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors">
-            <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
-            <UploadCloud class="w-6 h-6 mx-auto text-ink/40" />
-            <span class="block mt-2 text-sm text-ink/55">{{ pdfFile ? pdfFile.name : "Drop or click — PDF under 20MB, stored in your browser only" }}</span>
-          </label>
-          <div v-if="pdfFile" class="text-sm text-correct font-medium mt-2">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
-        </div>
-
         <!-- Flow tabs -->
-        <div class="flex gap-2 px-1">
-          <button @click="activeTab='gem'" :class="['px-5 py-2.5 rounded-xl text-sm font-bold transition-all', activeTab==='gem' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">GEM paste JSON</button>
+        <div class="sticky top-24 z-30 flex gap-2 px-1">
+          <button @click="activeTab='gem'" :class="['px-5 py-2.5 rounded-xl text-sm font-bold transition-all', activeTab==='gem' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">Gemini GEM flow</button>
           <button @click="activeTab='agent'" :class="['px-5 py-2.5 rounded-xl text-sm font-bold transition-all', activeTab==='agent' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">AI Agent — free models</button>
         </div>
 
-        <!-- Step III — Paste -->
-        <div v-show="activeTab==='gem'" class="tape-card relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" style="transform: rotate(-0.3deg)" @mousemove="handleSpotlight">
-          <div class="tape" aria-hidden="true"></div>
-          <div class="flex items-center gap-2.5 mb-2">
-            <span class="w-9 h-9 rounded-xl bg-hlyellow grid place-items-center"><ClipboardPaste class="w-4.5 h-4.5 text-ink" /></span>
-            <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">STEP III</span>
+        <!-- ═══ TAB 1 · GEM — paste JSON ═══ -->
+        <div v-show="activeTab==='gem'" class="grid gap-6">
+          <div class="tape-card relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" style="transform: rotate(-0.3deg)" @mousemove="handleSpotlight">
+            <div class="tape" aria-hidden="true"></div>
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-9 h-9 rounded-xl bg-pen/10 grid place-items-center"><Sparkles class="w-4.5 h-4.5 text-pen" /></span>
+              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-pen">GEM FLOW · FREE · NO KEY</span>
+            </div>
+            <div class="text-2xl font-bold font-display tracking-tight">Teen steps, bas.</div>
+            <div class="mt-5 grid md:grid-cols-3 gap-3">
+              <div class="rounded-2xl border border-ink/10 bg-paper p-4">
+                <div class="font-hand text-2xl text-pen leading-none">1</div>
+                <p class="mt-2 text-[13px] text-ink/65 leading-snug">GEM chat kholo, apna PDF wahan upload karo</p>
+                <a href="https://ishortn.ink/gemini-gem" target="_blank" @mousemove="handleMagnetic" @mouseleave="resetMagnetic" class="magnetic-btn group mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-pen text-white text-xs font-bold transition-transform hover:-translate-y-0.5">
+                  Open GEM Chat <ArrowRight class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
+              <div class="rounded-2xl border border-ink/10 bg-paper p-4">
+                <div class="font-hand text-2xl text-pen leading-none">2</div>
+                <p class="mt-2 text-[13px] text-ink/65 leading-snug">GEM jo JSON deta hai use poora copy kar lo</p>
+                <span class="font-hand text-lg text-ink/45 -rotate-2 inline-block mt-2">ctrl+A, ctrl+C</span>
+              </div>
+              <div class="rounded-2xl border border-ink/10 bg-paper p-4">
+                <div class="font-hand text-2xl text-pen leading-none">3</div>
+                <p class="mt-2 text-[13px] text-ink/65 leading-snug">Neeche paste karo → seedha Review</p>
+                <ClipboardPaste class="w-5 h-5 text-ink/35 mt-2" />
+              </div>
+            </div>
+            <textarea v-model="pasteText" rows="10" placeholder='Paste full JSON here — e.g. {"meta":{"title":"Test",...},"sections":[],"questions":[...]}' class="mt-5 w-full bg-paper border border-ink/12 rounded-2xl p-4 font-mono text-xs text-ink focus:outline-none focus:ring-2 focus:ring-pen/50 placeholder:text-ink/30"></textarea>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <button :disabled="parsing" class="px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5" @click="handlePasteParse">{{ parsing ? 'Parsing…' : 'Parse & go to Review' }} <ArrowRight v-if="!parsing" class="w-4 h-4 inline ml-1" /></button>
+              <button class="px-5 py-3 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors" @click="pasteText=''">Clear</button>
+            </div>
+            <div class="mt-4 flex gap-2">
+              <input v-model="pasteUrl" placeholder="Or paste a JSON URL and fetch" class="flex-1 bg-paper border border-ink/12 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pen/50 placeholder:text-ink/35" />
+              <button class="px-5 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors" @click="handleUrlFetch">Fetch URL</button>
+            </div>
+            <div v-if="error" class="mt-4 p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ error }}</div>
+            <div v-if="issuesText" class="mt-2 p-4 bg-hlyellow/40 border border-hlyellow rounded-2xl text-xs text-ink/75 whitespace-pre-wrap">{{ issuesText }}</div>
           </div>
-          <div class="text-xl font-bold font-display tracking-tight">Paste the JSON</div>
-          <textarea v-model="pasteText" rows="10" placeholder='Paste full JSON here — e.g. {"meta":{"title":"Test",...},"sections":[],"questions":[...]}' class="mt-4 w-full bg-paper border border-ink/12 rounded-2xl p-4 font-mono text-xs text-ink focus:outline-none focus:ring-2 focus:ring-pen/50 placeholder:text-ink/30"></textarea>
-          <div class="mt-4 flex flex-wrap gap-3">
-            <button :disabled="parsing" class="px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5" @click="handlePasteParse">{{ parsing ? 'Parsing…' : 'Parse & go to Review' }} <ArrowRight v-if="!parsing" class="w-4 h-4 inline ml-1" /></button>
-            <button class="px-5 py-3 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors" @click="pasteText=''">Clear</button>
-          </div>
-          <div class="mt-4 flex gap-2">
-            <input v-model="pasteUrl" placeholder="Or paste a JSON URL and fetch" class="flex-1 bg-paper border border-ink/12 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pen/50 placeholder:text-ink/35" />
-            <button class="px-5 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors" @click="handleUrlFetch">Fetch URL</button>
-          </div>
-          <div v-if="error" class="mt-4 p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ error }}</div>
-          <div v-if="issuesText" class="mt-2 p-4 bg-hlyellow/40 border border-hlyellow rounded-2xl text-xs text-ink/75 whitespace-pre-wrap">{{ issuesText }}</div>
+
+          <details class="rounded-lg bg-white ring-1 ring-ink/[0.06] p-5">
+            <summary class="cursor-pointer text-sm font-semibold text-ink/70 hover:text-ink select-none">Optional — PDF yahan bhi upload karo <span class="text-ink/45 font-normal">(sirf Review mein diagram crops ke liye)</span></summary>
+            <label class="mt-4 block border-2 border-dashed border-ink/15 rounded-2xl p-6 text-center cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors">
+              <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
+              <UploadCloud class="w-6 h-6 mx-auto text-ink/40" />
+              <span class="block mt-2 text-sm text-ink/55">{{ pdfFile ? pdfFile.name : "PDF under 20MB — browser mein hi store hota hai" }}</span>
+            </label>
+            <div v-if="pdfFile" class="text-sm text-correct font-medium mt-2">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
+          </details>
         </div>
+
+        <!-- ═══ TAB 2 · AI AGENT ═══ -->
+        <div v-show="activeTab==='agent'" class="grid gap-6">
+          <div class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-9 h-9 rounded-xl bg-hlgreen grid place-items-center"><UploadCloud class="w-4.5 h-4.5 text-ink" /></span>
+              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">AGENT · STEP 1</span>
+            </div>
+            <div class="text-xl font-bold font-display tracking-tight">PDF upload karo</div>
+            <label class="mt-4 block border-2 border-dashed border-ink/15 rounded-2xl p-7 text-center cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors">
+              <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
+              <UploadCloud class="w-6 h-6 mx-auto text-ink/40" />
+              <span class="block mt-2 text-sm text-ink/55">{{ pdfFile ? pdfFile.name : "Drop or click — PDF under 20MB, stored in your browser only" }}</span>
+            </label>
+            <div v-if="pdfFile" class="text-sm text-correct font-medium mt-2">✓ {{ pdfFile.name }} — {{ (pdfFile.size/1024/1024).toFixed(2) }} MB</div>
+            <p v-if="resumeAvailable && !agentRunning" class="mt-3 text-[13px] font-medium text-green-700">✓ Pichla checkpoint mila — neeche Resume checkpoint dabao</p>
+          </div>
 
         <!-- AI Agent tab — page-chunked extraction -->
         <div v-show="activeTab==='agent'" class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
