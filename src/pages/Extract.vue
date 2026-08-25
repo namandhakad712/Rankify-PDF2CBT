@@ -374,6 +374,59 @@ async function startAgent(resume = false) {
 }
 function cancelAgent() { abortCtl?.abort() }
 
+/* ── Past sessions — manage previous CBT attempts & drafts ── */
+interface SessionRow { id: number; title: string; when: string; score: string; pct: number; paper: import("@/types").UniversalPaper; resultId?: number }
+const pastSessions = ref<SessionRow[]>([])
+const draftSession = ref<{ title: string; when: string; qs: number } | null>(null)
+
+async function loadSessions() {
+  try {
+    const db = getDB()
+    const rows = await db.results.orderBy("createdAt").reverse().limit(12).toArray()
+    pastSessions.value = rows.map((r) => ({
+      id: r.id!,
+      title: r.paper?.meta?.title || "Untitled test",
+      when: new Date(r.createdAt).toLocaleString(),
+      score: `${r.score?.obtained ?? 0}/${r.score?.total ?? r.paper?.questions?.length ?? 0}`,
+      pct: r.score?.percentage ?? 0,
+      paper: r.paper,
+      resultId: r.id,
+    }))
+    const draft = await db.papers.get("review")
+    draftSession.value = draft?.paper ? { title: draft.paper.meta?.title || "Untitled draft", when: new Date(draft.updatedAt).toLocaleString(), qs: draft.paper.questions?.length || 0 } : null
+  } catch { /* table missing on old DBs */ }
+}
+void loadSessions()
+
+async function openReport(row: SessionRow) {
+  const db = getDB()
+  const rec = await db.results.get(row.resultId!)
+  if (!rec) return
+  localStorage.setItem("rpdf2cbt-last-result", JSON.stringify({ paper: rec.paper, answers: {}, status: {}, createdAt: rec.createdAt, score: rec.score }))
+  router.push("/results")
+}
+
+async function retake(row: SessionRow) {
+  const db = getDB()
+  await db.papers.put({ id: "current", paper: JSON.parse(JSON.stringify(row.paper)), updatedAt: Date.now() })
+  localStorage.setItem("rpdf2cbt-current", JSON.stringify(row.paper))
+  router.push("/test")
+}
+
+async function deleteSession(row: SessionRow) {
+  if (!window.confirm(`Delete "${row.title}" (${row.when})? This cannot be undone.`)) return
+  if (row.resultId != null) await getDB().results.delete(row.resultId)
+  await loadSessions()
+}
+
+async function deleteDraft() {
+  if (!window.confirm("Delete the saved draft paper?")) return
+  await getDB().papers.delete("review")
+  draftSession.value = null
+}
+
+async function openDraft() { router.push("/review") }
+
 function goReview() {
   resultInfo.value = null
   pipeStage.value = "idle"
@@ -659,6 +712,37 @@ void (async () => {
             <div v-if="agentError" class="p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ agentError }}</div>
           </div>
           </div>
+        </div>
+
+        <!-- Past sessions manager -->
+        <div v-if="pastSessions.length || draftSession" class="mt-6 rounded-2xl bg-white p-5 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.22)] ring-1 ring-ink/[0.06]">
+          <div class="flex items-center justify-between mb-3">
+            <div class="font-display font-bold tracking-tight text-sm">Previous Tests</div>
+            <span class="font-mono text-[10px] text-ink/40">{{ pastSessions.length }} attempts · stored locally</span>
+          </div>
+          <div v-if="pastSessions.length" class="space-y-1.5">
+            <div v-for="row in pastSessions" :key="row.id" class="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2 rounded-xl border border-ink/10 hover:border-ink/25 transition-colors">
+              <span :class="['font-mono text-xs font-bold px-2 py-0.5 rounded-full', row.pct >= 60 ? 'bg-correct/[0.12] text-green-700' : row.pct >= 35 ? 'bg-hlyellow/60 text-ink' : 'bg-redmargin/[0.1] text-redmargin']">{{ row.pct }}%</span>
+              <span class="text-sm font-semibold text-ink truncate min-w-0 flex-1">{{ row.title }}</span>
+              <span class="font-mono text-[10px] text-ink/45">{{ row.score }}</span>
+              <span class="font-mono text-[10px] text-ink/35 hidden sm:inline">{{ row.when }}</span>
+              <span class="flex gap-1.5 ml-auto">
+                <button @click="openReport(row)" title="View report" class="px-2.5 py-1 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Report</button>
+                <button @click="retake(row)" title="Retake" class="px-2.5 py-1 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Retake</button>
+                <button @click="deleteSession(row)" title="Delete" class="px-2.5 py-1 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
+              </span>
+            </div>
+          </div>
+          <div v-if="draftSession" class="mt-2.5 pt-2.5 border-t border-dashed border-ink/15 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2">
+            <span class="font-mono text-[10px] font-bold uppercase tracking-wider bg-hlblue px-2 py-0.5 rounded-full">draft</span>
+            <span class="text-sm font-semibold text-ink truncate flex-1">{{ draftSession.title }}</span>
+            <span class="font-mono text-[10px] text-ink/45">{{ draftSession.qs }} questions · {{ draftSession.when }}</span>
+            <span class="flex gap-1.5 ml-auto">
+              <button @click="openDraft" class="px-2.5 py-1 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Open in Review</button>
+              <button @click="deleteDraft" title="Delete draft" class="px-2.5 py-1 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
+            </span>
+          </div>
+          <div v-if="!pastSessions.length && !draftSession" class="text-xs text-ink/45 py-2">No previous sessions yet — your tests will appear here.</div>
         </div>
       </div>
     </div>

@@ -312,7 +312,7 @@
             <RouterLink to="/privacy" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.privacy') }}</RouterLink>
           </nav>
           <button class="relative h-36 w-36 md:h-40 md:w-40 shrink-0 text-cream/75 hover:text-hlyellow transition-colors" aria-label="Back to top" @click="toTop">
-            <CircularText text="{{ t('footer.back') }}  •  {{ t('footer.back') }}  •  " :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
+            <CircularText :text="t('footer.back') + '  •  ' + t('footer.back') + '  •  '" :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
             <ArrowUp class="absolute inset-0 m-auto w-6 h-6" />
           </button>
         </div>
