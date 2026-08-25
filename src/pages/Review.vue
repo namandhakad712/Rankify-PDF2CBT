@@ -291,7 +291,7 @@ function jumpTo(i: number) { selIdx.value = i }
                   <div v-for="(opt, oi) in q.options" :key="oi" :class="['rounded-xl border transition-colors', isCorrect(q, oi) ? 'border-correct/60 bg-correct/[0.06]' : 'border-ink/10 bg-paper hover:border-ink/25']">
                     <div class="flex items-center gap-2 px-2.5 py-2">
                       <span :class="['font-mono text-xs w-5 shrink-0', isCorrect(q, oi) ? 'text-green-700 font-bold' : 'text-ink/45']">{{ String.fromCharCode(65+oi) }}.</span>
-                      <span v-if="showRendered" class="flex-1 min-w-0 text-sm text-ink cursor-text truncate" :title="t('review.clickToEdit') + opt" @click="showRendered = false"><MathText :text="opt" /></span>
+                      <span v-if="showRendered" class="flex-1 min-w-0 text-sm text-ink cursor-text break-words [&_.katex]:text-[0.98em]" :title="t('review.clickToEdit') + opt" @click="showRendered = false"><MathText :text="opt" /></span>
                       <input v-else :value="opt" @input="q.options![oi] = ($event.target as HTMLInputElement).value; markDirty()" class="flex-1 min-w-0 bg-transparent text-sm text-ink focus:outline-none" :placeholder="t('review.phOption')" />
                       <span v-if="isCorrect(q, oi)" class="shrink-0 px-1.5 py-0.5 rounded-full bg-correct text-white font-mono text-[8px] font-bold">✓</span>
                     </div>

@@ -19,6 +19,54 @@ const cropperRef = ref<any>(null)
 const previewUrl = ref<string | null>(null)
 const quality = ref<"good" | "ok" | "bad">("good")
 const cropSize = ref<{ w: number; h: number } | null>(null)
+const autoFocus = ref(true)
+
+/** zoom helpers — enlarge/shrink the visible sheet so wasted area stays minimal */
+function zoomBy(factor: number) {
+  const c = cropperRef.value
+  try {
+    if (typeof c?.zoom === "function") c.zoom(factor)
+    else {
+      // fallback: scale stencil around its center via setCoordinates
+      const r = c?.getResult?.()
+      const co = r?.coordinates
+      const img = r?.imageSize
+      if (!co || !img) return
+      const w = Math.min(img.width, co.width * factor)
+      const h = Math.min(img.height, co.height * factor)
+      c.setCoordinates({
+        width: w,
+        height: h,
+        left: Math.max(0, co.left - (w - co.width) / 2),
+        top: Math.max(0, co.top - (h - co.height) / 2),
+      })
+    }
+  } catch { /* api variance across versions */ }
+}
+
+function fitStencil() {
+  const c = cropperRef.value
+  try {
+    const r = c?.getResult?.()
+    const img = r?.imageSize
+    if (!img) return c?.reset?.()
+    const w = img.width * 0.72
+    const h = img.height * 0.55
+    c.setCoordinates({ width: w, height: h, left: (img.width - w) / 2, top: (img.height - h) / 2 })
+  } catch { /* ignore */ }
+}
+
+/** keep stencil generously sized right after a new page renders */
+function initStencil() {
+  try {
+    const r = cropperRef.value?.getResult?.()
+    const img = r?.imageSize
+    if (!img) return
+    const w = img.width * 0.62
+    const h = img.height * 0.46
+    cropperRef.value?.setCoordinates({ width: w, height: h, left: (img.width - w) / 2, top: (img.height - h) / 2 })
+  } catch { /* ignore */ }
+}
 
 onMounted(async () => {
   if (!props.pdfBuffer) return
@@ -81,6 +129,9 @@ function onCropChange() {
   quality.value = delta < 0.08 && px > 220 ? "good" : delta < 0.22 && px > 90 ? "ok" : "bad"
 }
 
+// first paint of a page → pre-size the stencil so dark unused margins start small
+watch(pageSrc, () => { void nextTick().then(() => { initStencil(); onCropChange() }) })
+
 function saveCrop() {
   const res = cropperRef.value?.getResult?.()
   if (!res?.canvas || !cropSize.value) return
@@ -119,6 +170,13 @@ function saveCrop() {
       <div class="flex-1 min-h-0 flex flex-col lg:flex-row gap-4 p-4 md:p-5">
         <!-- Cropper -->
         <div class="relative w-full lg:w-[62%] rounded-xl border border-ink/12 bg-paper overflow-hidden" style="height: 68vh">
+          <!-- floating zoom controls -->
+          <div v-if="pdfDocRef" class="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 rounded-xl bg-white/95 ring-1 ring-ink/10 shadow-sm px-1 py-0.5">
+            <button @click="zoomBy(1.25)" title="Zoom in (bigger crop area)" class="w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/70 font-bold">＋</button>
+            <button @click="zoomBy(0.8)" title="Zoom out" class="w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/70 font-bold">－</button>
+            <button @click="fitStencil" title="Reset stencil size" class="px-2 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-[10px] font-mono font-bold text-ink/60">FIT</button>
+            <button @click="autoFocus = !autoFocus; if (autoFocus) initStencil()" :class="['px-2 h-7 rounded-lg text-[10px] font-mono font-bold transition-colors', autoFocus ? 'bg-pen text-white' : 'text-ink/55 hover:text-pen']" title="Start each page with a large pre-sized crop">AUTO</button>
+          </div>
           <div v-if="loadingPage || (!pageSrc && pdfDocRef)" class="absolute inset-0 z-10 grid place-items-center bg-white/70 text-sm text-ink/55 font-medium">{{ t('cropper.rendering') }}{{ pageNum }}…</div>
           <div v-if="!pdfDocRef" class="absolute inset-0 grid place-items-center text-sm text-ink/50 px-6 text-center">
             {{ props.pdfBuffer ? t('cropper.loading') : t('cropper.noPdf') }}
@@ -128,7 +186,14 @@ function saveCrop() {
             ref="cropperRef"
             :src="pageSrc"
             :stencil-component="RectangleStencil"
+            :auto-zoom="true"
             :canvas="{ minHeight: 120, minWidth: 120 }"
+            :stencil-props="{
+              movable: true,
+              resizable: true,
+              handlers: { eastNorth: true, north: true, westNorth: true, west: true, westSouth: true, south: true, eastSouth: true, east: true },
+              lines: { north: true, west: true, south: true, east: true },
+            }"
             style="width: 100%; height: 100%"
             class="bg-paper"
             @change="onCropChange"
@@ -166,3 +231,29 @@ function saveCrop() {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* stencil — pen-blue selection + dark surround that shrinks as you crop (auto-zoom) */
+:deep(.vue-rectangle-stencil) {
+  border: 2px solid rgba(47, 95, 224, 0.85);
+  box-shadow: 0 0 0 9999px rgba(35, 32, 58, 0.5);
+}
+:deep(.vue-handler-wrapper) {
+  width: 10px;
+  height: 10px;
+  background: white;
+  border: 2px solid #2f5fe0;
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+@media (min-width: 640px) {
+  :deep(.vue-handler-wrapper) {
+    width: 12px;
+    height: 12px;
+  }
+}
+:deep(.vue-line-wrapper),
+:deep(.vue-simple-line) {
+  border-color: rgba(47, 95, 224, 0.5);
+}
+</style>
