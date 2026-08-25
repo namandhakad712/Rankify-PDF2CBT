@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppNav from '@/components/AppNav.vue'
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { useRouter } from "vue-router"
 import type { UniversalPaper, UniversalQuestion, QuestionType } from "@/types"
 import { getDB } from "@/lib/db"
@@ -20,6 +20,7 @@ function optionsCompact(q: UniversalQuestion): boolean {
   return !!q.options?.length && q.options.every((o) => (o || "").length <= 26)
 }
 import gsap from "gsap"
+import katex from "katex"
 import { t } from "@/lib/i18n"
 
 const router = useRouter()
@@ -31,6 +32,9 @@ const selIdx = ref(0)
 const showPanel = ref(false) // collapsed by default — expand via toolbar or edge rail
 const showMobileNav = ref(false)
 const showMobileVal = ref(false)
+const showExportDialog = ref(false)
+const exportFormat = ref('student') // 'student' | 'teacher' | 'blank'
+const exportBusy = ref(false)
 
 /* ── Session dirty-tracking ── */
 const dirtyIds = ref<Set<number>>(new Set())
@@ -38,8 +42,20 @@ function markDirty(idx?: number) {
   const s = new Set(dirtyIds.value)
   s.add(idx ?? selIdx.value)
   dirtyIds.value = s
+  autoSave()
 }
 const dirtyCount = computed(() => dirtyIds.value.size)
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null
+function autoSave() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    if (!paper.value) return
+    localStorage.setItem("rpdf2cbt-review", JSON.stringify(paper.value))
+    getDB().papers.put({ id: "review", paper: paper.value, updatedAt: Date.now() })
+  }, 500)
+}
+watch(paper, () => { if (paper.value) autoSave() }, { deep: true })
 
 onMounted(async () => {
   setTimeout(() => gsap.from(".rev-zone", { y: 26, opacity: 0, duration: 0.55, stagger: 0.07, ease: "power2.out" }), 100)
@@ -165,6 +181,134 @@ const warnCount = computed(() => valIssues.value.filter((x) => x.level === "warn
 
 function jumpTo(i: number) { selIdx.value = i }
 function jumpToMobile(i: number) { selIdx.value = i; showMobileNav.value = false; showMobileVal.value = false }
+
+/* ── Export to PDF ── */
+async function exportPDF() {
+  if (!paper.value) return
+  exportBusy.value = true
+  try {
+    const html2pdf = (await import('html2pdf.js')).default
+    const el = buildExportHTML()
+    document.body.appendChild(el)
+    await html2pdf()
+      .set({
+        margin: [12, 14, 12, 14],
+        filename: `${paper.value.meta.title || 'question-paper'}.pdf`,
+        image: { type: 'jpeg', quality: 0.92 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      } as any)
+      .from(el)
+      .save()
+    document.body.removeChild(el)
+  } catch (e) {
+    console.error('Export failed', e)
+  } finally {
+    exportBusy.value = false
+    showExportDialog.value = false
+  }
+}
+
+function buildExportHTML() {
+  const p = paper.value!
+  const mode = exportFormat.value
+  const showAnswers = mode === 'teacher' || mode === 'student'
+  const answersAtEnd = mode === 'teacher'
+
+  const div = document.createElement('div')
+  div.style.cssText = 'font-family: system-ui, -apple-system, sans-serif; color: #23203a; padding: 20px; max-width: 700px; margin: 0 auto; font-size: 13px; line-height: 1.6;'
+
+  let html = `
+    <div style="text-align:center; margin-bottom: 24px; border-bottom: 2px solid #23203a20; padding-bottom: 16px;">
+      <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em;">${esc(p.meta.title)}</div>
+      <div style="font-size: 11px; color: #23203a80; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.15em;">
+        ${esc(p.meta.exam || '')} · ${p.meta.durationMinutes} min · ${p.questions.length} questions · ${p.meta.totalMarks || ''} marks
+      </div>
+    </div>
+  `
+
+  const ansMap: Record<string, string> = {};
+  p.questions.forEach(q => {
+    if (q.type === 'msq') {
+      ansMap[q.id] = (q.answers || []).map(i => String.fromCharCode(65 + Number(i))).join(', ');
+    } else if (q.options && /^\d+$/.test(q.answer)) {
+      ansMap[q.id] = String.fromCharCode(64 + Number(q.answer)) + '. ' + esc(q.options[Number(q.answer) - 1] || '');
+    } else {
+      ansMap[q.id] = esc(q.answer || '—');
+    }
+  })
+
+  p.questions.forEach((q, qi) => {
+    const opts = q.options || []
+    const hasOpts = opts.length > 0
+    const optsHTML = hasOpts ? opts.map((o, oi) => {
+      const letter = String.fromCharCode(65 + oi)
+      const isAns = q.type === 'msq'
+        ? (q.answers || []).includes(String(oi))
+        : String(oi + 1) === String(q.answer || '')
+      const mark = isAns && mode !== 'blank' ? ' ✓' : ''
+      return `<div style="padding: 4px 0 4px 24px;">${letter}. ${renderLatex(o || '')}${mark ? `<span style="color:#1FA45C;font-weight:bold;">${mark}</span>` : ''}</div>`
+    }).join('') : ''
+
+    const answerLine = showAnswers && !answersAtEnd && hasOpts
+      ? `<div style="font-size:11px; color:#1FA45C; margin-top:4px;">Answer: ${ansMap[q.id]}</div>`
+      : ''
+
+    const diagHTML = (q.diagrams || []).map(d =>
+      `<div style="margin-top:8px;"><img src="${d}" style="max-height:140px; max-width:100%; border:1px solid #23203a15; border-radius:6px;" /></div>`
+    ).join('')
+
+    html += `
+      <div style="page-break-inside:avoid; margin-bottom:14px; padding:10px 12px; border:1px solid #23203a12; border-radius:6px; background: ${qi % 2 === 0 ? '#faf8f4' : '#fff'};">
+        <div style="font-weight:700; font-size:13px;">Q${q.number}. <span style="font-weight:400;">${renderLatex(q.text)}</span></div>
+        ${diagHTML}
+        ${optsHTML}
+        ${answerLine}
+        <div style="font-size:10px; color:#23203a60; margin-top:4px;">[${q.type.toUpperCase()}] ${q.subject || 'General'} · ${q.marks} marks${q.negativeMarks ? ' · −' + q.negativeMarks : ''}</div>
+      </div>
+    `
+  })
+
+  if (answersAtEnd) {
+    html += `
+      <div style="page-break-before:always; margin-top:24px; padding-top:16px; border-top:2px solid #23203a20;">
+        <div style="font-size:16px; font-weight:800; margin-bottom:12px;">Answer Key</div>
+    `
+    p.questions.forEach(q => {
+      html += `<div style="padding:3px 0; font-size:12px;">Q${q.number}. <b>${ansMap[q.id]}</b></div>`
+    })
+    html += `</div>`
+  }
+
+  html += `
+    <div style="text-align:center; margin-top:24px; font-size:10px; color:#23203a40; border-top:1px solid #23203a12; padding-top:8px;">
+      Generated by Rankify PDF2CBT · rankify-pdf2cbt.vercel.app
+    </div>
+  `
+
+  div.innerHTML = html
+  return div
+}
+
+function renderLatex(text: string): string {
+  if (!text) return ''
+  let out = esc(text)
+  // render display math $$...$$
+  out = out.replace(/\$\$([\s\S]*?)\$\$/g, (_, tex) => {
+    try { return katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false }) } catch { return tex }
+  })
+  // render inline math $...$
+  out = out.replace(/\$([^$]+?)\$/g, (_, tex) => {
+    try { return katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false }) } catch { return tex }
+  })
+  return out
+}
+
+function esc(s: string) {
+  const d = document.createElement('div')
+  d.textContent = s || ''
+  return d.innerHTML
+}
 </script>
 
 <template>
@@ -198,6 +342,7 @@ function jumpToMobile(i: number) { selIdx.value = i; showMobileNav.value = false
             <span v-if="dirtyCount" class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-full bg-hlyellow/60 text-ink break-words">{{ dirtyCount }} {{ t('review.edited') }}</span>
             <button :class="['min-h-[40px] px-3 lg:px-3.5 py-2 rounded-xl border-2 text-xs font-bold transition-colors', showRendered ? 'border-pen/40 bg-pen/[0.06] text-pen' : 'border-ink/12 text-ink/60 hover:text-ink']" @click="showRendered = !showRendered">{{ showRendered ? "◉ " + t('review.toggleRendered') : "◌ " + t('review.toggleRaw') }}</button>
             <button class="min-h-[40px] px-4 lg:px-5 py-2 rounded-xl bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5 break-words" @click="saveAndGoTest">{{ t('review.saveStart') }}</button>
+            <button class="min-h-[40px] px-3.5 lg:px-4 py-2 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors break-words" @click="showExportDialog = true">⤓ {{ t('review.export') }}</button>
             <button :class="['min-h-[40px] hidden lg:inline-flex items-center px-3.5 py-2 rounded-xl border-2 text-xs font-bold transition-colors', showPanel ? 'border-pen/40 bg-pen/[0.06] text-pen' : 'border-ink/12 text-ink/60 hover:text-ink']" @click="showPanel = !showPanel">{{ t('review.validation') }}</button>
           </div>
         </div>
@@ -463,6 +608,53 @@ function jumpToMobile(i: number) { selIdx.value = i; showMobileNav.value = false
     </template>
 
     <DiagramCropper v-if="cropFor!==null && paper" :pdfBuffer="pdfBuffer" :initialPage="(paper.questions[cropFor]?.pageNo || 1)" @cropped="onCropped" @close="cropFor=null" />
+
+    <!-- ═══════════ EXPORT DIALOG ═══════════ -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" leave-active-class="transition duration-150 ease-in" leave-to-class="opacity-0">
+        <div v-if="showExportDialog" class="fixed inset-0 z-[100] flex items-center justify-center p-5">
+          <div class="absolute inset-0 bg-ink/40 backdrop-blur-sm" @click="showExportDialog = false"></div>
+          <div class="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-[0_30px_80px_-20px_rgba(35,32,58,0.45)] ring-1 ring-ink/[0.08] p-6 space-y-5">
+            <div>
+              <h2 class="font-display font-extrabold text-xl tracking-tight text-ink">{{ t('export.title') }}</h2>
+              <p class="mt-1 text-sm text-ink/55">{{ t('export.sub') }}</p>
+            </div>
+
+            <div class="space-y-2.5">
+              <label :class="['flex items-start gap-3 rounded-xl border-2 p-4 cursor-pointer transition-all', exportFormat==='student' ? 'border-pen bg-pen/[0.05]' : 'border-ink/10 bg-paper hover:border-ink/25']">
+                <input type="radio" v-model="exportFormat" value="student" class="accent-pen mt-1" />
+                <div>
+                  <div class="font-display font-bold text-sm text-ink">{{ t('export.student.title') }}</div>
+                  <div class="text-xs text-ink/50 mt-0.5">{{ t('export.student.desc') }}</div>
+                </div>
+              </label>
+              <label :class="['flex items-start gap-3 rounded-xl border-2 p-4 cursor-pointer transition-all', exportFormat==='teacher' ? 'border-pen bg-pen/[0.05]' : 'border-ink/10 bg-paper hover:border-ink/25']">
+                <input type="radio" v-model="exportFormat" value="teacher" class="accent-pen mt-1" />
+                <div>
+                  <div class="font-display font-bold text-sm text-ink">{{ t('export.teacher.title') }}</div>
+                  <div class="text-xs text-ink/50 mt-0.5">{{ t('export.teacher.desc') }}</div>
+                </div>
+              </label>
+              <label :class="['flex items-start gap-3 rounded-xl border-2 p-4 cursor-pointer transition-all', exportFormat==='blank' ? 'border-pen bg-pen/[0.05]' : 'border-ink/10 bg-paper hover:border-ink/25']">
+                <input type="radio" v-model="exportFormat" value="blank" class="accent-pen mt-1" />
+                <div>
+                  <div class="font-display font-bold text-sm text-ink">{{ t('export.blank.title') }}</div>
+                  <div class="text-xs text-ink/50 mt-0.5">{{ t('export.blank.desc') }}</div>
+                </div>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <button class="min-h-[40px] px-4 py-2.5 rounded-xl text-sm font-semibold text-ink/60 hover:text-ink transition-colors" @click="showExportDialog = false">{{ t('export.cancel') }}</button>
+              <button :disabled="exportBusy" class="min-h-[40px] px-6 py-2.5 rounded-xl bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5 disabled:opacity-50 flex items-center gap-2" @click="exportPDF">
+                <span v-if="exportBusy" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                {{ exportBusy ? t('export.generating') : '⤓ ' + t('export.download') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 

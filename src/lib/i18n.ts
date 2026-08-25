@@ -485,6 +485,7 @@ const dicts: Record<Locale, Dict> = {
     'review.val.msqEmpty': 'MSQ answers empty',
     'review.val.natNotNumeric': 'NAT answer is not numeric',
     'review.val.noSubject': 'no subject set',
+    'review.export': 'Export PDF',
 
     /* ── Results page ── */
     'results.eyebrow': 'checked · red pen time',
@@ -552,7 +553,20 @@ const dicts: Record<Locale, Dict> = {
     'pipeline.on': 'ON',
     'pipeline.skip': 'skip',
     'pipeline.pages': 'Pages',
-    'pipeline.ready': 'ready ✓'
+    'pipeline.ready': 'ready ✓',
+
+    /* ── Export dialog ── */
+    'export.title': 'Export Question Paper',
+    'export.sub': 'Download as a formatted PDF question paper.',
+    'export.student.title': 'With Answers (Student)',
+    'export.student.desc': 'Questions with answers shown inline — great for self-study.',
+    'export.teacher.title': 'Answer Key at End (Teacher)',
+    'export.teacher.desc': 'Questions first, answer key on the last page — perfect for printing.',
+    'export.blank.title': 'Blank Paper (No Answers)',
+    'export.blank.desc': 'Clean question paper without any answers — ready for a test.',
+    'export.cancel': 'Cancel',
+    'export.download': 'Download PDF',
+    'export.generating': 'Generating…'
   },
   hi: {
     'nav.guide': 'गाइड',
@@ -1021,6 +1035,7 @@ const dicts: Record<Locale, Dict> = {
     'review.val.msqEmpty': 'MSQ जवाब खाली हैं',
     'review.val.natNotNumeric': 'NAT जवाब न्यूमेरिक नहीं है',
     'review.val.noSubject': 'विषय सेट नहीं है',
+    'review.export': 'PDF एक्सपोर्ट',
 
     /* ── Results page ── */
     'results.eyebrow': 'चेक्ड · लाल कलम का समय',
@@ -1087,9 +1102,22 @@ const dicts: Record<Locale, Dict> = {
     'pipeline.found': 'मिला ✓',
     'pipeline.on': 'ON',
     'pipeline.skip': 'छोड़ें',
-    'pipeline.pages': 'पेज',
-    'pipeline.ready': 'तैयार ✓'
+    'pipeline.pages': 'पेज',    'pipeline.ready': 'तैयार ✓',
+
+    /* ── Export dialog ── */
+    'export.title': 'सवाल पेपर एक्सपोर्ट करें',
+    'export.sub': 'फॉर्मेटेड PDF सवाल पेपर के रूप में डाउनलोड करें।',
+    'export.student.title': 'जवाबों के साथ (छात्र)',
+    'export.student.desc': 'सवालों के साथ जवाब इनलाइन — सेल्फ-स्टडी के लिए बढ़िया।',
+    'export.teacher.title': 'जवाब की चाबी अंत में (शिक्षक)',
+    'export.teacher.desc': 'पहले सवाल, आखिरी पेज पर जवाब की चाबी — प्रिंट के लिए परफेक्ट।',
+    'export.blank.title': 'खाली पेपर (बिना जवाब)',
+    'export.blank.desc': 'बिना जवाब का साफ सवाल पेपर — टेस्ट के लिए तैयार।',
+    'export.cancel': 'कैंसल',
+    'export.download': 'PDF डाउनलोड करें',
+    'export.generating': 'बन रहा है…'
   },
+
 
   hinglish: {
     'nav.guide': 'Guide',
@@ -1558,6 +1586,7 @@ const dicts: Record<Locale, Dict> = {
     'review.val.msqEmpty': 'MSQ answers khali hain',
     'review.val.natNotNumeric': 'NAT answer numeric nahi hai',
     'review.val.noSubject': 'subject set nahi hai',
+    'review.export': 'Export PDF',
 
     /* ── Results page ── */
     'results.eyebrow': 'checked · red pen ka time',
@@ -1625,7 +1654,19 @@ const dicts: Record<Locale, Dict> = {
     'pipeline.on': 'ON',
     'pipeline.skip': 'skip',
     'pipeline.pages': 'Pages',
-    'pipeline.ready': 'ready ✓'
+    'pipeline.ready': 'ready ✓',
+
+    /* ── Export dialog ── */
+    'export.sub': 'Formatted PDF question paper mein download karo.',
+    'export.student.title': 'Answers ke saath (Student)',
+    'export.student.desc': 'Questions ke saath answers inline — self-study ke liye best.',
+    'export.teacher.title': 'Answer key end mein (Teacher)',
+    'export.teacher.desc': 'Pehle questions, last page pe answer key — print ke liye perfect.',
+    'export.blank.title': 'Blank paper (bina answers)',
+    'export.blank.desc': 'Bina answers ka saaf question paper — test ke liye ready.',
+    'export.cancel': 'Cancel',
+    'export.download': 'PDF Download Karo',
+    'export.generating': 'Ban raha hai…'
   }
 }
 
