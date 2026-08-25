@@ -4,23 +4,20 @@
 
 <br>
 
-### 🚀 Turn Any PDF into an Interactive Mock Test — Universal
+### 🚀 𝐓𝐮𝐫𝐧 𝐀𝐧𝐲 𝐏𝐃𝐅 𝐢𝐧𝐭𝐨 𝐚𝐧 𝐈𝐧𝐭𝐞𝐫𝐚𝐜𝐭𝐢𝐯𝐞 𝐌𝐨𝐜𝐤 𝐓𝐞𝐬𝐭 — 𝐔𝐧𝐢𝐯𝐞𝐫𝐬𝐚𝐥
 
 <p align="center">
   <em>The Light, Open-Source PDF → CBT Wrapper — for Every Exam, Every Subject</em>
 </p>
 
-[![Version](https://img.shields.io/badge/Version-1.0.0--light-7c3aed?style=for-the-badge&logo=semantic-release&logoColor=white)](https://github.com/namandhakad712/Rankify-PDF2CBT)
+[![Version](https://img.shields.io/badge/Version-1.0.0-7c3aed?style=for-the-badge&logo=semantic-release&logoColor=white)](https://github.com/namandhakad712/Rankify-PDF2CBT)
 [![Tech Stack](https://img.shields.io/badge/Tech-Vite_+_Vue_3_+_Rolldown-646cff?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
-[![Platform](https://img.shields.io/badge/Platform-Web_Light-00DC82?style=for-the-badge&logo=vite&logoColor=white)](https://rankify.qzz.io)
+[![Platform](https://img.shields.io/badge/Platform-Web_Light-00DC82?style=for-the-badge&logo=vite&logoColor=white)](https://rankify-pdf2cbt.vercel.app)
 [![License](https://img.shields.io/badge/License-PolyForm--Noncommercial-4a4a4a?style=for-the-badge)](https://polyformproject.org/licenses/noncommercial/1.0.0)
 
 <a href="https://www.producthunt.com/products/rankify-2?utm_source=badge-featured&utm_medium=badge&utm_source=badge-rankify-2" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1034991&theme=light" alt="Rankify - Turn PDF to Live Test Interface | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 
 <p align="center">
-  <a href="https://rankify.qzz.io">
-    <img src="https://img.shields.io/badge/🌐_Live_V1-Private_Reference-4CAF50?style=for-the-badge" alt="V1">
-  </a>
   <a href="#-quick-start">
     <img src="https://img.shields.io/badge/⚡_Light_Wrapper-Get_Started-7c3aed?style=for-the-badge" alt="Get Started">
   </a>
@@ -56,7 +53,7 @@
 </td>
 <td width="50%" align="center">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Laptop.png" alt="Laptop" width="80" height="80" />
-<h3>✅ Rankify Light Way</h3>
+<h3>✅ Rankify Fast Way</h3>
 <p>GEM JSON paste<br>Manual crop per Q<br>Instant CBT + results<br>Light & universal</p>
 </td>
 </tr>
@@ -92,8 +89,8 @@
 </td>
 <td width="33%" align="center">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Robot.png" alt="Robot" width="60" />
-<h4>🤖 GEM-Powered</h4>
-<p>Preset Gemini chat → JSON, not BYOK</p>
+<h4>🤖 AI-Powered</h4>
+<p>Preset Gemini chat OR Free AI Providers</p>
 </td>
 <td width="33%" align="center">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Locked.png" alt="Lock" width="60" />
@@ -122,7 +119,7 @@
 <p>Open <a href="https://ishortn.ink/gemini-gem">GEM</a><br>upload PDF</p>
 </td>
 <td align="center" width="20%">
-<img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Robot.png" alt="AI" width="80" />
+<img src="src\assets\json-reference.svg" alt="JSON" width="80" />
 <h3>2️⃣</h3>
 <h4>Paste JSON</h4>
 <p><code>/extract</code><br>paste + validate</p>
@@ -131,7 +128,7 @@
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gear.png" alt="Config" width="80" />
 <h3>3️⃣</h3>
 <h4>Review & Crop</h4>
-<p>Per-Q crop<br>on pdf.js</p>
+<p>Per-Q crop<br>for Diagram</p>
 </td>
 <td align="center" width="20%">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Activities/Video%20Game.png" alt="Test" width="80" />
@@ -238,7 +235,7 @@ pnpm preview
 
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%" style="max-width: 900px; border-radius: 20px;">
 
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Star" width="35" height="35" /> Key Features — Light Universal
+## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Star" width="35" height="35" /> Key Features — Universal CBT
 
 <div align="center">
 
@@ -312,16 +309,6 @@ graph LR
 </tr>
 </table>
 
-### 🧩 **Modular Providers (Fallback Only)**
-
-| Provider | Default Model | File | Docs |
-|----------|---------------|------|------|
-| **Mistral** | `mistral-large-latest` | `src/lib/providers/mistral.ts` `api/mistral/chat.ts` | [docs.mistral.ai](https://docs.mistral.ai/api/endpoint/chat) |
-| **Groq** | `llama-3.3-70b-versatile` | `src/lib/providers/groq.ts` `api/groq/chat.ts` | [console.groq.com](https://console.groq.com/docs/api-reference) |
-| **NVIDIA NIM** | `meta/llama-3.1-8b-instruct` | `src/lib/providers/nvidia.ts` `api/nvidia/chat.ts` | [docs.api.nvidia.com](https://docs.api.nvidia.com/nim/reference/create_chat_completion_v1_chat_completions_post-1) |
-
-Add: `cp mistral.ts cerebras.ts + api/mistral/chat.ts api/cerebras/chat.ts + 1 line in providers/index.ts`. Delete: remove file + 1 line. See `src/lib/providers/README.md`.
-
 </div>
 
 <br>
@@ -350,7 +337,7 @@ graph LR
     style F fill:#06b6d4,stroke:#0e7490,stroke-width:3px,color:#fff
 ```
 
-### ✋ **Fallback: Modular AI (for &lt;10 Q PDFs)**
+### ✋ **Fallback: Modular AI (for &lt;10 Page PDFs)**
 
 ```mermaid
 %%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#f59e0b','primaryTextColor':'#fff','primaryBorderColor':'#92400e','lineColor':'#10b981','secondaryColor':'#7c3aed','tertiaryColor':'#ef4444'}}}%%
@@ -365,8 +352,6 @@ graph LR
     style D fill:#ef4444,stroke:#991b1b,stroke-width:3px,color:#fff
     style E fill:#06b6d4,stroke:#0e7490,stroke-width:3px,color:#fff
 ```
-
-> Hidden behind **“Fallback for small PDFs”** toggle — primary GEM covers 80% cases. Providers are `POST /v1/chat/completions` `response_format: json_object`. BYOK or Vercel env `MISTRAL_API_KEY` etc.
 
 </div>
 
@@ -399,21 +384,11 @@ graph LR
 <p><strong>Dexie 4</strong><br>Single DB<br>3 tables → 4</p>
 </td>
 <td align="center" width="20%">
-<img src="https://mozilla.github.io/pdf.js/images/pdfjs-logo.svg" alt="pdf.js" width="48" />
-<p><strong>pdf.js 5</strong><br>Worker<br>no mupdf</p>
+<img src="https://mozilla.github.io/pdf.js/images/logo.svg" alt="pdf.js" width="48" />
+<p><strong>pdf.js 5</strong><br>Browser<br>Compatible</p>
 </td>
 </tr>
 </table>
-
-| Layer | Lite | V1 Heavy | Saving |
-|-------|------|----------|--------|
-| Bundler | Vite 8 Rolldown 110KB | Vite 6 + Nuxt 4 layers | −60% |
-| PDF | pdfjs-dist + canvas crop | pdfjs + mupdf WASM + comlink | −1.2MB |
-| AI | GEM paste + 3 modular proxies | 4 providers + chunking + heuristics | −4 clients |
-| DB | Dexie 1 DB `papers/results/pdfs` | 3 DBs 8 tables | −5 tables |
-| CBT | 1 shell ~400 LOC | 2 shells 1288+956 LOC | −70% |
-| Charts | CSS bars | echarts 6 | −300KB |
-| Anim | CSS only | gsap 7 plugins + Lenis + ogl | −500KB |
 
 ### 🔒 **Privacy & Keys — Fully Stitched**
 
@@ -426,7 +401,6 @@ graph LR
 + ✅ CORS + security headers vercel.json:9
 ```
 
-**Key handling:** `Extract.vue` → `provider.chat({viaProxy:true})` → `api/<provider>/chat.ts` reads `Authorization: Bearer <key>` else `process.env.*_API_KEY` (server-only, no `VITE_` leak). Direct mode `viaProxy:false` only for local dev. See `src/lib/providers/README.md`, `.env.example:1`.
 
 </div>
 
@@ -448,9 +422,7 @@ graph LR
 
 | Env | When | How |
 |-----|------|-----|
-| `MISTRAL_API_KEY` | Fallback only, optional | Vercel → Settings → Env Vars → Production+Preview |
-| `GROQ_API_KEY` | Fallback only, optional | Same |
-| `NVIDIA_API_KEY` | Fallback only, optional | Same |
+| `MISTRAL_API_KEY` | Agent Mode only,[OCR+JSON] | Vercel → Settings → Env Vars → Production+Preview |
 | _(none)_ | GEM primary | Nothing needed |
 
 Headers: `Cache-Control immutable` for `/assets/*`, `X-Frame-Options:DENY`, `HSTS` `vercel.json:9`. Functions: `maxDuration 30` `vercel.json:6`. SPA rewrites `/(.*) → /index.html` `vercel.json:35`.
@@ -482,13 +454,13 @@ npx serve dist -l 3000
 
 | Page | Route | Purpose |
 |------|-------|---------|
-| **Home** | `/` | Hero + scanner + bento + FAQ — light `Home.vue` |
-| **Extract** | `/extract` | GEM paste + PDF drop → parse → Review |
+| **Home** | `/` | Hero + scanner + bento + FAQ — simple `Home.vue` |
+| **Extract** | `/extract` | GEM paste/AI Agent + PDF drop → parse → Review |
 | **Review** | `/review` | Edit + per-Q `DiagramCropper.vue` pdf.js crop |
 | **Test** | `/test` | Single CBT shell, 5-state palette, timer, Dexie autosave |
 | **Results** | `/results` | Simple bars, detailed You vs Ans |
-| **About** | `/about` | Why universal, vs V1 heavy, credits |
-| **Getting Started** | `/getting-started` | Step-by-step GEM + fallback guide |
+| **About** | `/about` | Why universal, project description |
+| **Getting Started** | `/getting-started` | Step-by-step GEM + AI Agent guide |
 | **Privacy** | `/privacy` | No tracking, local-only, GDPR note |
 
 </div>
@@ -501,32 +473,6 @@ All docs = Vue SFC in `src/pages/`, routed via `src/router/index.ts:3`,SEO via `
 pnpm exec vue-tsc -b --noEmit  # typecheck
 pnpm build                     # 1711 modules, 110KB initial — must stay <350KB
 ```
-
-<br>
-
-<img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%" style="max-width: 900px; border-radius: 20px;">
-
-## <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Travel%20and%20places/Glowing%20Star.png" alt="Star" width="35" height="35" /> Problems Hunted & Fixed — End-to-End
-
-<div align="center">
-
-| Area | Problem Found | Fix | File |
-|------|---------------|-----|------|
-| **Paste JSON** | LLM returns ````json fences → `JSON.parse` fails | `stripFences()` | `src/lib/parse.ts:8` |
-| **MSQ** | Test used single `string` + `=== answer`, Results wrong | `answers: string[]` 0-index + checkbox + `JSON.stringify sort` scoring | `src/pages/Test.vue:10` `src/pages/Results.vue:72` |
-| **Diagrams** | Test rendered dataURL as `<span>text` | `<img :src>` | `src/pages/Test.vue:94` |
-| **Keys** | `Bearer env` literal, guard blocked env fallback | `viaProxy` skip header if empty, api `if(!key) key=env` | `src/lib/providers/*.ts:26` `api/*/chat.ts:18` `Extract.vue:103` |
-| **PDF** | `canvas` extra param `as any`, leak `doc` | remove `canvas`, `doc.destroy()` | `src/lib/pdf.ts:22` |
-| **Review** | splice without `hasDiagram` reset | sync after splice | `src/pages/Review.vue:47` (now async) |
-| **Normalize** | `__MATH_0__` collision | unique token (planned) | `src/lib/normalize.ts:8` |
-| **Validate** | MSQ range/sorted not checked | add `0-index < options.length` | `src/lib/validate.ts:33` |
-| **Palette** | `notVisited` vs `notAnswered` same gray | `dashed` vs solid | `src/pages/Test.vue:109` |
-| **Home** | V1 heavy Lenis/GSAP/ogl bloat | CSS scanner-line + grid pipeline | `src/pages/Home.vue:238` |
-
-</div>
-
-No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched.
-
 <br>
 
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%" style="max-width: 900px; border-radius: 20px;">
@@ -559,8 +505,8 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 
 </div>
 
-- **Keep it light:** small component count, initial bundle under 350KB, no heavyweight chart/pdf/glsl suites unless truly needed.
-- **Providers:** one file per provider in `src/lib/providers/` + one line in `index.ts` + one `api/` proxy. See `providers/README.md:1`.
+- **Keep it modular & maintainable:** small component count, works for most scenerios.
+- **Providers:** one file only in `src/config/providers.yaml` no hassle of custom provider .ts files, simply edit the yaml file and add your provider.
 - **Universal:** subjects/topics free strings — validator warns, not blocks. No vocab lock.
 - `pnpm exec vue-tsc -b --noEmit` before PR. One commit per feature.
 
@@ -572,11 +518,11 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 
 <div align="center">
 
-<img src="public/readme-bg.webp" alt="Footer" width="100%" style="max-width: 600px; border-radius: 20px;" />
+<img src="public/og-image.png" alt="Footer" width="100%" style="max-width: 600px; border-radius: 20px;" />
 
 <br>
 
-<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=32&duration=2800&pause=2000&color=7c3aed&center=true&vCenter=true&width=940&lines=MADE+BY+NAMAN;BUILT+FOR+EVERY+EXAM;UNIVERSAL+LIGHT+WRAPPER" alt="Typing SVG" style="max-width: 100%;" />
+<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=32&duration=2800&pause=2000&color=7c3aed&center=true&vCenter=true&width=940&lines=MADE+BY+NAMAN;BUILT+FOR+EVERY+EXAM;UNIVERSAL+EXAM+READYs" alt="Typing SVG" style="max-width: 100%;" />
 
 <br><br>
 
@@ -585,17 +531,17 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 <td align="center">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Graduation%20Cap.png" alt="Graduation" width="80" />
 <h3>🎓 For Every Student</h3>
-<p>Any exam, any subject</p>
+<p>Any exam, Any subject</p>
 </td>
 <td align="center">
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Heart" width="80" />
 <h3>❤️ Made with Love</h3>
-<p>Light, fast, private</p>
+<p>Light, Fast, Private</p>
 </td>
 <td align="center">
 <img src="https://media.githubusercontent.com/media/microsoft/fluentui-emoji-animated/main/assets/Star/animated/star_animated.png" alt="Star" width="80" />
-<h3>🆓 Free (Light)</h3>
-<p>MIT · Open Source</p>
+<h3>🆓 Free</h3>
+<p>Open Source</p>
 </td>
 </tr>
 </table>
@@ -632,16 +578,6 @@ No `GEMINI_API_KEY` leak, no `NUXT_PUBLIC` client env, no 3 DBs — all stitched
 <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/assets/images/showcase%202.gif" width="100%" style="max-width: 500px; border-radius: 20px;" alt="Animated Emojis" />
 </div>
 
-<br>
-
-<img src="public/readme-bg.webp" alt="Happy Learning Footer" width="100%" />
-
 </div>
 
 ---
-
-<div align="center">
-
-**Rankify PDF2CBT Light** — *GEM JSON paste → Review & Crop → CBT → Results* · `Vite 8 Rolldown` · `110KB` · `Universal` · `Fully Stitched`
-
-</div>

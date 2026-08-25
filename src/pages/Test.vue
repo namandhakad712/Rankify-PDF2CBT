@@ -64,6 +64,48 @@ function mark() {
   status.value[q.value.id] = s === "answered" ? "markedAnswered" : s === "marked" ? "notAnswered" : "marked"
 }
 
+function markNext() { mark(); if (idx.value < total.value - 1) go(idx.value + 1) }
+
+function clearResponse() {
+  if (!q.value) return
+  delete answers.value[q.value.id]
+  status.value[q.value.id] = "notAnswered"
+}
+
+/** NAT virtual keypad */
+function natKey(k: string) {
+  if (!q.value) return
+  const cur = (answers.value[q.value.id] as string) || ""
+  if (k === "⌫") { answers.value[q.value.id] = cur.slice(0, -1); return }
+  if (k === "✓") { // commit
+    status.value[q.value.id] = cur ? "answered" : status.value[q.value.id]
+    return
+  }
+  if (k === "+/-") { // toggle sign — only when there is something to toggle
+    if (!cur || cur === "-") { answers.value[q.value.id] = cur ? "" : "-"; return }
+    answers.value[q.value.id] = cur.startsWith("-") ? cur.slice(1) : "-" + cur
+    return
+  }
+  if (k === "." && cur.includes(".")) return
+  if (cur.replace("-", "").replace(".", "").length >= 10) return
+  answers.value[q.value.id] = cur + k
+}
+
+/** Save & Next — commit current selection state and advance */
+function saveNext() {
+  if (!q.value) return
+  const a = answers.value[q.value.id]
+  const has = q.value.type === "msq" ? ((a as string[]) || []).length > 0 : !!a
+  status.value[q.value.id] = has ? "answered" : "notAnswered"
+  if (idx.value < total.value - 1) go(idx.value + 1)
+}
+
+const counts = computed(() => {
+  const c = { answered: 0, notAnswered: 0, notVisited: 0, marked: 0, markedAnswered: 0 }
+  for (const qq of paper.value?.questions || []) c[status.value[qq.id] || "notVisited"]++
+  return c
+})
+
 function submit() {
   if (!paper.value) return
   const result = {
@@ -104,7 +146,7 @@ const fmt = computed(() => {
       <button class="mt-4 px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/review')">{{ t('test.empty.cta') }}</button>
     </div>
   </div>
-  <div v-else class="min-h-screen bg-paper flex flex-col text-ink">
+  <div v-else class="min-h-screen lg:h-screen lg:overflow-hidden bg-paper flex flex-col text-ink">
     <!-- exam header -->
     <div class="bg-white/90 backdrop-blur border-b-2 border-ink/[0.07] px-5 py-3 flex items-center justify-between sticky top-0 z-30">
       <div class="font-display font-bold flex items-center gap-2.5 tracking-tight min-w-0">
@@ -117,13 +159,12 @@ const fmt = computed(() => {
       </div>
     </div>
 
-    <div class="flex-1 flex flex-col lg:flex-row">
-      <!-- question sheet -->
-      <div class="flex-1 p-4 md:p-6 lg:pr-3">
-        <div v-if="q" class="relative max-w-3xl mx-auto lg:mx-0 rounded-lg bg-white shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden">
-          <div class="pointer-events-none absolute inset-y-0 left-9 w-px bg-redmargin/40"></div>
-          <div class="px-5 pl-14 py-6">
-            <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-ink/50 uppercase">
+    <div class="flex-1 lg:min-h-0 flex flex-col lg:flex-row">
+      <!-- question sheet — fills all leftover space, seamless white -->
+      <div class="flex-1 lg:min-h-0 lg:overflow-hidden flex flex-col bg-white">
+        <div class="flex-1 lg:overflow-y-auto px-6 md:px-10 py-5 md:py-6">
+        <div v-if="q">
+          <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-ink/50 uppercase">
               <span>Q{{ q.number }} / {{ total }}</span><span class="text-ink/25">·</span>
               <span>{{ q.type.toUpperCase() }}</span><span class="text-ink/25">·</span>
               <span>{{ q.subject || t('test.general') }}</span>
@@ -148,37 +189,68 @@ const fmt = computed(() => {
               </template>
             </div>
 
-            <div v-if="q.type==='nat'" class="mt-5">
-              <input :value="answers[q.id]||''" @input="answers[q.id]=($event.target as HTMLInputElement).value" :placeholder="t('test.natPlaceholder')" class="border-2 border-ink/12 rounded-xl px-4 py-2.5 w-56 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 font-mono" />
+            <div v-if="q.type==='nat'" class="mt-5 flex flex-wrap items-start gap-4">
+              <div>
+                <div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 mb-1.5">Answer</div>
+                <div class="w-48 h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums">{{ answers[q.id] || '—' }}</div>
+              </div>
+              <div class="w-52">
+                <div class="w-full h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums mb-2">{{ answers[q.id] || '' }}</div>
+                <div class="grid grid-cols-3 gap-1.5">
+                  <button v-for="k in ['1','2','3','4','5','6','7','8','9','.','0','+/-']" :key="k" @click="natKey(k)" class="w-full h-11 rounded-lg border border-ink/15 bg-paper text-base font-bold text-ink hover:border-pen hover:text-pen transition-colors">{{ k }}</button>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 mt-1.5">
+                  <button @click="natKey('⌫')" class="h-11 rounded-lg border border-redmargin/40 bg-redmargin/[0.07] text-redmargin grid place-items-center hover:bg-redmargin/[0.12] transition-colors" title="Backspace">⌫</button>
+                  <button @click="natKey('✓')" class="col-span-2 h-11 rounded-lg border border-pen/40 bg-pen/[0.08] text-pen grid place-items-center text-lg font-bold hover:bg-pen/[0.14] transition-colors" title="Save answer">✓</button>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <div class="mt-6 flex flex-wrap gap-2.5">
-              <button class="px-4 py-2.5 rounded-xl border-2 border-hlyellow bg-hlyellow/30 text-sm font-bold text-ink/80 hover:bg-hlyellow/50 transition-colors" @click="mark">{{ t('test.markForReview') }}</button>
-              <button class="px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold ml-auto transition-transform hover:-translate-y-0.5" @click="go(idx+1)" v-if="idx < total-1">{{ t('test.saveNext') }}</button>
-              <button class="px-5 py-2.5 rounded-xl bg-correct text-white text-sm font-bold ml-auto" @click="submit" v-else>{{ t('test.submitTest') }}</button>
-            </div>
+        <!-- classic CBT action bar — pinned under the sheet -->
+        <div class="shrink-0 bg-white border-t-2 border-ink/[0.07] px-4 md:px-6 py-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button class="px-4 py-2.5 rounded-lg bg-[#8b5cf6] text-white text-sm font-bold hover:brightness-110 transition-colors" @click="markNext">{{ t('test.markForReview') }} &amp; Next</button>
+            <button class="px-4 py-2.5 rounded-lg border-2 border-correct/50 text-sm font-bold text-green-700 hover:bg-correct/[0.06] transition-colors" @click="clearResponse">Clear Response</button>
+            <button :disabled="idx===0" @click="go(idx-1)" class="ml-auto px-4 py-2.5 rounded-lg bg-ink/[0.06] text-sm font-bold text-ink/70 hover:bg-ink/[0.1] transition-colors disabled:opacity-40 disabled:pointer-events-none">&lt;&lt; Back</button>
+            <button v-if="idx < total-1" @click="saveNext" class="px-8 py-2.5 rounded-lg bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5">Save &amp; Next &gt;&gt;</button>
+            <button v-else @click="submit" class="px-8 py-2.5 rounded-lg bg-correct text-white text-sm font-bold">{{ t('test.submitTest') }}</button>
           </div>
         </div>
       </div>
 
-      <!-- palette sidebar -->
-      <div class="lg:w-72 bg-white border-t-2 lg:border-t-0 lg:border-l-2 border-ink/[0.07] p-4">
-        <div class="text-xs font-bold uppercase tracking-[0.2em] text-ink/50">{{ t('test.palette') }}</div>
-        <div class="grid grid-cols-6 lg:grid-cols-5 gap-2 mt-3">
-          <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-9 h-9 rounded-lg text-xs font-bold transition-all', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white scale-110' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='marked' ? 'bg-hlyellow text-ink' : status[qq.id]==='markedAnswered' ? 'bg-hlyellow text-ink ring-2 ring-correct' : status[qq.id]==='notAnswered' ? 'bg-redmargin/10 text-redmargin border border-redmargin/40' : 'border border-dashed border-ink/25 text-ink/45']">{{ qq.number }}</button>
+      <!-- classic CBT right panel -->
+      <aside class="lg:w-80 shrink-0 bg-white border-t-2 lg:border-t-0 lg:border-l-2 border-ink/[0.07] flex flex-col lg:h-full lg:min-h-0">
+        <div class="shrink-0 px-4 py-3 border-b border-ink/[0.08] bg-paper/60 flex items-center justify-between">
+          <div class="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/50">Question Palette</div>
+          <div class="font-mono text-[10px] text-ink/45">{{ total }} Qs</div>
         </div>
-        <div class="mt-5 grid grid-cols-2 gap-2">
-          <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx-1)" :disabled="idx===0">{{ t('test.prev') }}</button>
-          <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx+1)" :disabled="idx===total-1">{{ t('test.next') }}</button>
+
+        <div class="shrink-0 px-4 py-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] font-medium text-ink/60 border-b border-ink/[0.06]">
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-correct inline-block"></span> Ans ({{ counts.answered }})</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-redmargin inline-block"></span> NotAns ({{ counts.notAnswered }})</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"></span> Marked ({{ counts.marked }})</div>
+          <div class="flex items-center gap-1.5"><span class="relative w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"><span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-correct border border-white"></span></span> A&amp;M ({{ counts.markedAnswered }})</div>
+          <div class="flex items-center gap-1.5 col-span-2"><span class="w-3.5 h-3.5 rounded bg-paper border border-dashed border-ink/35 inline-block"></span> Not Visited ({{ counts.notVisited }})</div>
         </div>
-        <div class="mt-5 space-y-1.5 text-[11px] text-ink/55 font-medium">
-          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-correct inline-block"></span> {{ t('test.legend.answered') }}</div>
-          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-redmargin/30 border border-redmargin/50 inline-block"></span> {{ t('test.legend.notAnswered') }}</div>
-          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-hlyellow inline-block"></span> {{ t('test.legend.marked') }}</div>
-          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded border border-dashed border-ink/30 inline-block"></span> {{ t('test.legend.notVisited') }}</div>
+
+        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+          <div class="grid grid-cols-6 lg:grid-cols-5 gap-2">
+            <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-9 h-9 rounded-lg text-xs font-bold transition-all relative', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='markedAnswered' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='marked' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='notAnswered' ? 'bg-redmargin text-white' : 'bg-paper border border-dashed border-ink/30 text-ink/45']">{{ qq.number }}<span v-if="status[qq.id]==='markedAnswered'" class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-correct border border-white"></span></button>
+          </div>
+
+          <div class="mt-5 grid grid-cols-2 gap-2">
+            <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx-1)" :disabled="idx===0">{{ t('test.prev') }}</button>
+            <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx+1)" :disabled="idx===total-1">{{ t('test.next') }}</button>
+          </div>
         </div>
-        <p class="font-hand text-lg text-ink/40 mt-5 -rotate-1">{{ t('test.note') }}</p>
-      </div>
+
+        <div class="shrink-0 p-4 pt-3 border-t border-ink/[0.08] bg-paper/40">
+          <div class="text-[11px] font-mono text-ink/50 mb-2">{{ counts.answered + counts.markedAnswered }}/{{ total }} attempted</div>
+          <button class="w-full py-3 rounded-xl bg-correct text-white text-sm font-extrabold tracking-wide hover:brightness-110 transition-colors" @click="submit">{{ t('test.submit') }}</button>
+        </div>
+      </aside>
     </div>
   </div>
 </template>

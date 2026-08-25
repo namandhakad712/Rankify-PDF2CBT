@@ -64,7 +64,7 @@ const dicts: Record<Locale, Dict> = {
     'feat.lang': 'Any language, any subject',
     'feat.lang.desc': 'Hindi, English, Tamil, Bangla — text is just text. Nothing is hardcoded to one exam.',
     'feat.install': 'Nothing to install',
-    'feat.install.desc': 'It\'s a website. Chrome, Firefox, Edge, even your school laptop. That\'s the whole checklist.',
+    'feat.install.desc': 'It\'s a website. Chrome, Firefox, Edge, even your laptop,mobile. That\'s the whole checklist.',
 
     'nolist.subtitle': 'your laptop, your papers, your business.',
     'nolist.1': 'Ads',
@@ -547,11 +547,11 @@ const dicts: Record<Locale, Dict> = {
     'feat.real': 'रियल एग्जाम का अहसास',
     'feat.real.desc': 'टाइमर टिकता है, पैलेट स्विच होता है, मार्क-फॉर-रिव्यू — ताकि टेस्ट देने का दिन बस एक और प्रैक्टिस जैसा लगे।',
     'feat.marks': 'स्कूल जैसे मार्क्स',
-    'feat.marks.desc': 'सबमिट करने के तुरंत बाद पर-सेक्शन एनालिटिक्स। देखें कौन सा चैप्टर आपकी धोखा दिया।',
+    'feat.marks.desc': 'सबमिट करने के तुरंत बाद पर-सेक्शन एनालिटिक्स। देखें कौन सा चैप्टर आपको धोखा दिया।',
     'feat.lang': 'कोई भी भाषा, कोई भी सब्जेक्ट',
     'feat.lang.desc': 'हिंदी, अंग्रेजी, तमिल, बंगाली — टेक्स्ट तो बस टेक्स्ट है। किसी एग्जाम के लिए कुछ भी हार्डकोड नहीं है।',
     'feat.install': 'कुछ भी इंस्टॉल नहीं',
-    'feat.install.desc': 'ये एक वेबसाइट है। क्रोम, फायरफॉक्स, एज, यहां तक कि आपकी स्कूल की लैपटॉप। ये है पूरी चेकलिस्ट।',
+    'feat.install.desc': 'ये एक वेबसाइट है। क्रोम, फायरफॉक्स, एज, यहां तक कि आपका लैपटॉप,मोबाइल। ये है पूरी चेकलिस्ट।',
 
     'nolist.headline': 'जो आपको यहां कभी नहीं मिलेगा',
     'nolist.subtitle': 'आपका लैपटॉप, आपके पेपर, आपका बिज़नस।',
@@ -949,7 +949,7 @@ const dicts: Record<Locale, Dict> = {
 
     /* ── Results page ── */
     'results.eyebrow': 'चेक्ड · लाल कलम का समय',
-    'results.h1a': 'आपकी ',
+    'results.h1a': 'आपका ',
     'results.h1b': 'रिपोर्ट कार्ड',
     'results.empty.title': 'अभी कोई रिज़ल्ट नहीं।',
     'results.empty.sub': 'पहले एक टेस्ट दें — लाल कलम इंतज़ार कर रही है।',
@@ -1037,11 +1037,11 @@ const dicts: Record<Locale, Dict> = {
     'feat.real': 'Real exam ka feel',
     'feat.real.desc': 'Timer ticking, palette switching, mark-for-review — taaki test day feel bas ek aur practice jaisa lagaye.',
     'feat.marks': 'School jaise marks',
-    'feat.marks.desc': 'Submit karne ke turant baad per-section analytics. Dekho exactly kaunsa chapter ne aapki dhokha diya.',
+    'feat.marks.desc': 'Submit karne ke turant baad per-section analytics. Dekho exactly kaunsa chapter ne aapko dhokha diya.',
     'feat.lang': 'Koi bhi language, koi bhi subject',
     'feat.lang.desc': 'Hindi, English, Tamil, Bangla — text bas text hai. Kisi exam ke liye kuch hardcoded nahi hai.',
     'feat.install': 'Kuch bhi install nahi',
-    'feat.install.desc': 'Ye ek website hai. Chrome, Firefox, Edge, even aapki school laptop. Wohi hai poori checklist.',
+    'feat.install.desc': 'Ye ek website hai. Chrome, Firefox, Edge, even aapka laptop, mobile. Wohi hai poori checklist.',
 
     'nolist.headline': 'Jo aapko yahan kabhi nahi milega',
     'nolist.subtitle': 'aapka laptop, aapke papers, aapka business.',
@@ -1351,7 +1351,7 @@ const dicts: Record<Locale, Dict> = {
     'test.submit': 'Submit',
     'test.general': 'General',
     'test.diagramBelow': 'diagram neeche hai',
-    'test.natPlaceholder': 'Apna numeric answer likho',
+    'test.natPlaceholder': 'Aapka numeric answer likho',
     'test.markForReview': 'Review ke liye mark karo',
     'test.saveNext': 'Save & agla →',
     'test.submitTest': 'Test submit karo',
@@ -1439,7 +1439,7 @@ const dicts: Record<Locale, Dict> = {
 
     /* ── Results page ── */
     'results.eyebrow': 'checked · red pen ka time',
-    'results.h1a': 'Aapki ',
+    'results.h1a': 'Aapka ',
     'results.h1b': 'report card',
     'results.empty.title': 'Abhi koi result nahi.',
     'results.empty.sub': 'Pehle ek test do — red pen wait kar raha hai.',

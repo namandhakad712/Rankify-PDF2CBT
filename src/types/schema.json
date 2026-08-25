@@ -1,35 +1,93 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://rankify.qzz.io/schemas/universal-paper.json",
+  "$id": "https://rankify-pdf2cbt.vercel.app/schemas/universal-paper.json",
   "title": "Rankify Universal Paper — Generic PDF→CBT",
   "description": "Universal, exam-agnostic. Any subject/topic, any language. No JEE vocab lock.",
   "type": "object",
-  "required": ["meta", "sections", "questions"],
+  "required": [
+    "meta",
+    "sections",
+    "questions"
+  ],
   "properties": {
     "meta": {
       "type": "object",
-      "required": ["title", "durationMinutes", "totalQuestions", "createdAt"],
+      "required": [
+        "title",
+        "durationMinutes",
+        "totalQuestions",
+        "createdAt"
+      ],
       "properties": {
-        "title": { "type": "string", "minLength": 1 },
-        "exam": { "type": ["string", "null"] },
-        "language": { "type": ["string", "null"] },
-        "durationMinutes": { "type": "integer", "minimum": 1 },
-        "totalQuestions": { "type": "integer", "minimum": 0 },
-        "totalMarks": { "type": ["integer", "null"] },
-        "instructions": { "type": ["string", "null"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exam": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "durationMinutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "totalQuestions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalMarks": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "instructions": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
       }
     },
     "sections": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "subject": { "type": ["string", "null"] },
-          "description": { "type": ["string", "null"] }
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       }
     },
@@ -37,28 +95,136 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "number", "type", "text", "answer", "marks", "negativeMarks", "hasDiagram"],
+        "required": [
+          "id",
+          "number",
+          "type",
+          "text",
+          "answer",
+          "marks",
+          "negativeMarks",
+          "hasDiagram"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "number": { "type": "integer", "minimum": 1 },
-          "subject": { "type": ["string", "null"] },
-          "section": { "type": ["string", "null"] },
-          "topic": { "type": ["string", "null"] },
-          "chapter": { "type": ["string", "null"] },
-          "type": { "enum": ["mcq", "msq", "nat", "true-false", "fill-blank", "match", "assertion-reason", "passage", "essay"] },
-          "text": { "type": "string", "minLength": 1 },
-          "textAlt": { "type": ["string", "null"] },
-          "options": { "type": ["array", "null"], "items": { "type": "string" } },
-          "answer": { "type": "string" },
-          "answers": { "type": ["array", "null"], "items": { "type": "string" } },
-          "marks": { "type": "number" },
-          "negativeMarks": { "type": "number" },
-          "hasDiagram": { "type": "boolean" },
-          "diagrams": { "type": ["array", "null"], "items": { "type": "string" } },
-          "difficulty": { "enum": ["easy", "medium", "hard", null] },
-          "tags": { "type": "array", "items": { "type": "string" } },
-          "explanation": { "type": ["string", "null"] },
-          "_imageRefs": { "type": "array", "items": { "type": "string" } }
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "subject": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "section": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "topic": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "chapter": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "enum": [
+              "mcq",
+              "msq",
+              "nat",
+              "true-false",
+              "fill-blank",
+              "match",
+              "assertion-reason",
+              "passage",
+              "essay"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "textAlt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "options": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "answer": {
+            "type": "string"
+          },
+          "answers": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "marks": {
+            "type": "number"
+          },
+          "negativeMarks": {
+            "type": "number"
+          },
+          "hasDiagram": {
+            "type": "boolean"
+          },
+          "diagrams": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "difficulty": {
+            "enum": [
+              "easy",
+              "medium",
+              "hard",
+              null
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "explanation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "_imageRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     }

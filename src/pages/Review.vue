@@ -28,7 +28,7 @@ const pdfName = ref<string | null>(null)
 const pdfBuffer = ref<ArrayBuffer | null>(null)
 const cropFor = ref<number | null>(null)
 const selIdx = ref(0)
-const showPanel = ref(true)
+const showPanel = ref(false) // collapsed by default — expand via toolbar or edge rail
 
 /* ── Session dirty-tracking ── */
 const dirtyIds = ref<Set<number>>(new Set())

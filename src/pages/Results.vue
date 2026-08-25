@@ -51,6 +51,79 @@ const stats = computed(() => {
   return { correct, wrong, unattempted, score, total: qs.length, bySubject }
 })
 
+const analytics = computed(() => {
+  const s = stats.value
+  if (!s || !result.value) return null
+  let maxMarks = 0
+  for (const q of result.value.paper.questions) maxMarks += q.marks || 0
+  const attempted = s.correct + s.wrong
+  const pct = maxMarks ? Math.round((s.score / maxMarks) * 100) : 0
+  const accuracy = attempted ? Math.round((s.correct / attempted) * 100) : 0
+  const segs = [
+    { key: "correct", n: s.correct, color: "#1FA45C" },
+    { key: "wrong", n: s.wrong, color: "#F26D6D" },
+    { key: "skipped", n: s.unattempted, color: "#C9C6D8" },
+  ].filter((x) => x.n > 0)
+  const C = 2 * Math.PI * 54
+  let acc = 0
+  const arcs = segs.map((seg) => {
+    const len = s.total ? (seg.n / s.total) * C : 0
+    const arc = { ...seg, dasharray: `${len} ${C - len}`, offset: C / 4 - acc }
+    acc += len
+    return arc
+  })
+  const strip = result.value.paper.questions.map((q) => {
+    const a: unknown = result.value!.answers[q.id]
+    const isMsq = q.type === "msq"
+    const correct = isMsq ? Array.isArray(a) && (a as string[]).slice().sort().join(",") === (q.answers || []).slice().sort().join(",") : a === q.answer
+    const att = isMsq ? Array.isArray(a) && (a as string[]).length > 0 : !!a
+    return { id: q.id, num: q.number, st: (correct ? "c" : att ? "w" : "s") as "c" | "w" | "s" }
+  })
+  // per-type performance
+  const byType: Record<string, { total: number; correct: number }> = {}
+  for (const q of result.value.paper.questions) {
+    const tt = byType[q.type] || (byType[q.type] = { total: 0, correct: 0 })
+    tt.total++
+    const st = strip.find((x) => x.id === q.id)!.st
+    if (st === "c") tt.correct++
+  }
+  return { maxMarks, pct, accuracy, arcs, strip, attempted, byType }
+})
+
+function verdictOf(q: import("@/types").UniversalQuestion): "c" | "w" | "s" {
+  const a: unknown = result.value?.answers[q.id]
+  const isMsq = q.type === "msq"
+  const correct = isMsq ? Array.isArray(a) && (a as string[]).slice().sort().join(",") === (q.answers || []).slice().sort().join(",") : a === q.answer
+  const att = isMsq ? Array.isArray(a) && (a as string[]).length > 0 : !!a
+  return correct ? "c" : att ? "w" : "s"
+}
+
+/** human-readable "your answer" — option TEXT not raw index */
+function yourAnswerText(q: import("@/types").UniversalQuestion): string {
+  const a: unknown = result.value?.answers[q.id]
+  if (q.type === "msq") {
+    if (!Array.isArray(a) || !a.length) return "—"
+    return a.map((i) => q.options?.[Number(i)] ?? `opt ${i}`).join("  ·  ")
+  }
+  if (a == null || a === "") return "—"
+  if (q.options && /^\d+$/.test(String(a))) return q.options[Number(a) - 1] ?? String(a)
+  return String(a)
+}
+
+function correctAnswerText(q: import("@/types").UniversalQuestion): string {
+  if (q.type === "msq") return (q.answers || []).map((i) => q.options?.[Number(i)] ?? `opt ${i}`).join("  ·  ") || "—"
+  if (q.options && /^\d+$/.test(q.answer)) return q.options[Number(q.answer) - 1] ?? q.answer
+  return q.answer || "—"
+}
+
+const takenMeta = computed(() => ({
+  when: result.value ? new Date(result.value.createdAt).toLocaleString() : "—",
+  platform: "Rankify PDF2CBT · web app",
+  duration: result.value ? `${result.value.paper.meta.durationMinutes} min` : "—",
+}))
+
+function exportPdf() { window.print() }
+
 const grade = computed(() => {
   const s = stats.value
   if (!s || s.total === 0) return '—'
@@ -74,7 +147,25 @@ const grade = computed(() => {
           <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2">{{ t('results.eyebrow') }}</div>
           <h1 class="text-4xl md:text-6xl font-display font-extrabold tracking-tight">{{ t('results.h1a') }}<span class="relative inline-block">{{ t('results.h1b') }}<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlgreen"></span></span></h1>
         </div>
-        <div v-if="stats" class="grade grid h-20 w-20 rotate-6 place-items-center rounded-full border-[3px] border-redmargin font-hand text-4xl font-bold text-redmargin bg-redmargin/[0.04]">{{ grade }}</div>
+        <div class="flex items-center gap-3">
+          <button class="no-print px-4 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors" @click="exportPdf">⤓ Export PDF</button>
+          <div v-if="stats" class="grade grid h-20 w-20 rotate-6 place-items-center rounded-full border-[3px] border-redmargin font-hand text-4xl font-bold text-redmargin bg-redmargin/[0.04]">{{ grade }}</div>
+        </div>
+      </div>
+
+      <!-- print-only report header -->
+      <div class="hidden print:block border-b-2 border-ink pb-3 mb-4">
+        <div class="flex items-baseline justify-between">
+          <div>
+            <div class="font-display font-extrabold text-xl">Rankify <span class="text-pen">PDF2CBT</span></div>
+            <div class="font-mono text-[10px] text-ink/60">{{ result ? result.paper.meta.title : '' }} — official score report</div>
+          </div>
+          <div class="font-mono text-[10px] text-ink/60 text-right">
+            <div>Taken: {{ takenMeta.when }}</div>
+            <div>Platform: {{ takenMeta.platform }}</div>
+            <div>Duration: {{ takenMeta.duration }} · {{ result?.paper.questions.length }} questions</div>
+          </div>
+        </div>
       </div>
 
       <div v-if="!result" class="mt-8 relative rounded-lg bg-white p-10 text-center shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
@@ -106,6 +197,35 @@ const grade = computed(() => {
           </div>
         </div>
 
+        <!-- analytics row: donut + marks -->
+        <div v-if="analytics" class="mt-6 grid md:grid-cols-[auto_1fr] gap-4">
+          <div class="stat-card rounded-2xl bg-white p-5 flex items-center gap-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
+            <svg viewBox="0 0 128 128" class="w-36 h-36 -rotate-0">
+              <circle cx="64" cy="64" r="54" fill="none" stroke="#EFEDE6" stroke-width="16" />
+              <circle v-for="(a, ai) in analytics.arcs" :key="ai" cx="64" cy="64" r="54" fill="none" :stroke="a.color" stroke-width="16" stroke-linecap="butt" :stroke-dasharray="a.dasharray" :stroke-dashoffset="a.offset" class="donut-seg" />
+              <text x="64" y="60" text-anchor="middle" class="fill-ink font-display font-extrabold" style="font-size: 22px">{{ analytics.pct }}%</text>
+              <text x="64" y="78" text-anchor="middle" class="fill-ink/50 font-mono" style="font-size: 9px">OF MAX</text>
+            </svg>
+            <div class="space-y-1.5 text-xs font-semibold text-ink/60">
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-correct"></span> Correct · {{ stats.correct }}</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-redmargin"></span> Wrong · {{ stats.wrong }}</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-ink/20"></span> Skipped · {{ stats.unattempted }}</div>
+            </div>
+          </div>
+          <div class="stat-card rounded-2xl bg-white p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] grid grid-cols-3 gap-3 content-center">
+            <div><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45">Score</div><div class="text-xl font-extrabold font-display tabular-nums">{{ stats.score }}<span class="text-ink/40 text-sm">/{{ analytics.maxMarks }}</span></div></div>
+            <div><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45">Accuracy</div><div class="text-xl font-extrabold font-display tabular-nums text-correct">{{ analytics.accuracy }}%</div></div>
+            <div><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45">Attempted</div><div class="text-xl font-extrabold font-display tabular-nums">{{ analytics.attempted }}<span class="text-ink/40 text-sm">/{{ stats.total }}</span></div></div>
+            <!-- verdict strip -->
+            <div class="col-span-3 mt-1">
+              <div class="flex flex-wrap gap-1">
+                <span v-for="s in analytics.strip" :key="s.id" :title="'Q' + s.num" :class="['w-5 h-5 rounded grid place-items-center font-mono text-[8px] font-bold', s.st === 'c' ? 'bg-correct/85 text-white' : s.st === 'w' ? 'bg-redmargin/85 text-white' : 'bg-ink/[0.12] text-ink/50']">{{ s.num }}</span>
+              </div>
+              <div class="font-mono text-[9px] uppercase tracking-wider text-ink/35 mt-1.5">question-wise map</div>
+            </div>
+          </div>
+        </div>
+
         <!-- subject bars -->
         <div class="mt-6 relative rounded-lg bg-white p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
           <div class="pointer-events-none absolute inset-y-0 left-9 w-px bg-redmargin/25"></div>
@@ -123,15 +243,34 @@ const grade = computed(() => {
           </div>
         </div>
 
+        <!-- per-type performance -->
+        <div v-if="analytics && Object.keys(analytics.byType).length > 1" class="stat-card mt-6 rounded-2xl bg-white p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
+          <div class="font-display font-bold tracking-tight text-sm">Performance by question type</div>
+          <div class="mt-3 grid gap-2.5">
+            <div v-for="(v, k) in analytics.byType" :key="k" class="flex items-center gap-3">
+              <span class="w-16 font-mono text-[10px] font-bold uppercase tracking-wider text-ink/55">{{ k }}</span>
+              <div class="flex-1 h-3 bg-paper rounded-full overflow-hidden border border-ink/[0.07]">
+                <div class="bar-fill h-full rounded-full bg-pen" :data-w="(100 * v.correct / v.total) + '%'" :style="{ width: (100 * v.correct / v.total) + '%' }"></div>
+              </div>
+              <span class="font-mono text-[10px] text-ink/50 w-12 text-right tabular-nums">{{ v.correct }}/{{ v.total }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- detailed -->
         <div class="mt-6 rounded-lg bg-white p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
           <div class="font-display font-bold tracking-tight">{{ t('results.detail') }}</div>
-          <div class="mt-4 grid gap-2">
-            <div v-for="q in result.paper.questions" :key="q.id" class="flex gap-3 items-center text-sm rounded-xl border px-3.5 py-2.5" :class="(() => { const a: unknown = result!.answers[q.id]; const isMsq = q.type==='msq'; const correct = isMsq ? Array.isArray(a) && (a as string[]).slice().sort().join(',')===(q.answers||[]).slice().sort().join(',') : a===q.answer; const attempted = isMsq ? Array.isArray(a) && (a as string[]).length>0 : !!a; return correct ? 'bg-correct/[0.06] border-correct/30' : attempted ? 'bg-redmargin/[0.05] border-redmargin/30' : 'bg-paper border-ink/10'; })()">
-              <div class="w-9 font-mono text-xs text-ink/50 shrink-0">Q{{ q.number }}</div>
-              <div class="flex-1 truncate text-ink/80">{{ q.text.slice(0,80) }}</div>
-              <div class="text-xs text-ink/55 shrink-0 hidden sm:block">{{ t('results.you') }}<b class="text-ink/80">{{ Array.isArray(result!.answers[q.id]) ? ((result!.answers[q.id] as unknown as string[]).join(',') || '—') : (result!.answers[q.id] as unknown as string) || '—' }}</b> · {{ t('results.ans') }}<b class="text-ink/80">{{ q.type==='msq' ? (q.answers||[]).join(',') : q.answer }}</b></div>
-              <span class="shrink-0 w-5 h-5 grid place-items-center rounded-full text-white text-[10px] font-bold" :class="(() => { const a: unknown = result!.answers[q.id]; const isMsq = q.type==='msq'; const correct = isMsq ? Array.isArray(a) && (a as string[]).slice().sort().join(',')===(q.answers||[]).slice().sort().join(',') : a===q.answer; const attempted = isMsq ? Array.isArray(a) && (a as string[]).length>0 : !!a; return correct ? 'bg-correct' : attempted ? 'bg-redmargin' : 'bg-ink/25'; })()">✓</span>
+          <div class="mt-4 grid gap-2.5">
+            <div v-for="q in result.paper.questions" :key="q.id" class="rounded-xl border px-3.5 py-2.5" :class="verdictOf(q) === 'c' ? 'bg-correct/[0.05] border-correct/30' : verdictOf(q) === 'w' ? 'bg-redmargin/[0.04] border-redmargin/30' : 'bg-paper border-ink/10'">
+              <div class="flex gap-3 items-center text-sm">
+                <div class="w-9 font-mono text-xs text-ink/50 shrink-0">Q{{ q.number }}</div>
+                <div class="flex-1 truncate text-ink/80">{{ q.text.slice(0, 90) }}</div>
+                <span :class="['shrink-0 w-6 h-6 grid place-items-center rounded-full text-[11px] font-bold text-white', verdictOf(q) === 'c' ? 'bg-correct' : verdictOf(q) === 'w' ? 'bg-redmargin' : 'bg-ink/30']">{{ verdictOf(q) === 'c' ? '✓' : verdictOf(q) === 'w' ? '✗' : '–' }}</span>
+              </div>
+              <div class="mt-1.5 pl-12 grid sm:grid-cols-2 gap-1 text-[12px]">
+                <div :class="verdictOf(q) === 'w' ? 'text-redmargin' : 'text-ink/60'"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">you</span><b class="font-semibold">{{ yourAnswerText(q).slice(0, 70) }}</b></div>
+                <div class="text-green-700"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">ans</span><b class="font-semibold">{{ correctAnswerText(q).slice(0, 70) }}</b></div>
+              </div>
             </div>
           </div>
         </div>
@@ -148,6 +287,11 @@ const grade = computed(() => {
 </template>
 
 <style scoped>
+@media print {
+  .no-print, header, nav { display: none !important; }
+  body { background: white !important; }
+  .res-hero h1 { font-size: 2rem; }
+}
 .tape {
   position: absolute;
   top: -26px;
