@@ -708,7 +708,7 @@ onBeforeUnmount(() => {
 
 /* ── Easter eggs ── */
 let keyBuffer = ''
-function onKeyEasterEgg(e: KeyboardEvent) {
+function onKeyEasterEgg(e) {
   keyBuffer += e.key
   if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20)
   if (keyBuffer.includes('ArrowUpArrowUpArrowDownArrowDownArrowLeftArrowRightArrowLeftArrowRightba')) {
@@ -719,10 +719,10 @@ function onKeyEasterEgg(e: KeyboardEvent) {
     const logo = document.querySelector('.nb-root .font-display')
     if (logo) {
       logo.classList.add('text-pen')
-      ;(logo as HTMLElement).style.textShadow = '0 0 12px rgba(47,95,224,0.6)'
+      logo.style.textShadow = '0 0 12px rgba(47,95,224,0.6)'
       setTimeout(() => {
         logo.classList.remove('text-pen')
-        ;(logo as HTMLElement).style.textShadow = ''
+        logo.style.textShadow = ''
       }, 2000)
     }
     keyBuffer = ''
