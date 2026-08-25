@@ -3,6 +3,7 @@ import AppNav from '@/components/AppNav.vue'
 import { ref, onMounted, computed, nextTick } from "vue"
 import { useRouter } from "vue-router"
 import gsap from "gsap"
+import { t } from "@/lib/i18n"
 const router = useRouter()
 
 interface LastResult { paper: import("@/types").UniversalPaper; answers: Record<string,string>; createdAt: number }
@@ -66,12 +67,12 @@ const grade = computed(() => {
   <div class="min-h-screen bg-paper text-ink font-sans pt-28 pb-16">
     <AppNav />
     <div class="max-w-4xl mx-auto px-5">
-      <button class="text-sm font-medium text-ink/50 hover:text-ink transition-colors" @click="router.push('/')">← home</button>
+      <button class="text-sm font-medium text-ink/50 hover:text-ink transition-colors" @click="router.push('/')">{{ t('common.backHome') }}</button>
 
       <div class="res-hero mt-3 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2">checked · red pen time</div>
-          <h1 class="text-4xl md:text-6xl font-display font-extrabold tracking-tight">Your <span class="relative inline-block">report card<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlgreen"></span></span></h1>
+          <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2">{{ t('results.eyebrow') }}</div>
+          <h1 class="text-4xl md:text-6xl font-display font-extrabold tracking-tight">{{ t('results.h1a') }}<span class="relative inline-block">{{ t('results.h1b') }}<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlgreen"></span></span></h1>
         </div>
         <div v-if="stats" class="grade grid h-20 w-20 rotate-6 place-items-center rounded-full border-[3px] border-redmargin font-hand text-4xl font-bold text-redmargin bg-redmargin/[0.04]">{{ grade }}</div>
       </div>
@@ -79,9 +80,9 @@ const grade = computed(() => {
       <div v-if="!result" class="mt-8 relative rounded-lg bg-white p-10 text-center shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
         <div class="tape" aria-hidden="true"></div>
         <img src="/images/notebook/empty-result.webp" alt="" class="w-40 mx-auto mb-4" loading="lazy" />
-        <p class="font-display font-bold text-xl">No result yet.</p>
-        <p class="text-ink/55 mt-1.5 text-[15px]">Take a test first — the red pen is waiting.</p>
-        <button class="mt-5 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">Start</button>
+        <p class="font-display font-bold text-xl">{{ t('results.empty.title') }}</p>
+        <p class="text-ink/55 mt-1.5 text-[15px]">{{ t('results.empty.sub') }}</p>
+        <button class="mt-5 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">{{ t('results.empty.cta') }}</button>
       </div>
 
       <template v-else-if="stats">
@@ -89,19 +90,19 @@ const grade = computed(() => {
         <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
             <div class="text-4xl font-extrabold font-display tabular-nums">{{ scoreDisplay }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">Score</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.score') }}</div>
           </div>
           <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
             <div class="text-4xl font-extrabold font-display tabular-nums text-correct">{{ stats.correct }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">Correct / {{ stats.total }}</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.correct') }} / {{ stats.total }}</div>
           </div>
           <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
             <div class="text-4xl font-extrabold font-display tabular-nums text-redmargin">{{ stats.wrong }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">Wrong</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.wrong') }}</div>
           </div>
           <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
             <div class="text-4xl font-extrabold font-display tabular-nums text-ink/40">{{ stats.unattempted }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">Skipped</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.skipped') }}</div>
           </div>
         </div>
 
@@ -109,7 +110,7 @@ const grade = computed(() => {
         <div class="mt-6 relative rounded-lg bg-white p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
           <div class="pointer-events-none absolute inset-y-0 left-9 w-px bg-redmargin/25"></div>
           <div class="pl-6">
-            <div class="font-display font-bold tracking-tight">Subject breakdown</div>
+            <div class="font-display font-bold tracking-tight">{{ t('results.breakdown') }}</div>
             <div class="mt-4 grid gap-3">
               <div v-for="(v,k) in stats.bySubject" :key="k" class="flex items-center gap-4">
                 <div class="w-28 text-sm font-semibold text-ink/70 truncate">{{ k }}</div>
@@ -124,22 +125,22 @@ const grade = computed(() => {
 
         <!-- detailed -->
         <div class="mt-6 rounded-lg bg-white p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
-          <div class="font-display font-bold tracking-tight">Question by question</div>
+          <div class="font-display font-bold tracking-tight">{{ t('results.detail') }}</div>
           <div class="mt-4 grid gap-2">
             <div v-for="q in result.paper.questions" :key="q.id" class="flex gap-3 items-center text-sm rounded-xl border px-3.5 py-2.5" :class="(() => { const a: unknown = result!.answers[q.id]; const isMsq = q.type==='msq'; const correct = isMsq ? Array.isArray(a) && (a as string[]).slice().sort().join(',')===(q.answers||[]).slice().sort().join(',') : a===q.answer; const attempted = isMsq ? Array.isArray(a) && (a as string[]).length>0 : !!a; return correct ? 'bg-correct/[0.06] border-correct/30' : attempted ? 'bg-redmargin/[0.05] border-redmargin/30' : 'bg-paper border-ink/10'; })()">
               <div class="w-9 font-mono text-xs text-ink/50 shrink-0">Q{{ q.number }}</div>
               <div class="flex-1 truncate text-ink/80">{{ q.text.slice(0,80) }}</div>
-              <div class="text-xs text-ink/55 shrink-0 hidden sm:block">you: <b class="text-ink/80">{{ Array.isArray(result!.answers[q.id]) ? ((result!.answers[q.id] as unknown as string[]).join(',') || '—') : (result!.answers[q.id] as unknown as string) || '—' }}</b> · ans: <b class="text-ink/80">{{ q.type==='msq' ? (q.answers||[]).join(',') : q.answer }}</b></div>
+              <div class="text-xs text-ink/55 shrink-0 hidden sm:block">{{ t('results.you') }}<b class="text-ink/80">{{ Array.isArray(result!.answers[q.id]) ? ((result!.answers[q.id] as unknown as string[]).join(',') || '—') : (result!.answers[q.id] as unknown as string) || '—' }}</b> · {{ t('results.ans') }}<b class="text-ink/80">{{ q.type==='msq' ? (q.answers||[]).join(',') : q.answer }}</b></div>
               <span class="shrink-0 w-5 h-5 grid place-items-center rounded-full text-white text-[10px] font-bold" :class="(() => { const a: unknown = result!.answers[q.id]; const isMsq = q.type==='msq'; const correct = isMsq ? Array.isArray(a) && (a as string[]).slice().sort().join(',')===(q.answers||[]).slice().sort().join(',') : a===q.answer; const attempted = isMsq ? Array.isArray(a) && (a as string[]).length>0 : !!a; return correct ? 'bg-correct' : attempted ? 'bg-redmargin' : 'bg-ink/25'; })()">✓</span>
             </div>
           </div>
         </div>
 
-        <p class="mt-6 font-hand text-2xl text-ink/50 -rotate-1">{{ stats.correct / stats.total >= 0.6 ? 'shabash! keep this streak going' : 'agle attempt me pakka — review the red ones' }}</p>
+        <p class="mt-6 font-hand text-2xl text-ink/50 -rotate-1">{{ stats.correct / stats.total >= 0.6 ? t('results.good') : t('results.bad') }}</p>
 
         <div class="mt-4 flex flex-wrap gap-3">
-          <button class="px-5 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-bold text-ink/70 hover:border-ink/30 transition-colors" @click="router.push('/review')">Back to review</button>
-          <button class="px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">New test</button>
+          <button class="px-5 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-bold text-ink/70 hover:border-ink/30 transition-colors" @click="router.push('/review')">{{ t('results.backReview') }}</button>
+          <button class="px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">{{ t('results.newTest') }}</button>
         </div>
       </template>
     </div>

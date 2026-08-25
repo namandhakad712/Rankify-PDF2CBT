@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue"
+import { t } from "@/lib/i18n"
 import pdfSvg from "@/assets/pdf.svg"
 import textSvg from "@/assets/text.svg"
 import pdfOcrSvg from "@/assets/pdf-ocr.svg"
@@ -72,8 +73,8 @@ const iconCls = (s: St) => (s === "idle" ? "opacity-30" : "opacity-100")
       <!-- Text layer check -->
       <div :class="['flex flex-col items-center gap-1 rounded-xl px-3 py-3 min-w-[92px]', cls(st('read'))]">
         <img :src="textSvg" alt="" class="w-7 h-7" :class="iconCls(st('read'))" />
-        <span class="font-mono text-[9px] font-bold tracking-wider uppercase text-center leading-tight">Text<br />layer?</span>
-        <span v-if="idx > ORDER.indexOf('read')" class="font-mono text-[8px]" :class="ocrUsed ? 'text-redmargin' : 'text-green-700'">{{ ocrUsed ? 'scanned' : 'found ✓' }}</span>
+        <span class="font-mono text-[9px] font-bold tracking-wider uppercase text-center leading-tight">{{ t('pipeline.text') }}<br />{{ t('pipeline.layer') }}</span>
+        <span v-if="idx > ORDER.indexOf('read')" class="font-mono text-[8px]" :class="ocrUsed ? 'text-redmargin' : 'text-green-700'">{{ ocrUsed ? t('pipeline.scanned') : t('pipeline.found') }}</span>
       </div>
       <div class="flex items-center font-mono text-lg" :class="arrowCls(idx > ORDER.indexOf('read'))">›</div>
 
@@ -81,14 +82,14 @@ const iconCls = (s: St) => (s === "idle" ? "opacity-30" : "opacity-100")
       <div :class="['relative flex flex-col items-center gap-1 rounded-xl px-3 py-3 min-w-[92px]', cls(ocrSt)]">
         <img :src="pdfOcrSvg" alt="" class="w-7 h-7" :class="ocrSt === 'active' ? 'opacity-100 animate-pulse' : iconCls(ocrSt)" />
         <span class="font-mono text-[9px] font-bold tracking-wider uppercase text-center leading-tight">Mistral<br />OCR</span>
-        <span v-if="ocrSt !== 'idle'" class="absolute -top-2 right-1 font-mono text-[8px] bg-hlyellow text-ink px-1 rounded-full">{{ ocrUsed ? 'ON' : 'skip' }}</span>
+        <span v-if="ocrSt !== 'idle'" class="absolute -top-2 right-1 font-mono text-[8px] bg-hlyellow text-ink px-1 rounded-full">{{ ocrUsed ? t('pipeline.on') : t('pipeline.skip') }}</span>
       </div>
       <div class="flex items-center font-mono text-lg" :class="arrowCls(idx > ORDER.indexOf('ocr'))">›</div>
 
       <!-- Page chunks -->
       <div :class="['flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 min-w-[110px]', cls(st('chunks'))]">
         <img :src="pagesSvg" alt="" class="w-7 h-7" :class="iconCls(st('chunks'))" />
-        <span class="font-mono text-[9px] font-bold tracking-wider uppercase">Pages</span>
+        <span class="font-mono text-[9px] font-bold tracking-wider uppercase">{{ t('pipeline.pages') }}</span>
         <div v-if="chunkCells.length" class="grid grid-cols-8 gap-0.5">
           <span v-for="c in chunkCells" :key="c.i" class="w-1.5 h-1.5 rounded-[2px]" :class="c.cls" />
         </div>
@@ -107,7 +108,7 @@ const iconCls = (s: St) => (s === "idle" ? "opacity-30" : "opacity-100")
       <div :class="['flex flex-col items-center gap-1 rounded-xl px-3 py-3 min-w-[92px]', cls(st('done'))]">
         <img :src="jsonSvg" alt="" class="w-7 h-7" :class="iconCls(st('done'))" />
         <span class="font-mono text-[9px] font-bold tracking-wider uppercase">JSON</span>
-        <span v-if="stage === 'done'" class="font-mono text-[8px] text-green-700">ready ✓</span>
+        <span v-if="stage === 'done'" class="font-mono text-[8px] text-green-700">{{ t('pipeline.ready') }}</span>
       </div>
     </div>
   </div>
