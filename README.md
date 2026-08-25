@@ -15,7 +15,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Web_Light-00DC82?style=for-the-badge&logo=vite&logoColor=white)](https://rankify-pdf2cbt.vercel.app)
 [![License](https://img.shields.io/badge/License-PolyForm--Noncommercial-4a4a4a?style=for-the-badge)](https://polyformproject.org/licenses/noncommercial/1.0.0)
 
-<a href="https://www.producthunt.com/products/rankify-2?utm_source=badge-featured&utm_medium=badge&utm_source=badge-rankify-2" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1034991&theme=light" alt="Rankify - Turn PDF to Live Test Interface | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<a href="https://www.producthunt.com/products/rankify-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rankify-3" target="_blank" rel="noopener noreferrer"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1232134&theme=light" alt="Rankify - Any question-paper PDF becomes a real CBT in your browser | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 
 <p align="center">
   <a href="#-quick-start">

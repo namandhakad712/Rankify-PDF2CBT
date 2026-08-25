@@ -7,7 +7,7 @@ import LangSwitch from '@/components/LangSwitch.vue'
 
 <template>
   <nav class="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-3xl">
-    <div class="flex items-center justify-between gap-2 rounded-2xl border border-ink/[0.08] bg-white/85 pl-4 lg:pl-5 pr-2.5 py-2.5 shadow-[0_2px_20px_-8px_rgba(35,32,58,0.15)] backdrop-blur-md overflow-hidden">
+    <div class="flex items-center justify-between gap-2 rounded-2xl border border-ink/[0.08] bg-white/85 pl-4 lg:pl-5 pr-2.5 py-2.5 shadow-[0_2px_20px_-8px_rgba(35,32,58,0.15)] backdrop-blur-md">
       <RouterLink to="/" class="flex items-baseline gap-1.5 group shrink-0">
         <span class="font-display font-bold text-lg lg:text-xl tracking-tight text-ink group-hover:text-pen transition-colors">Rankify</span>
         <span class="font-hand text-base lg:text-lg text-redmargin -rotate-6 inline-block">pdf→cbt</span>

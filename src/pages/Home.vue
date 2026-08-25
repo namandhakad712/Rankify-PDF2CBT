@@ -10,7 +10,7 @@
     <!-- ═══════════ NAV ═══════════ -->
     <header ref="navEl" class="fixed top-0 inset-x-0 z-50 -translate-y-20 opacity-0">
       <nav class="mx-auto max-w-6xl px-5">
-        <div class="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-ink/[0.08] bg-white/85 pl-4 lg:pl-5 pr-2.5 py-2.5 shadow-[0_2px_20px_-8px_rgba(35,32,58,0.15)] backdrop-blur-md overflow-hidden">
+        <div class="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-ink/[0.08] bg-white/85 pl-4 lg:pl-5 pr-2.5 py-2.5 shadow-[0_2px_20px_-8px_rgba(35,32,58,0.15)] backdrop-blur-md">
           <RouterLink to="/" class="flex items-baseline gap-1.5 shrink-0">
             <span class="font-display font-bold text-lg lg:text-xl tracking-tight text-ink">Rankify</span>
             <span class="font-hand text-base lg:text-lg text-redmargin -rotate-6 inline-block">pdf→cbt</span>
@@ -37,7 +37,7 @@
 
     <main>
       <!-- ═══════════ HERO ═══════════ -->
-      <section class="paper relative overflow-hidden pt-28 lg:pt-36 pb-16 lg:pb-20 md:pt-44 md:pb-28">
+      <section class="paper relative pt-28 lg:pt-36 pb-16 lg:pb-20 md:pt-44 md:pb-28">
         <div class="mx-auto max-w-6xl px-5 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8 lg:gap-14 items-center">
           <!-- Copy -->
           <div>
@@ -62,24 +62,19 @@
             </p>
 
             <div ref="heroCtas" class="opacity-0 mt-9 flex flex-wrap items-center gap-3 lg:gap-4">
-              <RouterLink
-                to="/extract"
-                data-sticker-trigger
-                class="group relative inline-flex items-center gap-2.5 rounded-2xl bg-pen px-6 lg:px-7 py-3.5 lg:py-4 text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(47,95,224,0.55)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(47,95,224,0.6)] min-h-[44px]"
-              >
-                <span class="relative z-10 flex items-center gap-2">{{ t('hero.cta1') }}
-                  <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </RouterLink>
+              <a href="https://www.producthunt.com/products/rankify-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rankify-3" target="_blank" rel="noopener noreferrer" class="block">
+                <img alt="Rankify on Product Hunt" width="250" height="54" src="/ph-badge.svg" class="block" />
+              </a>
               <a href="#how" class="nb-anchor inline-flex items-center gap-2 rounded-2xl border-2 border-ink/12 px-6 lg:px-7 py-3 lg:py-[14px] text-base font-bold text-ink/75 hover:border-ink/30 hover:text-ink transition-colors min-h-[44px]">
                 {{ t('hero.cta2') }}
               </a>
               <span ref="note1" class="font-hand text-lg lg:text-xl text-ink/55 -rotate-3 opacity-0 inline-block break-words">{{ t('hero.note') }}</span>
             </div>
+
           </div>
 
           <!-- Interactive mini exam sheet -->
-          <div class="relative min-w-0 overflow-hidden">
+          <div class="relative min-w-0">
             <img src="/images/notebook/hero-stack.webp" alt="" fetchpriority="high" decoding="async" class="hidden lg:block absolute -top-10 -right-8 w-52 pointer-events-none select-none z-20" style="filter: drop-shadow(0 16px 32px rgba(35,32,58,0.15));" ref="heroFloat" />
             <img src="/images/notebook/floating-notebook-pdf.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute -bottom-8 -left-6 w-32 pointer-events-none select-none opacity-90 rotate-3 z-20" style="filter: drop-shadow(0 10px 20px rgba(35,32,58,0.12));" />
             <div ref="examSheet" class="relative mx-auto max-w-md rotate-[0.8deg] lg:rotate-[1.2deg] rounded-xl bg-white shadow-[0_24px_60px_-24px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07] overflow-hidden">
@@ -171,7 +166,7 @@
       </section>
 
       <!-- ═══════════ FEATURES · STICKY NOTES ═══════════ -->
-      <section id="features" class="relative bg-[#F4EFE3] border-y-2 border-ink/[0.07] py-16 lg:py-24 md:py-32 overflow-hidden">
+      <section id="features" class="relative bg-[#F4EFE3] border-y-2 border-ink/[0.07] py-16 lg:py-24 md:py-32">
         <img src="/images/notebook/sticker-pack.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute -top-6 right-6 w-56 pointer-events-none select-none opacity-90 rotate-2" style="filter: drop-shadow(0 12px 24px rgba(35,32,58,0.12));" />
         <div class="mx-auto max-w-6xl px-5 relative">
           <div class="flex flex-wrap items-end justify-between gap-6">
@@ -192,6 +187,7 @@
               :style="{ transform: `rotate(${f.tilt}deg)` }"
             >
               <div class="tape" aria-hidden="true"></div>
+              <ImageTrail :items="[f.sticker]" :threshold="50" />
               <div class="text-ink/75" v-html="f.icon"></div>
               <h3 class="mt-4 font-display font-bold text-ink text-xl tracking-tight">{{ f.title }}</h3>
               <p class="mt-2 text-[15px] leading-relaxed text-ink/65">{{ f.desc }}</p>
@@ -319,7 +315,12 @@
         <div class="mt-8 lg:mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent break-words" style="-webkit-text-stroke: 1.5px rgba(251,248,241,0.28)" aria-hidden="true">RANKIFY</div>
         <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 border-cream/[0.12] pt-6 font-mono text-[10px] uppercase tracking-[0.25em] text-cream/45 break-words">
           <span class="break-words">{{ t('footer.copyright') }}</span>
-          <span class="font-hand text-base lg:text-lg normal-case tracking-normal text-hlyellow break-words" style="text-shadow: 0 0 14px rgba(255,216,77,0.6), 0 0 38px rgba(255,216,77,0.3);">{{ t('footer.students') }}</span>
+          <div class="flex items-center gap-4">
+            <span class="font-hand text-base lg:text-lg normal-case tracking-normal text-hlyellow break-words" style="text-shadow: 0 0 14px rgba(255,216,77,0.6), 0 0 38px rgba(255,216,77,0.3);">{{ t('footer.students') }}</span>
+            <a href="https://github.com/namandhakad712/Rankify-PDF2CBT" target="_blank" rel="noopener noreferrer" class="text-cream/50 hover:text-cream transition-colors" aria-label="GitHub">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+          </div>
         </div>
       </div>
     </footer>
@@ -385,12 +386,12 @@ const steps = [
 ]
 
 const features = [
-  { icon: ic.lock, title: t('feat.files'), desc: t('feat.files.desc'), cls: 'bg-hlyellow', tilt: -1.6 },
-  { icon: ic.crop, title: t('feat.crop'), desc: t('feat.crop.desc'), cls: 'bg-hlpink', tilt: 1.2 },
-  { icon: ic.timer, title: t('feat.real'), desc: t('feat.real.desc'), cls: 'bg-hlgreen', tilt: -0.8 },
-  { icon: ic.chart, title: t('feat.marks'), desc: t('feat.marks.desc'), cls: 'bg-hlblue', tilt: 1.4 },
-  { icon: ic.lang, title: t('feat.lang'), desc: t('feat.lang.desc'), cls: 'bg-hlyellow', tilt: 0.9 },
-  { icon: ic.upload, title: t('feat.install'), desc: t('feat.install.desc'), cls: 'bg-hlpink', tilt: -1.1 }
+  { icon: ic.lock, title: t('feat.files'), desc: t('feat.files.desc'), cls: 'bg-hlyellow', tilt: -1.6, sticker: '/images/notebook/stickers/heart-red.webp' },
+  { icon: ic.crop, title: t('feat.crop'), desc: t('feat.crop.desc'), cls: 'bg-hlpink', tilt: 1.2, sticker: '/images/notebook/stickers/star-yellow.webp' },
+  { icon: ic.timer, title: t('feat.real'), desc: t('feat.real.desc'), cls: 'bg-hlgreen', tilt: -0.8, sticker: '/images/notebook/stickers/plane-blue.webp' },
+  { icon: ic.chart, title: t('feat.marks'), desc: t('feat.marks.desc'), cls: 'bg-hlblue', tilt: 1.4, sticker: '/images/notebook/stickers/pencil-yellow.webp' },
+  { icon: ic.lang, title: t('feat.lang'), desc: t('feat.lang.desc'), cls: 'bg-hlyellow', tilt: 0.9, sticker: '/images/notebook/stickers/aplus-red.webp' },
+  { icon: ic.upload, title: t('feat.install'), desc: t('feat.install.desc'), cls: 'bg-hlpink', tilt: -1.1, sticker: '/images/notebook/stickers/heart-pink.webp' }
 ]
 
 const noList = ['Ads', 'Signups', 'Uploads', 'Fees', 'Tracking', 'Data selling']
@@ -592,6 +593,7 @@ onMounted(() => {
   tl.to(heroSub.value, { opacity: 1, duration: 0.7 }, 0.5)
   tl.to(heroCtas.value, { opacity: 1, duration: 0.7 }, 0.62)
   tl.to(note1.value, { opacity: 1, x: 0, rotate: -3, duration: 0.5, ease: 'back.out(2)' }, 0.85)
+
   /* highlighter sweep */
   tl.to(hl1.value, { scaleX: 1, duration: 0.55, ease: 'power3.inOut' }, 0.75)
   /* exam sheet + stickers + notebook art */
@@ -681,9 +683,18 @@ onMounted(() => {
   // subtle batch reveal — no click bounce
   ScrollTrigger.batch('.tape-card, .sticky-note', {
     onEnter: batch => gsap.from(batch, { y: 28, opacity: 0, duration: 0.6, stagger: 0.08, ease: 'power3.out', overwrite: true }),
-    start: 'top 88%',
+    start: 'top 95%',
     once: true
   })
+  // bulletproof fallback: force ALL batch-animated cards visible after a short delay
+  setTimeout(() => {
+    document.querySelectorAll('.tape-card, .sticky-note').forEach(el => {
+      gsap.killTweensOf(el)
+      gsap.set(el, { opacity: 1, y: 0 })
+    })
+  }, 1800)
+
+
   }, root.value)
 })
 
