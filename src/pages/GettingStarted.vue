@@ -1,8 +1,44 @@
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount } from 'vue'
 import AppNav from '@/components/AppNav.vue'
 import { useHead } from "@vueuse/head"
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { SplitText } from 'gsap/SplitText'
 import { t } from '@/lib/i18n'
+
+gsap.registerPlugin(ScrollTrigger, SplitText)
 useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
+
+let ctx: gsap.Context | null = null
+
+onMounted(() => {
+  ctx = gsap.context(() => {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) return
+
+    gsap.from('.gs-eyebrow', { y: 20, opacity: 0, duration: 0.6, ease: 'power3.out' })
+    gsap.from('.gs-title', { y: 40, opacity: 0, duration: 0.8, delay: 0.1, ease: 'power4.out' })
+    gsap.from('.gs-sub', { y: 20, opacity: 0, duration: 0.7, delay: 0.25, ease: 'power3.out' })
+    gsap.from('.gs-chai', { y: 15, opacity: 0, duration: 0.5, delay: 0.4, ease: 'back.out(2)' })
+
+    const hl = document.querySelector('.gs-title .hl-bg')
+    if (hl) {
+      gsap.fromTo(hl, { scaleX: 0 }, {
+        scaleX: 1, duration: 0.6, ease: 'power3.inOut',
+        scrollTrigger: { trigger: hl.parentElement, start: 'top 85%', once: true }
+      })
+    }
+
+    ScrollTrigger.batch('.gs-card', {
+      onEnter: batch => gsap.from(batch, { y: 40, opacity: 0, duration: 0.7, stagger: 0.1, ease: 'power3.out' }),
+      start: 'top 90%',
+      once: true
+    })
+  })
+})
+
+onBeforeUnmount(() => { ctx?.revert() })
 </script>
 
 <template>
@@ -11,13 +47,13 @@ useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
     <div class="max-w-3xl mx-auto px-5 min-w-0">
       <a href="/" class="inline-flex min-h-[40px] items-center text-sm font-medium text-ink/50 hover:text-ink transition-colors">{{ t('common.backHome') }}</a>
 
-      <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2 mt-4 break-words">{{ t('gs.eyebrow') }}</div>
-      <h1 class="text-3xl lg:text-4xl md:text-6xl font-display font-extrabold tracking-tight break-words">{{ t('gs.h1a') }}<span class="relative inline-block">{{ t('gs.h1b') }}<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlblue"></span></span></h1>
-      <p class="mt-4 text-[15px] lg:text-[16px] text-ink/60 leading-relaxed max-w-xl break-words">{{ t('gs.sub.a') }}<b>Gemini GEM flow</b>{{ t('gs.sub.b') }}<b>AI Agent</b>{{ t('gs.sub.c') }}</p>
-      <p class="font-hand text-xl lg:text-2xl text-pen mt-2 rotate-1 break-words">{{ t('gs.chai') }}</p>
+      <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-2 mt-4 break-words gs-eyebrow">{{ t('gs.eyebrow') }}</div>
+      <h1 class="text-3xl lg:text-4xl md:text-6xl font-display font-extrabold tracking-tight break-words gs-title">{{ t('gs.h1a') }}<span class="relative inline-block">{{ t('gs.h1b') }}<span class="absolute inset-x-[-4px] inset-y-[16%] -z-10 rounded-sm bg-hlblue hl-bg"></span></span></h1>
+      <p class="mt-4 text-[15px] lg:text-[16px] text-ink/60 leading-relaxed max-w-xl break-words gs-sub">{{ t('gs.sub.a') }}<b>Gemini GEM flow</b>{{ t('gs.sub.b') }}<b>AI Agent</b>{{ t('gs.sub.c') }}</p>
+      <p class="font-hand text-xl lg:text-2xl text-pen mt-2 rotate-1 break-words gs-chai">{{ t('gs.chai') }}</p>
 
       <div class="mt-8 lg:mt-10 grid gap-6">
-        <section class="relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(-0.4deg)">
+        <section class="gs-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(-0.4deg)">
           <div class="tape" aria-hidden="true"></div>
           <div class="flex items-center gap-3 min-w-0">
             <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin shrink-0">1</span>
@@ -31,7 +67,7 @@ useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
           </ol>
         </section>
 
-        <section class="relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(0.3deg)">
+        <section class="gs-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(0.3deg)">
           <div class="tape" aria-hidden="true"></div>
           <div class="flex items-center gap-3 min-w-0">
             <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin shrink-0">2</span>
@@ -44,7 +80,7 @@ useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
           </ol>
         </section>
 
-        <section class="relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(-0.3deg)">
+        <section class="gs-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(-0.3deg)">
           <div class="tape" aria-hidden="true"></div>
           <div class="flex items-center gap-3 min-w-0">
             <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin shrink-0">3</span>
@@ -58,7 +94,7 @@ useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
           <p class="font-hand text-lg lg:text-xl text-ink/50 mt-3 -rotate-1 break-words">{{ t('gs.s3.note') }}</p>
         </section>
 
-        <section class="relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(0.4deg)">
+        <section class="gs-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(0.4deg)">
           <div class="tape" aria-hidden="true"></div>
           <div class="flex items-center gap-3 min-w-0">
             <span class="grade grid h-10 w-10 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin shrink-0">4</span>
@@ -70,7 +106,7 @@ useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
           </ol>
         </section>
 
-        <section class="rounded-lg bg-hlblue/30 border-2 border-hlblue p-4 lg:p-7 overflow-hidden">
+        <section class="gs-card rounded-lg bg-hlblue/30 border-2 border-hlblue p-4 lg:p-7 overflow-hidden">
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('gs.opt.title') }}</h2>
           <ol class="mt-3 list-decimal list-inside text-[15px] text-ink/70 space-y-1.5 leading-relaxed break-words">
             <li class="break-words">{{ t('gs.opt.l1a') }}<b>/extract</b>{{ t('gs.opt.l1b') }}<b>AI Agent</b>{{ t('gs.opt.l1c') }}</li>
@@ -81,7 +117,7 @@ useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
           </ol>
         </section>
 
-        <section class="rounded-lg bg-white p-4 lg:p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] overflow-hidden">
+        <section class="gs-card rounded-lg bg-white p-4 lg:p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] overflow-hidden">
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('gs.keys.title') }}</h2>
           <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed break-words">
             <li class="break-words">{{ t('gs.keys.l1a') }}<b>{{ t('gs.keys.noKey') }}</b>{{ t('gs.keys.l1b') }}</li>
@@ -90,7 +126,7 @@ useHead(() => ({ title: t("gs.docTitle") + " — Rankify PDF2CBT" }))
           </ul>
         </section>
 
-        <section class="rounded-lg bg-white p-4 lg:p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] overflow-hidden">
+        <section class="gs-card rounded-lg bg-white p-4 lg:p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] overflow-hidden">
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('gs.fix.title') }} <span class="font-hand text-lg lg:text-xl text-ink/45 font-normal break-words">{{ t('gs.fix.sub') }}</span></h2>
           <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed break-words">
             <li class="break-words"><b>{{ t('gs.fix.l1a') }}</b>{{ t('gs.fix.l1b') }}</li>
