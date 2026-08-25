@@ -706,6 +706,37 @@ onBeforeUnmount(() => {
   if (lenis) lenis.destroy()
 })
 
+/* ── Easter eggs ── */
+let keyBuffer = ''
+function onKeyEasterEgg(e: KeyboardEvent) {
+  keyBuffer += e.key
+  if (keyBuffer.length > 20) keyBuffer = keyBuffer.slice(-20)
+  if (keyBuffer.includes('ArrowUpArrowUpArrowDownArrowDownArrowLeftArrowRightArrowLeftArrowRightba')) {
+    keyBuffer = ''
+    triggerEasterConfetti()
+  }
+  if (keyBuffer.endsWith('rankify')) {
+    const logo = document.querySelector('.nb-root .font-display')
+    if (logo) {
+      logo.classList.add('text-pen')
+      ;(logo as HTMLElement).style.textShadow = '0 0 12px rgba(47,95,224,0.6)'
+      setTimeout(() => {
+        logo.classList.remove('text-pen')
+        ;(logo as HTMLElement).style.textShadow = ''
+      }, 2000)
+    }
+    keyBuffer = ''
+  }
+}
+async function triggerEasterConfetti() {
+  try {
+    const confetti = (await import('canvas-confetti')).default
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.1 }, colors: ['#2F5FE0', '#FFD84D', '#1FA45C', '#FF9EC0', '#7c3aed'] })
+  } catch {}
+}
+onMounted(() => { window.addEventListener('keydown', onKeyEasterEgg) })
+onBeforeUnmount(() => { window.removeEventListener('keydown', onKeyEasterEgg) })
+
 useHead({
   title: 'Rankify — Any question paper. Now it\'s a real exam.',
   meta: [

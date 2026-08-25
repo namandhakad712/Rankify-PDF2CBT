@@ -3,6 +3,8 @@ import AppNav from '@/components/AppNav.vue'
 import { ref, onMounted, computed, nextTick } from "vue"
 import { useRouter } from "vue-router"
 import gsap from "gsap"
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+gsap.registerPlugin(ScrollTrigger)
 import { t } from "@/lib/i18n"
 const router = useRouter()
 
@@ -21,10 +23,38 @@ onMounted(async () => {
   const scoreObj = { v: 0 }
   gsap.to(scoreObj, { v: s.score, duration: 1.6, delay: 0.4, ease: "power2.out", onUpdate: () => (scoreDisplay.value = Math.round(scoreObj.v)) })
   gsap.fromTo(".bar-fill", { width: "0%" }, { width: (i, el: HTMLElement) => el.dataset.w || "0%", duration: 1.2, delay: 0.6, stagger: 0.12, ease: "power3.out" })
+
+  // Donut ring animation
+  document.querySelectorAll('.donut-seg').forEach((seg) => {
+    const el = seg as SVGGeometryElement
+    const target = el.getAttribute('stroke-dasharray') || '0 339.3'
+    el.setAttribute('stroke-dasharray', '0 339.3')
+    gsap.to(el, { attr: { 'stroke-dasharray': target }, duration: 1.2, delay: 0.8, ease: 'power3.out' })
+  })
+
+  // Verdict row cascade
+  ScrollTrigger.batch('.verdict-row', {
+    onEnter: batch => gsap.from(batch, { x: -20, opacity: 0, duration: 0.4, stagger: 0.04, ease: 'power2.out' }),
+    start: 'top 92%',
+    once: true
+  })
+
+  // Grade circle bounce
+  const gradeEl = document.querySelector('.grade')
+  if (gradeEl) {
+    gsap.from(gradeEl, { scale: 0, rotation: -20, duration: 0.6, delay: 0.3, ease: 'back.out(2)' })
+  }
+
   if (s.total > 0 && s.correct / s.total >= 0.6) {
     try {
       const confetti = (await import("canvas-confetti")).default
-      confetti({ particleCount: 120, spread: 75, origin: { y: 0.35 }, colors: ["#2F5FE0", "#FFD84D", "#1FA45C", "#FF9EC0"] })
+      // Burst from center
+      confetti({ particleCount: 80, spread: 60, origin: { y: 0.5, x: 0.5 }, colors: ["#2F5FE0", "#FFD84D", "#1FA45C", "#FF9EC0"] })
+      // Side bursts
+      setTimeout(() => {
+        confetti({ particleCount: 40, angle: 60, spread: 55, origin: { x: 0 }, colors: ["#2F5FE0", "#FFD84D"] })
+        confetti({ particleCount: 40, angle: 120, spread: 55, origin: { x: 1 }, colors: ["#1FA45C", "#FF9EC0"] })
+      }, 300)
     } catch {}
   }
 })
@@ -263,7 +293,7 @@ const grade = computed(() => {
         <div class="mt-6 rounded-lg bg-white p-4 lg:p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden">
           <div class="font-display font-bold tracking-tight break-words">{{ t('results.detail') }}</div>
           <div class="mt-4 grid gap-2.5">
-            <div v-for="q in result.paper.questions" :key="q.id" class="rounded-xl border px-3 py-2.5 lg:px-3.5 min-w-0 overflow-hidden" :class="verdictOf(q) === 'c' ? 'bg-correct/[0.05] border-correct/30' : verdictOf(q) === 'w' ? 'bg-redmargin/[0.04] border-redmargin/30' : 'bg-paper border-ink/10'">
+            <div v-for="q in result.paper.questions" :key="q.id" class="verdict-row rounded-xl border px-3 py-2.5 lg:px-3.5 min-w-0 overflow-hidden" :class="verdictOf(q) === 'c' ? 'bg-correct/[0.05] border-correct/30' : verdictOf(q) === 'w' ? 'bg-redmargin/[0.04] border-redmargin/30' : 'bg-paper border-ink/10'">
               <div class="flex gap-2 lg:gap-3 items-start text-sm min-w-0">
                 <div class="w-9 font-mono text-xs text-ink/50 shrink-0">Q{{ q.number }}</div>
                 <div class="flex-1 min-w-0 text-ink/80 break-words line-clamp-2">{{ q.text.slice(0, 90) }}</div>

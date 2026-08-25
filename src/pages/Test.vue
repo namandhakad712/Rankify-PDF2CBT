@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue"
 import { useRouter } from "vue-router"
 import type { UniversalPaper } from "@/types"
 import { getDB } from "@/lib/db"
 import MathText from "@/components/MathText.vue"
+import gsap from 'gsap'
 import { t } from "@/lib/i18n"
 
 const router = useRouter()
@@ -135,6 +136,24 @@ const fmt = computed(() => {
   const m = Math.floor(timeLeft.value/60); const s = timeLeft.value%60
   return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`
 })
+
+// Question transition animation
+watch(idx, () => {
+  const sheet = document.querySelector('.q-sheet')
+  if (sheet) {
+    gsap.fromTo(sheet, { opacity: 0.5, y: 12 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' })
+  }
+})
+
+// Timer urgency shake when <60s
+watch(timeLeft, (val) => {
+  if (val === 60) {
+    const timerEl = document.querySelector('.timer-display')
+    if (timerEl) {
+      gsap.fromTo(timerEl, { x: -3 }, { x: 0, duration: 0.4, ease: 'elastic.out(1,0.3)', repeat: 2 })
+    }
+  }
+})
 </script>
 
 <template>
@@ -154,7 +173,7 @@ const fmt = computed(() => {
         <span class="truncate break-words min-w-0">{{ paper.meta.title }}</span>
       </div>
       <div class="flex items-center gap-2 lg:gap-3 shrink-0">
-        <div class="min-h-[40px] flex items-center font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse' : 'bg-paper text-ink/70 border border-ink/10'">{{ fmt }}</div>
+        <div class="timer-display min-h-[40px] flex items-center font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse' : 'bg-paper text-ink/70 border border-ink/10'">{{ fmt }}</div>
         <button class="min-h-[40px] px-5 py-2.5 rounded-xl bg-pen hover:bg-pen/90 text-white text-sm font-bold transition-colors" @click="submit">{{ t('test.submit') }}</button>
       </div>
     </div>
@@ -163,7 +182,7 @@ const fmt = computed(() => {
       <!-- question sheet — fills all leftover space, seamless white -->
       <div class="flex-1 lg:min-h-0 lg:overflow-hidden flex flex-col bg-white min-w-0 overflow-hidden">
         <div class="flex-1 lg:overflow-y-auto px-4 lg:px-6 md:px-10 py-5 md:py-6 min-w-0">
-        <div v-if="q" class="min-w-0 break-words">
+        <div v-if="q" class="q-sheet min-w-0 break-words">
           <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-ink/50 uppercase break-words">
               <span>Q{{ q.number }} / {{ total }}</span><span class="text-ink/25">·</span>
               <span class="break-words">{{ q.type.toUpperCase() }}</span><span class="text-ink/25">·</span>

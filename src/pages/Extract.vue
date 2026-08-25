@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
 import AppNav from '@/components/AppNav.vue'
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue"
 import { useRouter } from "vue-router"
 import { parsePastedJSON, fetchAndParse } from "@/lib/parse"
 import { getDB } from "@/lib/db"
@@ -30,6 +30,26 @@ onMounted(() => {
   gsap.from(".ex-title", { y: 40, opacity: 0, duration: 0.9, delay: 0.1, ease: "power4.out" })
   gsap.from(".ex-sub", { y: 20, opacity: 0, duration: 0.8, delay: 0.25, ease: "power3.out" })
   gsap.from(".tape-card", { y: 50, opacity: 0, duration: 0.8, stagger: 0.12, delay: 0.35, ease: "power2.out" })
+
+  // Tab switch animation
+  watch(activeTab, (val) => {
+    const selector = val === 'gem' ? '.tab-gem' : '.tab-agent'
+    const el = document.querySelector(selector)
+    if (el) {
+      gsap.fromTo(el, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out' })
+    }
+  })
+
+  // JSON paste glow watcher
+  watch(pasteText, (val) => {
+    const textarea = document.querySelector('.json-textarea') as HTMLElement
+    if (!textarea) return
+    if (val.trim().startsWith('{')) {
+      textarea.classList.add('json-valid-glow')
+    } else {
+      textarea.classList.remove('json-valid-glow')
+    }
+  })
 })
 
 function handleSpotlight(e: MouseEvent) {
@@ -478,7 +498,7 @@ void (async () => {
         </div>
 
         <!-- ═══ TAB 1 · GEM — paste JSON ═══ -->
-        <div v-show="activeTab==='gem'" class="grid gap-6">
+        <div v-show="activeTab==='gem'" class="grid gap-6 tab-gem">
           <div class="tape-card relative rounded-lg bg-white p-4 lg:p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card overflow-hidden" style="transform: rotate(-0.3deg)" @mousemove="handleSpotlight">
             <div class="tape" aria-hidden="true"></div>
             <div class="flex items-center gap-2.5 mb-2 min-w-0">
@@ -510,7 +530,7 @@ void (async () => {
                 <div class="absolute inset-0 grid place-items-center pointer-events-none select-none">
                   <img :src="jsonSvg" alt="" aria-hidden="true" class="w-14 h-14 opacity-[0.07]" />
                 </div>
-                <textarea v-model="pasteText" rows="12" :placeholder="t('extract.gem.pastePlaceholder')" class="relative w-full min-w-0 min-h-[250px] bg-transparent p-4 font-mono text-xs text-ink focus:outline-none placeholder:text-ink/30 break-words"></textarea>
+                <textarea v-model="pasteText" rows="12" :placeholder="t('extract.gem.pastePlaceholder')" class="json-textarea relative w-full min-w-0 min-h-[250px] bg-transparent p-4 font-mono text-xs text-ink focus:outline-none placeholder:text-ink/30 break-words"></textarea>
               </div>
               <label class="relative min-w-0 rounded-2xl border-2 border-dashed border-ink/15 flex flex-col items-center justify-center gap-2 text-center p-3 cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors min-h-[250px]">
                 <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
@@ -542,7 +562,7 @@ void (async () => {
         </div>
 
         <!-- ═══ TAB 2 · AI AGENT ═══ -->
-        <div v-show="activeTab==='agent'" class="grid gap-6">
+        <div v-show="activeTab==='agent'" class="grid gap-6 tab-agent">
           <div class="flex items-center justify-end">
             <button type="button" @click="showSettings = true" class="min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-ink/15 bg-white text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors shadow-sm">
               <Settings class="w-3.5 h-3.5" /> {{ t('extract.agent.settingsBtn') }}
@@ -824,5 +844,14 @@ void (async () => {
 }
 @media (max-width: 390px) {
   .tape { width: 190px; height: 50px; top: -20px; }
+}
+.json-textarea.json-valid-glow {
+  box-shadow: 0 0 0 2px rgba(31, 164, 92, 0.3), 0 0 20px rgba(31, 164, 92, 0.1);
+  border-color: rgba(31, 164, 92, 0.4);
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+.spotlight-card {
+  transition: transform 0.2s ease;
+  transform-style: preserve-3d;
 }
 </style>
