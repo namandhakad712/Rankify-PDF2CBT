@@ -172,10 +172,10 @@ function saveCrop() {
         <div class="relative w-full lg:w-[62%] rounded-xl border border-ink/12 bg-paper overflow-hidden" style="height: 68vh">
           <!-- floating zoom controls -->
           <div v-if="pdfDocRef" class="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 rounded-xl bg-white/95 ring-1 ring-ink/10 shadow-sm px-1 py-0.5">
-            <button @click="zoomBy(1.25)" title="Zoom in (bigger crop area)" class="w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/70 font-bold">＋</button>
-            <button @click="zoomBy(0.8)" title="Zoom out" class="w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/70 font-bold">－</button>
-            <button @click="fitStencil" title="Reset stencil size" class="px-2 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-[10px] font-mono font-bold text-ink/60">FIT</button>
-            <button @click="autoFocus = !autoFocus; if (autoFocus) initStencil()" :class="['px-2 h-7 rounded-lg text-[10px] font-mono font-bold transition-colors', autoFocus ? 'bg-pen text-white' : 'text-ink/55 hover:text-pen']" title="Start each page with a large pre-sized crop">AUTO</button>
+            <button @click="zoomBy(1.25)" :title="t('cropper.zoomInT')" class="w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/70 font-bold">＋</button>
+            <button @click="zoomBy(0.8)" :title="t('cropper.zoomOutT')" class="w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/70 font-bold">－</button>
+            <button @click="fitStencil" :title="t('cropper.fitT')" class="px-2 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-[10px] font-mono font-bold text-ink/60">{{ t('cropper.fitLabel') }}</button>
+            <button @click="autoFocus = !autoFocus; if (autoFocus) initStencil()" :class="['px-2 h-7 rounded-lg text-[10px] font-mono font-bold transition-colors', autoFocus ? 'bg-pen text-white' : 'text-ink/55 hover:text-pen']" :title="t('cropper.autoT')">{{ t('cropper.autoLabel') }}</button>
           </div>
           <div v-if="loadingPage || (!pageSrc && pdfDocRef)" class="absolute inset-0 z-10 grid place-items-center bg-white/70 text-sm text-ink/55 font-medium">{{ t('cropper.rendering') }}{{ pageNum }}…</div>
           <div v-if="!pdfDocRef" class="absolute inset-0 grid place-items-center text-sm text-ink/50 px-6 text-center">

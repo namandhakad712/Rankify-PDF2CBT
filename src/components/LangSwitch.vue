@@ -41,7 +41,7 @@ onBeforeUnmount(() => {
       class="grid h-9 w-9 place-items-center rounded-full border border-ink/10 bg-white text-ink/65 hover:text-ink hover:border-ink/25 transition-colors"
       :aria-expanded="open"
       aria-haspopup="menu"
-      aria-label="Change language"
+      :aria-label="t('lang.change')"
       @click="open = !open"
     >
       <Languages class="w-4.5 h-4.5" />
@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
           role="menuitem"
           class="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-ink/75 hover:bg-hlyellow/30 hover:text-ink transition-colors"
         >
-          Want another language?
+          {{ t('lang.request') }}
           <ArrowUpRight class="w-4 h-4 shrink-0" />
         </a>
       </div>

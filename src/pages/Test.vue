@@ -191,7 +191,7 @@ const fmt = computed(() => {
 
             <div v-if="q.type==='nat'" class="mt-5 flex flex-wrap items-start gap-4 min-w-0">
               <div class="min-w-0">
-                <div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 mb-1.5">Answer</div>
+                <div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 mb-1.5">{{ t('test.nat.answer') }}</div>
                 <div class="w-full max-w-48 h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums break-all px-2">{{ answers[q.id] || '—' }}</div>
               </div>
               <div class="w-full max-w-52 min-w-0">
@@ -200,8 +200,8 @@ const fmt = computed(() => {
                   <button v-for="k in ['1','2','3','4','5','6','7','8','9','.','0','+/-']" :key="k" @click="natKey(k)" class="w-full min-h-[44px] h-11 rounded-lg border border-ink/15 bg-paper text-base font-bold text-ink hover:border-pen hover:text-pen transition-colors">{{ k }}</button>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5 mt-1.5">
-                  <button @click="natKey('⌫')" class="min-h-[44px] h-11 rounded-lg border border-redmargin/40 bg-redmargin/[0.07] text-redmargin grid place-items-center hover:bg-redmargin/[0.12] transition-colors" title="Backspace">⌫</button>
-                  <button @click="natKey('✓')" class="col-span-2 min-h-[44px] h-11 rounded-lg border border-pen/40 bg-pen/[0.08] text-pen grid place-items-center text-lg font-bold hover:bg-pen/[0.14] transition-colors" title="Save answer">✓</button>
+                  <button @click="natKey('⌫')" class="min-h-[44px] h-11 rounded-lg border border-redmargin/40 bg-redmargin/[0.07] text-redmargin grid place-items-center hover:bg-redmargin/[0.12] transition-colors" :title="t('test.nat.backspaceT')">⌫</button>
+                  <button @click="natKey('✓')" class="col-span-2 min-h-[44px] h-11 rounded-lg border border-pen/40 bg-pen/[0.08] text-pen grid place-items-center text-lg font-bold hover:bg-pen/[0.14] transition-colors" :title="t('test.nat.saveAnsT')">✓</button>
                 </div>
               </div>
             </div>
@@ -211,10 +211,10 @@ const fmt = computed(() => {
         <!-- classic CBT action bar — pinned under the sheet -->
         <div class="shrink-0 bg-white border-t-2 border-ink/[0.07] px-3 lg:px-4 md:px-6 py-3">
           <div class="flex flex-wrap items-center gap-2 lg:gap-2.5">
-            <button class="min-h-[40px] px-3 lg:px-4 py-2.5 rounded-lg bg-[#8b5cf6] text-white text-sm font-bold hover:brightness-110 transition-colors break-words" @click="markNext">{{ t('test.markForReview') }} &amp; Next</button>
-            <button class="min-h-[40px] px-3 lg:px-4 py-2.5 rounded-lg border-2 border-correct/50 text-sm font-bold text-green-700 hover:bg-correct/[0.06] transition-colors break-words" @click="clearResponse">Clear Response</button>
-            <button :disabled="idx===0" @click="go(idx-1)" class="min-h-[40px] ml-auto px-3 lg:px-4 py-2.5 rounded-lg bg-ink/[0.06] text-sm font-bold text-ink/70 hover:bg-ink/[0.1] transition-colors disabled:opacity-40 disabled:pointer-events-none">‹‹ Back</button>
-            <button v-if="idx < total-1" @click="saveNext" class="min-h-[40px] px-6 lg:px-8 py-2.5 rounded-lg bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5 break-words">Save &amp; Next ››</button>
+            <button class="min-h-[40px] px-3 lg:px-4 py-2.5 rounded-lg bg-[#8b5cf6] text-white text-sm font-bold hover:brightness-110 transition-colors break-words" @click="markNext">{{ t('test.markForReview') }}</button>
+            <button class="min-h-[40px] px-3 lg:px-4 py-2.5 rounded-lg border-2 border-correct/50 text-sm font-bold text-green-700 hover:bg-correct/[0.06] transition-colors break-words" @click="clearResponse">{{ t('test.clearResponse') }}</button>
+            <button :disabled="idx===0" @click="go(idx-1)" class="min-h-[40px] ml-auto px-3 lg:px-4 py-2.5 rounded-lg bg-ink/[0.06] text-sm font-bold text-ink/70 hover:bg-ink/[0.1] transition-colors disabled:opacity-40 disabled:pointer-events-none">‹‹ {{ t('test.back') }}</button>
+            <button v-if="idx < total-1" @click="saveNext" class="min-h-[40px] px-6 lg:px-8 py-2.5 rounded-lg bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5 break-words">{{ t('test.saveNext') }}</button>
             <button v-else @click="submit" class="min-h-[40px] px-6 lg:px-8 py-2.5 rounded-lg bg-correct text-white text-sm font-bold break-words">{{ t('test.submitTest') }}</button>
           </div>
         </div>
@@ -223,16 +223,16 @@ const fmt = computed(() => {
       <!-- classic CBT right panel -->
       <aside class="lg:w-80 shrink-0 bg-white border-t-2 lg:border-t-0 lg:border-l-2 border-ink/[0.07] flex flex-col lg:h-full lg:min-h-0">
         <div class="shrink-0 px-4 py-3 border-b border-ink/[0.08] bg-paper/60 flex items-center justify-between">
-          <div class="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/50">Question Palette</div>
-          <div class="font-mono text-[10px] text-ink/45">{{ total }} Qs</div>
+          <div class="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/50">{{ t('test.palette') }}</div>
+          <div class="font-mono text-[10px] text-ink/45">{{ total }} {{ t('test.qsUnit') }}</div>
         </div>
 
         <div class="shrink-0 px-4 py-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] font-medium text-ink/60 border-b border-ink/[0.06]">
-          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-correct inline-block"></span> Ans ({{ counts.answered }})</div>
-          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-redmargin inline-block"></span> NotAns ({{ counts.notAnswered }})</div>
-          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"></span> Marked ({{ counts.marked }})</div>
-          <div class="flex items-center gap-1.5"><span class="relative w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"><span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-correct border border-white"></span></span> A&amp;M ({{ counts.markedAnswered }})</div>
-          <div class="flex items-center gap-1.5 col-span-2"><span class="w-3.5 h-3.5 rounded bg-paper border border-dashed border-ink/35 inline-block"></span> Not Visited ({{ counts.notVisited }})</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-correct inline-block"></span> {{ t('test.legend.answered') }} ({{ counts.answered }})</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-redmargin inline-block"></span> {{ t('test.legend.notAnswered') }} ({{ counts.notAnswered }})</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"></span> {{ t('test.legend.marked') }} ({{ counts.marked }})</div>
+          <div class="flex items-center gap-1.5"><span class="relative w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"><span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-correct border border-white"></span></span> {{ t('test.legend.ansMarked') }} ({{ counts.markedAnswered }})</div>
+          <div class="flex items-center gap-1.5 col-span-2"><span class="w-3.5 h-3.5 rounded bg-paper border border-dashed border-ink/35 inline-block"></span> {{ t('test.legend.notVisited') }} ({{ counts.notVisited }})</div>
         </div>
 
         <div class="flex-1 min-h-0 overflow-y-auto px-4 py-4 overflow-x-hidden">
@@ -247,7 +247,7 @@ const fmt = computed(() => {
         </div>
 
         <div class="shrink-0 p-4 pt-3 border-t border-ink/[0.08] bg-paper/40">
-          <div class="text-[11px] font-mono text-ink/50 mb-2 break-words">{{ counts.answered + counts.markedAnswered }}/{{ total }} attempted</div>
+          <div class="text-[11px] font-mono text-ink/50 mb-2 break-words">{{ counts.answered + counts.markedAnswered }}/{{ total }} {{ t('test.attemptedSuffix') }}</div>
           <button class="w-full min-h-[44px] py-3 rounded-xl bg-correct text-white text-sm font-extrabold tracking-wide hover:brightness-110 transition-colors" @click="submit">{{ t('test.submit') }}</button>
         </div>
       </aside>

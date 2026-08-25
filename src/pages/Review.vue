@@ -385,7 +385,7 @@ function jumpToMobile(i: number) { selIdx.value = i; showMobileNav.value = false
             <div class="absolute inset-0 bg-ink/40 backdrop-blur-sm" @click="showMobileNav = false"></div>
             <div class="absolute left-0 top-0 bottom-0 w-[88%] max-w-[360px] bg-white shadow-2xl flex flex-col overflow-hidden">
               <div class="shrink-0 p-3 border-b border-ink/[0.08] flex items-center justify-between gap-2">
-                <div class="font-display font-bold text-base truncate">Questions</div>
+                <div class="font-display font-bold text-base truncate">{{ t('review.mobileTitle') }}</div>
                 <button @click="showMobileNav = false" class="min-h-[40px] min-w-[40px] w-10 h-10 rounded-full bg-paper border border-ink/10 grid place-items-center text-ink/60">✕</button>
               </div>
               <div class="shrink-0 p-3 border-b border-ink/[0.08] space-y-2.5 bg-paper/40">

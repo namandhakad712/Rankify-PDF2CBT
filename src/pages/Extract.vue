@@ -385,7 +385,7 @@ async function loadSessions() {
     const rows = await db.results.orderBy("createdAt").reverse().limit(12).toArray()
     pastSessions.value = rows.map((r) => ({
       id: r.id!,
-      title: r.paper?.meta?.title || "Untitled test",
+      title: r.paper?.meta?.title || t("extract.past.untitled"),
       when: new Date(r.createdAt).toLocaleString(),
       score: `${r.score?.obtained ?? 0}/${r.score?.total ?? r.paper?.questions?.length ?? 0}`,
       pct: r.score?.percentage ?? 0,
@@ -393,7 +393,7 @@ async function loadSessions() {
       resultId: r.id,
     }))
     const draft = await db.papers.get("review")
-    draftSession.value = draft?.paper ? { title: draft.paper.meta?.title || "Untitled draft", when: new Date(draft.updatedAt).toLocaleString(), qs: draft.paper.questions?.length || 0 } : null
+    draftSession.value = draft?.paper ? { title: draft.paper.meta?.title || t("extract.past.untitledDraft"), when: new Date(draft.updatedAt).toLocaleString(), qs: draft.paper.questions?.length || 0 } : null
   } catch { /* table missing on old DBs */ }
 }
 void loadSessions()
@@ -414,13 +414,13 @@ async function retake(row: SessionRow) {
 }
 
 async function deleteSession(row: SessionRow) {
-  if (!window.confirm(`Delete "${row.title}" (${row.when})? This cannot be undone.`)) return
+  if (!window.confirm(`${t("extract.past.confirmA")} "${row.title}" (${row.when})? ${t("extract.past.confirmB")}`)) return
   if (row.resultId != null) await getDB().results.delete(row.resultId)
   await loadSessions()
 }
 
 async function deleteDraft() {
-  if (!window.confirm("Delete the saved draft paper?")) return
+  if (!window.confirm(t("extract.past.delDraftQ"))) return
   await getDB().papers.delete("review")
   draftSession.value = null
 }
@@ -717,8 +717,8 @@ void (async () => {
         <!-- Past sessions manager -->
         <div v-if="pastSessions.length || draftSession" class="mt-6 rounded-2xl bg-white p-4 lg:p-5 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.22)] ring-1 ring-ink/[0.06] overflow-hidden">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <div class="font-display font-bold tracking-tight text-sm break-words">Previous Tests</div>
-            <span class="font-mono text-[10px] text-ink/40 break-words">{{ pastSessions.length }} attempts · stored locally</span>
+            <div class="font-display font-bold tracking-tight text-sm break-words">{{ t('extract.past.title') }}</div>
+            <span class="font-mono text-[10px] text-ink/40 break-words">{{ pastSessions.length }} {{ t('extract.past.attempts') }}</span>
           </div>
           <div v-if="pastSessions.length" class="space-y-1.5">
             <div v-for="row in pastSessions" :key="row.id" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 rounded-xl border border-ink/10 hover:border-ink/25 transition-colors min-w-0">
@@ -727,22 +727,22 @@ void (async () => {
               <span class="font-mono text-[10px] text-ink/45 shrink-0">{{ row.score }}</span>
               <span class="font-mono text-[10px] text-ink/35 hidden sm:inline break-words">{{ row.when }}</span>
               <span class="flex flex-wrap gap-1.5 ml-auto">
-                <button @click="openReport(row)" title="View report" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Report</button>
-                <button @click="retake(row)" title="Retake" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Retake</button>
-                <button @click="deleteSession(row)" title="Delete" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
+                <button @click="openReport(row)" :title="t('extract.past.viewReportT')" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ t('extract.past.report') }}</button>
+                <button @click="retake(row)" :title="t('extract.past.retake')" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ t('extract.past.retake') }}</button>
+                <button @click="deleteSession(row)" :title="t('extract.past.deleteT')" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
               </span>
             </div>
           </div>
           <div v-if="draftSession" class="mt-2.5 pt-2.5 border-t border-dashed border-ink/15 flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 min-w-0">
-            <span class="font-mono text-[10px] font-bold uppercase tracking-wider bg-hlblue px-2 py-0.5 rounded-full shrink-0">draft</span>
+            <span class="font-mono text-[10px] font-bold uppercase tracking-wider bg-hlblue px-2 py-0.5 rounded-full shrink-0">{{ t('extract.past.draftBadge') }}</span>
             <span class="text-sm font-semibold text-ink truncate flex-1 min-w-0 break-words">{{ draftSession.title }}</span>
-            <span class="font-mono text-[10px] text-ink/45 break-words">{{ draftSession.qs }} questions · {{ draftSession.when }}</span>
+            <span class="font-mono text-[10px] text-ink/45 break-words">{{ draftSession.qs }} {{ t('extract.past.questionsWord') }} · {{ draftSession.when }}</span>
             <span class="flex flex-wrap gap-1.5 ml-auto">
-              <button @click="openDraft" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Open in Review</button>
-              <button @click="deleteDraft" title="Delete draft" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
+              <button @click="openDraft" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ t('extract.past.openReview') }}</button>
+              <button @click="deleteDraft" :title="t('extract.past.deleteDraftT')" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
             </span>
           </div>
-          <div v-if="!pastSessions.length && !draftSession" class="text-xs text-ink/45 py-2">No previous sessions yet — your tests will appear here.</div>
+          <div v-if="!pastSessions.length && !draftSession" class="text-xs text-ink/45 py-2">{{ t('extract.past.empty') }}</div>
         </div>
       </div>
     </div>
