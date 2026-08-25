@@ -26,7 +26,6 @@ body:
         - Malayalam
         - Punjabi
         - French
-        - Gujarati
         - Other (tell us below)
     validations:
       required: true

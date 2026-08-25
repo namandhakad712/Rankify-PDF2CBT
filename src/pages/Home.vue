@@ -16,18 +16,21 @@
             <span class="font-hand text-lg text-redmargin -rotate-6 inline-block">pdf→cbt</span>
           </RouterLink>
           <div class="hidden md:flex items-center gap-7 text-[15px] font-medium text-ink/60">
-            <a href="#how" class="hover:text-ink transition-colors nb-anchor">How it works</a>
-            <a href="#features" class="hover:text-ink transition-colors nb-anchor">Features</a>
-            <a href="#faq" class="hover:text-ink transition-colors nb-anchor">FAQ</a>
-            <RouterLink to="/about" class="hover:text-ink transition-colors">About</RouterLink>
+            <a href="#how" class="hover:text-ink transition-colors nb-anchor">{{ t('home.nav.how') }}</a>
+            <a href="#features" class="hover:text-ink transition-colors nb-anchor">{{ t('home.nav.features') }}</a>
+            <a href="#faq" class="hover:text-ink transition-colors nb-anchor">{{ t('home.nav.faq') }}</a>
+            <RouterLink to="/about" class="hover:text-ink transition-colors">{{ t('nav.about') }}</RouterLink>
           </div>
-          <RouterLink
-            to="/extract"
-            class="group relative inline-flex items-center gap-2 rounded-xl bg-pen px-5 py-2.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0"
-          >
-            Start free
-            <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </RouterLink>
+          <div class="flex items-center gap-2">
+            <LangSwitch />
+            <RouterLink
+              to="/extract"
+              class="group relative inline-flex items-center gap-2 rounded-xl bg-pen px-5 py-2.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap"
+            >
+              {{ t('nav.cta') }}
+              <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </RouterLink>
+          </div>
         </div>
       </nav>
     </header>
@@ -337,6 +340,7 @@ import Lenis from 'lenis'
 import { ArrowRight, ArrowUp, Plus } from 'lucide-vue-next'
 import { t } from '@/lib/i18n'
 import CircularText from '@/components/CircularText.vue'
+import LangSwitch from '@/components/LangSwitch.vue'
 import ImageTrail from '@/components/ImageTrail.vue'
 import Crosshair from '@/components/Crosshair.vue'
 
