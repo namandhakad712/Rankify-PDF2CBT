@@ -148,60 +148,60 @@ const fmt = computed(() => {
   </div>
   <div v-else class="min-h-screen lg:h-screen lg:overflow-hidden bg-paper flex flex-col text-ink">
     <!-- exam header -->
-    <div class="bg-white/90 backdrop-blur border-b-2 border-ink/[0.07] px-5 py-3 flex items-center justify-between sticky top-0 z-30">
-      <div class="font-display font-bold flex items-center gap-2.5 tracking-tight min-w-0">
+    <div class="bg-white/90 backdrop-blur border-b-2 border-ink/[0.07] px-4 lg:px-5 py-3 flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30">
+      <div class="font-display font-bold flex items-center gap-2.5 tracking-tight min-w-0 flex-1">
         <span class="w-2.5 h-2.5 rounded-full bg-correct shrink-0"></span>
-        <span class="truncate">{{ paper.meta.title }}</span>
+        <span class="truncate break-words min-w-0">{{ paper.meta.title }}</span>
       </div>
-      <div class="flex items-center gap-3 shrink-0">
-        <div class="font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse' : 'bg-paper text-ink/70 border border-ink/10'">{{ fmt }}</div>
-        <button class="px-5 py-2 rounded-xl bg-pen hover:bg-pen/90 text-white text-sm font-bold transition-colors" @click="submit">{{ t('test.submit') }}</button>
+      <div class="flex items-center gap-2 lg:gap-3 shrink-0">
+        <div class="min-h-[40px] flex items-center font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse' : 'bg-paper text-ink/70 border border-ink/10'">{{ fmt }}</div>
+        <button class="min-h-[40px] px-5 py-2.5 rounded-xl bg-pen hover:bg-pen/90 text-white text-sm font-bold transition-colors" @click="submit">{{ t('test.submit') }}</button>
       </div>
     </div>
 
     <div class="flex-1 lg:min-h-0 flex flex-col lg:flex-row">
       <!-- question sheet — fills all leftover space, seamless white -->
-      <div class="flex-1 lg:min-h-0 lg:overflow-hidden flex flex-col bg-white">
-        <div class="flex-1 lg:overflow-y-auto px-6 md:px-10 py-5 md:py-6">
-        <div v-if="q">
-          <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-ink/50 uppercase">
+      <div class="flex-1 lg:min-h-0 lg:overflow-hidden flex flex-col bg-white min-w-0 overflow-hidden">
+        <div class="flex-1 lg:overflow-y-auto px-4 lg:px-6 md:px-10 py-5 md:py-6 min-w-0">
+        <div v-if="q" class="min-w-0 break-words">
+          <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-ink/50 uppercase break-words">
               <span>Q{{ q.number }} / {{ total }}</span><span class="text-ink/25">·</span>
-              <span>{{ q.type.toUpperCase() }}</span><span class="text-ink/25">·</span>
-              <span>{{ q.subject || t('test.general') }}</span>
-              <span v-if="q.hasDiagram" class="bg-hlyellow text-ink px-2 py-0.5 rounded-full font-sans font-bold normal-case tracking-normal">{{ t('test.diagramBelow') }}</span>
+              <span class="break-words">{{ q.type.toUpperCase() }}</span><span class="text-ink/25">·</span>
+              <span class="truncate break-words min-w-0">{{ q.subject || t('test.general') }}</span>
+              <span v-if="q.hasDiagram" class="bg-hlyellow text-ink px-2 py-0.5 rounded-full font-sans font-bold normal-case tracking-normal break-words">{{ t('test.diagramBelow') }}</span>
             </div>
-            <div class="mt-3.5 text-[16px] leading-relaxed whitespace-pre-wrap"><MathText :text="q.text" /></div>
+            <div class="mt-3.5 text-[15px] lg:text-[16px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden"><MathText :text="q.text" /></div>
             <div v-if="q.diagrams?.length" class="mt-3 flex gap-2.5 flex-wrap">
-              <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 rounded-lg border border-ink/10 bg-white" />
+              <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 max-w-full rounded-lg border border-ink/10 bg-white" />
             </div>
 
-            <div v-if="q.options" class="mt-5 grid gap-2.5">
+            <div v-if="q.options" class="mt-5 grid gap-2.5 min-w-0">
               <template v-if="q.type==='msq'">
-                <label v-for="(opt, oi) in q.options" :key="oi" :class="['flex items-center gap-3 text-left rounded-xl border-2 px-4 py-3 text-[15px] cursor-pointer transition-all', ((answers[q.id] as string[])||[]).includes(String(oi)) ? 'border-pen bg-pen/[0.05] font-medium' : 'border-ink/10 bg-paper hover:border-ink/25']">
-                  <input type="checkbox" :checked="((answers[q.id] as string[])||[]).includes(String(oi))" @change="selectOption(String(oi))" class="accent-pen w-4 h-4" />
-                  <span class="font-mono text-xs text-ink/50">{{ String.fromCharCode(65+oi) }}.</span><MathText :text="opt" />
+                <label v-for="(opt, oi) in q.options" :key="oi" :class="['flex items-center gap-3 text-left rounded-xl border-2 px-4 py-3 text-[15px] cursor-pointer transition-all min-h-[44px] break-words', ((answers[q.id] as string[])||[]).includes(String(oi)) ? 'border-pen bg-pen/[0.05] font-medium' : 'border-ink/10 bg-paper hover:border-ink/25']">
+                  <input type="checkbox" :checked="((answers[q.id] as string[])||[]).includes(String(oi))" @change="selectOption(String(oi))" class="accent-pen w-4 h-4 shrink-0" />
+                  <span class="font-mono text-xs text-ink/50 shrink-0">{{ String.fromCharCode(65+oi) }}.</span><span class="min-w-0 flex-1 break-words"><MathText :text="opt" /></span>
                 </label>
               </template>
               <template v-else>
-                <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left rounded-xl border-2 px-4 py-3 text-[15px] transition-all', answers[q.id]===String(oi+1) ? 'border-pen bg-pen text-white font-medium' : 'border-ink/10 bg-paper hover:border-ink/30']">
-                  <span class="font-mono text-xs mr-2.5" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span><MathText :text="opt" />
+                <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left rounded-xl border-2 px-4 py-3 text-[15px] transition-all min-h-[44px] break-words overflow-hidden', answers[q.id]===String(oi+1) ? 'border-pen bg-pen text-white font-medium' : 'border-ink/10 bg-paper hover:border-ink/30']">
+                  <span class="font-mono text-xs mr-2.5 shrink-0" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span><span class="min-w-0 break-words"><MathText :text="opt" /></span>
                 </button>
               </template>
             </div>
 
-            <div v-if="q.type==='nat'" class="mt-5 flex flex-wrap items-start gap-4">
-              <div>
+            <div v-if="q.type==='nat'" class="mt-5 flex flex-wrap items-start gap-4 min-w-0">
+              <div class="min-w-0">
                 <div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 mb-1.5">Answer</div>
-                <div class="w-48 h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums">{{ answers[q.id] || '—' }}</div>
+                <div class="w-full max-w-48 h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums break-all px-2">{{ answers[q.id] || '—' }}</div>
               </div>
-              <div class="w-52">
-                <div class="w-full h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums mb-2">{{ answers[q.id] || '' }}</div>
+              <div class="w-full max-w-52 min-w-0">
+                <div class="w-full h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums mb-2 break-all px-2">{{ answers[q.id] || '' }}</div>
                 <div class="grid grid-cols-3 gap-1.5">
-                  <button v-for="k in ['1','2','3','4','5','6','7','8','9','.','0','+/-']" :key="k" @click="natKey(k)" class="w-full h-11 rounded-lg border border-ink/15 bg-paper text-base font-bold text-ink hover:border-pen hover:text-pen transition-colors">{{ k }}</button>
+                  <button v-for="k in ['1','2','3','4','5','6','7','8','9','.','0','+/-']" :key="k" @click="natKey(k)" class="w-full min-h-[44px] h-11 rounded-lg border border-ink/15 bg-paper text-base font-bold text-ink hover:border-pen hover:text-pen transition-colors">{{ k }}</button>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5 mt-1.5">
-                  <button @click="natKey('⌫')" class="h-11 rounded-lg border border-redmargin/40 bg-redmargin/[0.07] text-redmargin grid place-items-center hover:bg-redmargin/[0.12] transition-colors" title="Backspace">⌫</button>
-                  <button @click="natKey('✓')" class="col-span-2 h-11 rounded-lg border border-pen/40 bg-pen/[0.08] text-pen grid place-items-center text-lg font-bold hover:bg-pen/[0.14] transition-colors" title="Save answer">✓</button>
+                  <button @click="natKey('⌫')" class="min-h-[44px] h-11 rounded-lg border border-redmargin/40 bg-redmargin/[0.07] text-redmargin grid place-items-center hover:bg-redmargin/[0.12] transition-colors" title="Backspace">⌫</button>
+                  <button @click="natKey('✓')" class="col-span-2 min-h-[44px] h-11 rounded-lg border border-pen/40 bg-pen/[0.08] text-pen grid place-items-center text-lg font-bold hover:bg-pen/[0.14] transition-colors" title="Save answer">✓</button>
                 </div>
               </div>
             </div>
@@ -209,13 +209,13 @@ const fmt = computed(() => {
         </div>
 
         <!-- classic CBT action bar — pinned under the sheet -->
-        <div class="shrink-0 bg-white border-t-2 border-ink/[0.07] px-4 md:px-6 py-3">
-          <div class="flex flex-wrap items-center gap-2.5">
-            <button class="px-4 py-2.5 rounded-lg bg-[#8b5cf6] text-white text-sm font-bold hover:brightness-110 transition-colors" @click="markNext">{{ t('test.markForReview') }} &amp; Next</button>
-            <button class="px-4 py-2.5 rounded-lg border-2 border-correct/50 text-sm font-bold text-green-700 hover:bg-correct/[0.06] transition-colors" @click="clearResponse">Clear Response</button>
-            <button :disabled="idx===0" @click="go(idx-1)" class="ml-auto px-4 py-2.5 rounded-lg bg-ink/[0.06] text-sm font-bold text-ink/70 hover:bg-ink/[0.1] transition-colors disabled:opacity-40 disabled:pointer-events-none">&lt;&lt; Back</button>
-            <button v-if="idx < total-1" @click="saveNext" class="px-8 py-2.5 rounded-lg bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5">Save &amp; Next &gt;&gt;</button>
-            <button v-else @click="submit" class="px-8 py-2.5 rounded-lg bg-correct text-white text-sm font-bold">{{ t('test.submitTest') }}</button>
+        <div class="shrink-0 bg-white border-t-2 border-ink/[0.07] px-3 lg:px-4 md:px-6 py-3">
+          <div class="flex flex-wrap items-center gap-2 lg:gap-2.5">
+            <button class="min-h-[40px] px-3 lg:px-4 py-2.5 rounded-lg bg-[#8b5cf6] text-white text-sm font-bold hover:brightness-110 transition-colors break-words" @click="markNext">{{ t('test.markForReview') }} &amp; Next</button>
+            <button class="min-h-[40px] px-3 lg:px-4 py-2.5 rounded-lg border-2 border-correct/50 text-sm font-bold text-green-700 hover:bg-correct/[0.06] transition-colors break-words" @click="clearResponse">Clear Response</button>
+            <button :disabled="idx===0" @click="go(idx-1)" class="min-h-[40px] ml-auto px-3 lg:px-4 py-2.5 rounded-lg bg-ink/[0.06] text-sm font-bold text-ink/70 hover:bg-ink/[0.1] transition-colors disabled:opacity-40 disabled:pointer-events-none">‹‹ Back</button>
+            <button v-if="idx < total-1" @click="saveNext" class="min-h-[40px] px-6 lg:px-8 py-2.5 rounded-lg bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5 break-words">Save &amp; Next ››</button>
+            <button v-else @click="submit" class="min-h-[40px] px-6 lg:px-8 py-2.5 rounded-lg bg-correct text-white text-sm font-bold break-words">{{ t('test.submitTest') }}</button>
           </div>
         </div>
       </div>
@@ -235,20 +235,20 @@ const fmt = computed(() => {
           <div class="flex items-center gap-1.5 col-span-2"><span class="w-3.5 h-3.5 rounded bg-paper border border-dashed border-ink/35 inline-block"></span> Not Visited ({{ counts.notVisited }})</div>
         </div>
 
-        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-4">
-          <div class="grid grid-cols-6 lg:grid-cols-5 gap-2">
-            <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-9 h-9 rounded-lg text-xs font-bold transition-all relative', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='markedAnswered' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='marked' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='notAnswered' ? 'bg-redmargin text-white' : 'bg-paper border border-dashed border-ink/30 text-ink/45']">{{ qq.number }}<span v-if="status[qq.id]==='markedAnswered'" class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-correct border border-white"></span></button>
+        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-4 overflow-x-hidden">
+          <div class="grid grid-cols-5 gap-2 lg:grid-cols-5">
+            <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-10 h-10 min-h-[40px] min-w-[40px] rounded-lg text-xs font-bold transition-all relative grid place-items-center', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='markedAnswered' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='marked' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='notAnswered' ? 'bg-redmargin text-white' : 'bg-paper border border-dashed border-ink/30 text-ink/45']">{{ qq.number }}<span v-if="status[qq.id]==='markedAnswered'" class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-correct border border-white"></span></button>
           </div>
 
           <div class="mt-5 grid grid-cols-2 gap-2">
-            <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx-1)" :disabled="idx===0">{{ t('test.prev') }}</button>
-            <button class="py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx+1)" :disabled="idx===total-1">{{ t('test.next') }}</button>
+            <button class="min-h-[40px] py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx-1)" :disabled="idx===0">{{ t('test.prev') }}</button>
+            <button class="min-h-[40px] py-2.5 rounded-xl border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-ink/30 transition-colors disabled:opacity-40" @click="go(idx+1)" :disabled="idx===total-1">{{ t('test.next') }}</button>
           </div>
         </div>
 
         <div class="shrink-0 p-4 pt-3 border-t border-ink/[0.08] bg-paper/40">
-          <div class="text-[11px] font-mono text-ink/50 mb-2">{{ counts.answered + counts.markedAnswered }}/{{ total }} attempted</div>
-          <button class="w-full py-3 rounded-xl bg-correct text-white text-sm font-extrabold tracking-wide hover:brightness-110 transition-colors" @click="submit">{{ t('test.submit') }}</button>
+          <div class="text-[11px] font-mono text-ink/50 mb-2 break-words">{{ counts.answered + counts.markedAnswered }}/{{ total }} attempted</div>
+          <button class="w-full min-h-[44px] py-3 rounded-xl bg-correct text-white text-sm font-extrabold tracking-wide hover:brightness-110 transition-colors" @click="submit">{{ t('test.submit') }}</button>
         </div>
       </aside>
     </div>

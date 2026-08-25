@@ -178,98 +178,100 @@ const grade = computed(() => {
 
       <template v-else-if="stats">
         <!-- stat cards -->
-        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
-            <div class="text-4xl font-extrabold font-display tabular-nums">{{ scoreDisplay }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.score') }}</div>
+        <div class="mt-8 grid grid-cols-2 gap-3 lg:gap-4 md:grid-cols-4">
+          <div class="stat-card rounded-2xl bg-white p-4 lg:p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] overflow-hidden">
+            <div class="text-3xl lg:text-4xl font-extrabold font-display tabular-nums break-words">{{ scoreDisplay }}</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5 break-words">{{ t('results.score') }}</div>
           </div>
-          <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
-            <div class="text-4xl font-extrabold font-display tabular-nums text-correct">{{ stats.correct }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.correct') }} / {{ stats.total }}</div>
+          <div class="stat-card rounded-2xl bg-white p-4 lg:p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] overflow-hidden">
+            <div class="text-3xl lg:text-4xl font-extrabold font-display tabular-nums text-correct break-words">{{ stats.correct }}</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5 break-words">{{ t('results.correct') }} / {{ stats.total }}</div>
           </div>
-          <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
-            <div class="text-4xl font-extrabold font-display tabular-nums text-redmargin">{{ stats.wrong }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.wrong') }}</div>
+          <div class="stat-card rounded-2xl bg-white p-4 lg:p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] overflow-hidden">
+            <div class="text-3xl lg:text-4xl font-extrabold font-display tabular-nums text-redmargin break-words">{{ stats.wrong }}</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5 break-words">{{ t('results.wrong') }}</div>
           </div>
-          <div class="stat-card rounded-2xl bg-white p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
-            <div class="text-4xl font-extrabold font-display tabular-nums text-ink/40">{{ stats.unattempted }}</div>
-            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5">{{ t('results.skipped') }}</div>
+          <div class="stat-card rounded-2xl bg-white p-4 lg:p-6 text-center ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] overflow-hidden">
+            <div class="text-3xl lg:text-4xl font-extrabold font-display tabular-nums text-ink/40 break-words">{{ stats.unattempted }}</div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45 mt-1.5 break-words">{{ t('results.skipped') }}</div>
           </div>
         </div>
 
         <!-- analytics row: donut + marks -->
-        <div v-if="analytics" class="mt-6 grid md:grid-cols-[auto_1fr] gap-4">
-          <div class="stat-card rounded-2xl bg-white p-5 flex items-center gap-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
-            <svg viewBox="0 0 128 128" class="w-36 h-36 -rotate-0">
+        <div v-if="analytics" class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-[auto_1fr]">
+          <div class="stat-card rounded-2xl bg-white p-4 lg:p-5 flex flex-col sm:flex-row items-center gap-4 lg:gap-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] overflow-hidden">
+            <svg viewBox="0 0 128 128" class="w-32 h-32 lg:w-36 lg:h-36 -rotate-0 shrink-0">
               <circle cx="64" cy="64" r="54" fill="none" stroke="#EFEDE6" stroke-width="16" />
               <circle v-for="(a, ai) in analytics.arcs" :key="ai" cx="64" cy="64" r="54" fill="none" :stroke="a.color" stroke-width="16" stroke-linecap="butt" :stroke-dasharray="a.dasharray" :stroke-dashoffset="a.offset" class="donut-seg" />
               <text x="64" y="60" text-anchor="middle" class="fill-ink font-display font-extrabold" style="font-size: 22px">{{ analytics.pct }}%</text>
               <text x="64" y="78" text-anchor="middle" class="fill-ink/50 font-mono" style="font-size: 9px">OF MAX</text>
             </svg>
-            <div class="space-y-1.5 text-xs font-semibold text-ink/60">
-              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-correct"></span> Correct · {{ stats.correct }}</div>
-              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-redmargin"></span> Wrong · {{ stats.wrong }}</div>
-              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-ink/20"></span> Skipped · {{ stats.unattempted }}</div>
+            <div class="space-y-1.5 text-xs font-semibold text-ink/60 w-full sm:w-auto">
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-correct shrink-0"></span> Correct · {{ stats.correct }}</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-redmargin shrink-0"></span> Wrong · {{ stats.wrong }}</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-ink/20 shrink-0"></span> Skipped · {{ stats.unattempted }}</div>
             </div>
           </div>
-          <div class="stat-card rounded-2xl bg-white p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] grid grid-cols-3 gap-3 content-center">
-            <div><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45">Score</div><div class="text-xl font-extrabold font-display tabular-nums">{{ stats.score }}<span class="text-ink/40 text-sm">/{{ analytics.maxMarks }}</span></div></div>
-            <div><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45">Accuracy</div><div class="text-xl font-extrabold font-display tabular-nums text-correct">{{ analytics.accuracy }}%</div></div>
-            <div><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45">Attempted</div><div class="text-xl font-extrabold font-display tabular-nums">{{ analytics.attempted }}<span class="text-ink/40 text-sm">/{{ stats.total }}</span></div></div>
+          <div class="stat-card rounded-2xl bg-white p-4 lg:p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] grid grid-cols-3 gap-2 lg:gap-3 content-center overflow-hidden">
+            <div class="min-w-0"><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 break-words">Score</div><div class="text-lg lg:text-xl font-extrabold font-display tabular-nums break-words">{{ stats.score }}<span class="text-ink/40 text-sm">/{{ analytics.maxMarks }}</span></div></div>
+            <div class="min-w-0"><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 break-words">Accuracy</div><div class="text-lg lg:text-xl font-extrabold font-display tabular-nums text-correct break-words">{{ analytics.accuracy }}%</div></div>
+            <div class="min-w-0"><div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 break-words">Attempted</div><div class="text-lg lg:text-xl font-extrabold font-display tabular-nums break-words">{{ analytics.attempted }}<span class="text-ink/40 text-sm">/{{ stats.total }}</span></div></div>
             <!-- verdict strip -->
-            <div class="col-span-3 mt-1">
+            <div class="col-span-3 mt-1 min-w-0">
               <div class="flex flex-wrap gap-1">
-                <span v-for="s in analytics.strip" :key="s.id" :title="'Q' + s.num" :class="['w-5 h-5 rounded grid place-items-center font-mono text-[8px] font-bold', s.st === 'c' ? 'bg-correct/85 text-white' : s.st === 'w' ? 'bg-redmargin/85 text-white' : 'bg-ink/[0.12] text-ink/50']">{{ s.num }}</span>
+                <span v-for="s in analytics.strip" :key="s.id" :title="'Q' + s.num" :class="['w-5 h-5 rounded grid place-items-center font-mono text-[8px] font-bold shrink-0', s.st === 'c' ? 'bg-correct/85 text-white' : s.st === 'w' ? 'bg-redmargin/85 text-white' : 'bg-ink/[0.12] text-ink/50']">{{ s.num }}</span>
               </div>
-              <div class="font-mono text-[9px] uppercase tracking-wider text-ink/35 mt-1.5">question-wise map</div>
+              <div class="font-mono text-[9px] uppercase tracking-wider text-ink/35 mt-1.5 break-words">question-wise map</div>
             </div>
           </div>
         </div>
 
         <!-- subject bars -->
-        <div class="mt-6 relative rounded-lg bg-white p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
-          <div class="pointer-events-none absolute inset-y-0 left-9 w-px bg-redmargin/25"></div>
-          <div class="pl-6">
-            <div class="font-display font-bold tracking-tight">{{ t('results.breakdown') }}</div>
+        <div class="mt-6 relative rounded-lg bg-white p-4 lg:p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden">
+          <div class="pointer-events-none absolute inset-y-0 left-9 w-px bg-redmargin/25 hidden sm:block"></div>
+          <div class="pl-0 sm:pl-6">
+            <div class="font-display font-bold tracking-tight break-words">{{ t('results.breakdown') }}</div>
             <div class="mt-4 grid gap-3">
-              <div v-for="(v,k) in stats.bySubject" :key="k" class="flex items-center gap-4">
-                <div class="w-28 text-sm font-semibold text-ink/70 truncate">{{ k }}</div>
-                <div class="flex-1 h-3.5 bg-paper rounded-full overflow-hidden border border-ink/[0.07]">
-                  <div class="bar-fill h-full rounded-full bg-gradient-to-r from-pen to-correct" :data-w="(100*v.correct/v.total)+'%'" :style="{width: (100*v.correct/v.total)+'%'}"></div>
+              <div v-for="(v,k) in stats.bySubject" :key="k" class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 min-w-0">
+                <div class="w-full sm:w-28 text-sm font-semibold text-ink/70 truncate break-words min-w-0">{{ k }}</div>
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                  <div class="flex-1 h-3.5 bg-paper rounded-full overflow-hidden border border-ink/[0.07] min-w-0">
+                    <div class="bar-fill h-full rounded-full bg-gradient-to-r from-pen to-correct" :data-w="(100*v.correct/v.total)+'%'" :style="{width: (100*v.correct/v.total)+'%'}"></div>
+                  </div>
+                  <div class="font-mono text-xs text-ink/55 w-14 text-right tabular-nums shrink-0">{{ v.correct }}/{{ v.total }}</div>
                 </div>
-                <div class="font-mono text-xs text-ink/55 w-14 text-right tabular-nums">{{ v.correct }}/{{ v.total }}</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- per-type performance -->
-        <div v-if="analytics && Object.keys(analytics.byType).length > 1" class="stat-card mt-6 rounded-2xl bg-white p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)]">
-          <div class="font-display font-bold tracking-tight text-sm">Performance by question type</div>
+        <div v-if="analytics && Object.keys(analytics.byType).length > 1" class="stat-card mt-6 rounded-2xl bg-white p-4 lg:p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] overflow-hidden">
+          <div class="font-display font-bold tracking-tight text-sm break-words">Performance by question type</div>
           <div class="mt-3 grid gap-2.5">
-            <div v-for="(v, k) in analytics.byType" :key="k" class="flex items-center gap-3">
-              <span class="w-16 font-mono text-[10px] font-bold uppercase tracking-wider text-ink/55">{{ k }}</span>
-              <div class="flex-1 h-3 bg-paper rounded-full overflow-hidden border border-ink/[0.07]">
+            <div v-for="(v, k) in analytics.byType" :key="k" class="flex items-center gap-2 lg:gap-3 min-w-0">
+              <span class="w-14 lg:w-16 font-mono text-[10px] font-bold uppercase tracking-wider text-ink/55 shrink-0 break-words">{{ k }}</span>
+              <div class="flex-1 h-3 bg-paper rounded-full overflow-hidden border border-ink/[0.07] min-w-0">
                 <div class="bar-fill h-full rounded-full bg-pen" :data-w="(100 * v.correct / v.total) + '%'" :style="{ width: (100 * v.correct / v.total) + '%' }"></div>
               </div>
-              <span class="font-mono text-[10px] text-ink/50 w-12 text-right tabular-nums">{{ v.correct }}/{{ v.total }}</span>
+              <span class="font-mono text-[10px] text-ink/50 w-10 lg:w-12 text-right tabular-nums shrink-0">{{ v.correct }}/{{ v.total }}</span>
             </div>
           </div>
         </div>
 
         <!-- detailed -->
-        <div class="mt-6 rounded-lg bg-white p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
-          <div class="font-display font-bold tracking-tight">{{ t('results.detail') }}</div>
+        <div class="mt-6 rounded-lg bg-white p-4 lg:p-6 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden">
+          <div class="font-display font-bold tracking-tight break-words">{{ t('results.detail') }}</div>
           <div class="mt-4 grid gap-2.5">
-            <div v-for="q in result.paper.questions" :key="q.id" class="rounded-xl border px-3.5 py-2.5" :class="verdictOf(q) === 'c' ? 'bg-correct/[0.05] border-correct/30' : verdictOf(q) === 'w' ? 'bg-redmargin/[0.04] border-redmargin/30' : 'bg-paper border-ink/10'">
-              <div class="flex gap-3 items-center text-sm">
+            <div v-for="q in result.paper.questions" :key="q.id" class="rounded-xl border px-3 py-2.5 lg:px-3.5 min-w-0 overflow-hidden" :class="verdictOf(q) === 'c' ? 'bg-correct/[0.05] border-correct/30' : verdictOf(q) === 'w' ? 'bg-redmargin/[0.04] border-redmargin/30' : 'bg-paper border-ink/10'">
+              <div class="flex gap-2 lg:gap-3 items-start text-sm min-w-0">
                 <div class="w-9 font-mono text-xs text-ink/50 shrink-0">Q{{ q.number }}</div>
-                <div class="flex-1 truncate text-ink/80">{{ q.text.slice(0, 90) }}</div>
+                <div class="flex-1 min-w-0 text-ink/80 break-words line-clamp-2">{{ q.text.slice(0, 90) }}</div>
                 <span :class="['shrink-0 w-6 h-6 grid place-items-center rounded-full text-[11px] font-bold text-white', verdictOf(q) === 'c' ? 'bg-correct' : verdictOf(q) === 'w' ? 'bg-redmargin' : 'bg-ink/30']">{{ verdictOf(q) === 'c' ? '✓' : verdictOf(q) === 'w' ? '✗' : '–' }}</span>
               </div>
-              <div class="mt-1.5 pl-12 grid sm:grid-cols-2 gap-1 text-[12px]">
-                <div :class="verdictOf(q) === 'w' ? 'text-redmargin' : 'text-ink/60'"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">you</span><b class="font-semibold">{{ yourAnswerText(q).slice(0, 70) }}</b></div>
-                <div class="text-green-700"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">ans</span><b class="font-semibold">{{ correctAnswerText(q).slice(0, 70) }}</b></div>
+              <div class="mt-1.5 pl-0 lg:pl-12 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[12px] min-w-0">
+                <div :class="verdictOf(q) === 'w' ? 'text-redmargin' : 'text-ink/60'" class="min-w-0 break-words"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">you</span><b class="font-semibold break-words break-all">{{ yourAnswerText(q).slice(0, 70) }}</b></div>
+                <div class="text-green-700 min-w-0 break-words"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">ans</span><b class="font-semibold break-words break-all">{{ correctAnswerText(q).slice(0, 70) }}</b></div>
               </div>
             </div>
           </div>

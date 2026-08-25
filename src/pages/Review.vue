@@ -29,6 +29,8 @@ const pdfBuffer = ref<ArrayBuffer | null>(null)
 const cropFor = ref<number | null>(null)
 const selIdx = ref(0)
 const showPanel = ref(false) // collapsed by default — expand via toolbar or edge rail
+const showMobileNav = ref(false)
+const showMobileVal = ref(false)
 
 /* ── Session dirty-tracking ── */
 const dirtyIds = ref<Set<number>>(new Set())
@@ -162,6 +164,7 @@ const errCount = computed(() => valIssues.value.filter((x) => x.level === "error
 const warnCount = computed(() => valIssues.value.filter((x) => x.level === "warn").length)
 
 function jumpTo(i: number) { selIdx.value = i }
+function jumpToMobile(i: number) { selIdx.value = i; showMobileNav.value = false; showMobileVal.value = false }
 </script>
 
 <template>
@@ -170,44 +173,44 @@ function jumpTo(i: number) { selIdx.value = i }
 
     <!-- ═══ No paper yet ═══ -->
     <div v-if="!paper" class="max-w-5xl mx-auto px-5 pt-28 pb-16">
-      <button class="text-sm font-medium text-ink/50 hover:text-ink transition-colors" @click="router.push('/extract')">{{ t('review.backExtract') }}</button>
+      <button class="min-h-[40px] px-3 py-2 rounded-lg text-sm font-medium text-ink/50 hover:text-ink transition-colors" @click="router.push('/extract')">{{ t('review.backExtract') }}</button>
       <div class="mt-8 relative rounded-lg bg-white p-10 text-center shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06]">
         <div class="tape" aria-hidden="true"></div>
         <img src="/images/notebook/empty-extract.webp" alt="" class="w-40 mx-auto mb-4" loading="lazy" />
         <p class="font-display font-bold text-xl">{{ t('review.empty.title') }}</p>
-        <p class="text-ink/55 mt-1.5 text-[15px]">{{ t('review.empty.sub') }}</p>
-        <button class="mt-5 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">{{ t('review.empty.cta') }}</button>
+        <p class="text-ink/55 mt-1.5 text-[15px] break-words">{{ t('review.empty.sub') }}</p>
+        <button class="mt-5 min-h-[40px] px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">{{ t('review.empty.cta') }}</button>
       </div>
     </div>
 
     <!-- ═══ 3-zone review workspace ═══ -->
     <template v-else>
-      <div class="max-w-[1700px] mx-auto px-5 pt-24 pb-4">
+      <div class="max-w-[1700px] mx-auto px-5 pt-24 pb-24 lg:pb-4">
         <!-- sticky toolbar -->
-        <div class="sticky top-[88px] z-30 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-2.5 shadow-[0_14px_40px_-22px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.06]">
-          <div class="flex items-center gap-3 min-w-0">
-            <button class="text-sm font-medium text-ink/50 hover:text-ink transition-colors shrink-0" @click="router.push('/extract')">{{ t('review.back') }}</button>
-            <span class="h-5 w-px bg-ink/10 shrink-0"></span>
-            <h1 class="font-display font-extrabold tracking-tight text-xl shrink-0" :title="pdfName ?? undefined">{{ t('review.title') }}</h1>
-            <span v-if="pdfName" class="font-hand text-lg text-ink/40 truncate max-w-52 hidden xl:inline">{{ pdfName }}</span>
+        <div class="sticky top-[88px] z-30 flex flex-wrap items-center justify-between gap-2 lg:gap-3 rounded-xl bg-white px-3 lg:px-4 py-2.5 shadow-[0_14px_40px_-22px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.06]">
+          <div class="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+            <button class="min-h-[40px] px-2 lg:px-0 text-sm font-medium text-ink/50 hover:text-ink transition-colors shrink-0" @click="router.push('/extract')">{{ t('review.back') }}</button>
+            <span class="h-5 w-px bg-ink/10 shrink-0 hidden sm:block"></span>
+            <h1 class="font-display font-extrabold tracking-tight text-lg lg:text-xl shrink-0 truncate" :title="pdfName ?? undefined">{{ t('review.title') }}</h1>
+            <span v-if="pdfName" class="font-hand text-lg text-ink/40 truncate max-w-32 lg:max-w-52 hidden xl:inline break-all">{{ pdfName }}</span>
           </div>
-          <div class="flex items-center gap-2.5">
-            <span v-if="dirtyCount" class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-full bg-hlyellow/60 text-ink">{{ dirtyCount }} {{ t('review.edited') }}</span>
-            <button :class="['px-3.5 py-2 rounded-xl border-2 text-xs font-bold transition-colors', showRendered ? 'border-pen/40 bg-pen/[0.06] text-pen' : 'border-ink/12 text-ink/60 hover:text-ink']" @click="showRendered = !showRendered">{{ showRendered ? "◉ " + t('review.toggleRendered') : "◌ " + t('review.toggleRaw') }}</button>
-            <button class="px-5 py-2 rounded-xl bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5" @click="saveAndGoTest">{{ t('review.saveStart') }}</button>
-            <button :class="['px-3.5 py-2 rounded-xl border-2 text-xs font-bold transition-colors', showPanel ? 'border-pen/40 bg-pen/[0.06] text-pen' : 'border-ink/12 text-ink/60 hover:text-ink']" @click="showPanel = !showPanel">{{ t('review.validation') }}</button>
+          <div class="flex items-center gap-2 lg:gap-2.5 flex-wrap">
+            <span v-if="dirtyCount" class="font-mono text-[11px] font-bold px-2.5 py-1 rounded-full bg-hlyellow/60 text-ink break-words">{{ dirtyCount }} {{ t('review.edited') }}</span>
+            <button :class="['min-h-[40px] px-3 lg:px-3.5 py-2 rounded-xl border-2 text-xs font-bold transition-colors', showRendered ? 'border-pen/40 bg-pen/[0.06] text-pen' : 'border-ink/12 text-ink/60 hover:text-ink']" @click="showRendered = !showRendered">{{ showRendered ? "◉ " + t('review.toggleRendered') : "◌ " + t('review.toggleRaw') }}</button>
+            <button class="min-h-[40px] px-4 lg:px-5 py-2 rounded-xl bg-pen text-white text-sm font-bold transition-transform hover:-translate-y-0.5 break-words" @click="saveAndGoTest">{{ t('review.saveStart') }}</button>
+            <button :class="['min-h-[40px] hidden lg:inline-flex items-center px-3.5 py-2 rounded-xl border-2 text-xs font-bold transition-colors', showPanel ? 'border-pen/40 bg-pen/[0.06] text-pen' : 'border-ink/12 text-ink/60 hover:text-ink']" @click="showPanel = !showPanel">{{ t('review.validation') }}</button>
           </div>
         </div>
 
         <!-- zones -->
-        <div class="mt-3 flex gap-4 h-[calc(100vh-11.5rem)] min-h-[420px]">
-          <!-- a) LEFT SIDEBAR -->
+        <div class="mt-3 flex flex-col lg:flex-row gap-4 lg:h-[calc(100vh-11.5rem)] min-h-[420px]">
+          <!-- a) LEFT SIDEBAR — desktop only -->
           <aside class="rev-zone hidden lg:flex w-72 shrink-0 flex-col rounded-xl bg-white shadow-[0_14px_40px_-22px_rgba(35,32,58,0.3)] ring-1 ring-ink/[0.06] overflow-hidden">
             <div class="p-3 border-b border-ink/[0.08] space-y-2.5">
-              <select v-model="typeFilter" class="w-full border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40">
+              <select v-model="typeFilter" class="w-full border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 min-h-[40px]">
                 <option v-for="f in TYPE_FILTERS" :key="f.value" :value="f.value">{{ f.label }}</option>
               </select>
-              <label class="flex items-center gap-2 text-xs font-medium text-ink/65 cursor-pointer select-none">
+              <label class="flex items-center gap-2 text-xs font-medium text-ink/65 cursor-pointer select-none min-h-[40px]">
                 <input type="checkbox" v-model="diagramsOnly" class="accent-pen" /> {{ t('review.diagramsOnly') }}
               </label>
             </div>
@@ -216,7 +219,7 @@ function jumpTo(i: number) { selIdx.value = i }
               <button
                 v-for="{ i, q: item } in filteredQuestions"
                 :key="item.id"
-                class="relative w-full text-left rounded-lg bg-white ring-1 overflow-hidden transition-all group"
+                class="relative w-full text-left rounded-lg bg-white ring-1 overflow-hidden transition-all group min-h-[40px]"
                 :class="selIdx === i ? 'ring-pen border-pen bg-pen/[0.05]' : 'ring-ink/[0.08] hover:ring-ink/25'"
                 @click="jumpTo(i)"
               >
@@ -228,71 +231,71 @@ function jumpTo(i: number) { selIdx.value = i }
                 <div class="px-2.5 py-2 pl-4">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="font-mono text-[11px] font-bold bg-paper border border-ink/10 rounded px-1.5 py-0.5">Q{{ item.number }}</span>
-                    <span class="font-mono text-[9px] uppercase tracking-wider bg-ink/[0.06] text-ink/60 rounded px-1.5 py-0.5">{{ item.type }}</span>
+                    <span class="font-mono text-[9px] uppercase tracking-wider bg-ink/[0.06] text-ink/60 rounded px-1.5 py-0.5 break-words">{{ item.type }}</span>
                     <span v-if="item.pageNo" class="font-mono text-[10px] bg-hlyellow/60 text-ink rounded px-1.5 py-0.5">p.{{ item.pageNo }}</span>
                     <span v-if="item.diagrams?.length || item.hasDiagram" class="ml-auto w-1.5 h-1.5 rounded-full bg-hlgreen shrink-0" aria-hidden="true"></span>
                   </div>
-                  <p class="mt-1.5 text-xs leading-snug text-ink/75 line-clamp-2">{{ item.text || '—' }}</p>
+                  <p class="mt-1.5 text-xs leading-snug text-ink/75 line-clamp-2 break-words">{{ item.text || '—' }}</p>
                 </div>
               </button>
-              <p v-if="!filteredQuestions.length" class="text-xs text-ink/45 text-center py-6">{{ t('review.noMatch') }}</p>
+              <p v-if="!filteredQuestions.length" class="text-xs text-ink/45 text-center py-6 break-words">{{ t('review.noMatch') }}</p>
             </div>
 
-            <div class="px-3 py-2 border-t border-ink/[0.08] font-mono text-[10px] text-ink/45">{{ filteredQuestions.length }}/{{ totalQ }} {{ t('review.questionCount') }}</div>
+            <div class="px-3 py-2 border-t border-ink/[0.08] font-mono text-[10px] text-ink/45 break-words">{{ filteredQuestions.length }}/{{ totalQ }} {{ t('review.questionCount') }}</div>
           </aside>
 
           <!-- b) CENTER EDITOR -->
-          <main class="rev-zone relative flex-1 min-w-0 overflow-y-auto rounded-xl bg-white p-6 shadow-[0_14px_40px_-22px_rgba(35,32,58,0.3)] ring-1 ring-ink/[0.06]">
+          <main class="rev-zone relative flex-1 min-w-0 overflow-visible lg:overflow-y-auto rounded-xl bg-white p-4 lg:p-6 shadow-[0_14px_40px_-22px_rgba(35,32,58,0.3)] ring-1 ring-ink/[0.06] break-words">
             <template v-if="q">
-              <div class="sticky -top-6 -mx-6 -mt-6 px-6 py-3.5 bg-white/95 backdrop-blur border-b border-ink/[0.08] flex items-center justify-between gap-3 z-10 rounded-t-xl">
-                <div class="font-mono text-[11px] tracking-wider text-ink/50 uppercase truncate">Q{{ q.number }} · {{ q.type }} · {{ q.subject || t('review.noSubject') }}<span v-if="q.pageNo" class="ml-2 bg-hlyellow/60 text-ink px-1.5 py-0.5 rounded normal-case">p.{{ q.pageNo }}</span></div>
+              <div class="sticky -top-4 -mx-4 -mt-4 lg:-top-6 lg:-mx-6 lg:-mt-6 px-4 lg:px-6 py-3.5 bg-white/95 backdrop-blur border-b border-ink/[0.08] flex items-center justify-between gap-2 lg:gap-3 z-10 rounded-t-xl">
+                <div class="font-mono text-[10px] lg:text-[11px] tracking-wider text-ink/50 uppercase truncate min-w-0 break-words">Q{{ q.number }} · {{ q.type }} · {{ q.subject || t('review.noSubject') }}<span v-if="q.pageNo" class="ml-2 bg-hlyellow/60 text-ink px-1.5 py-0.5 rounded normal-case">p.{{ q.pageNo }}</span></div>
                 <div class="flex gap-2 shrink-0">
-                  <button :disabled="!hasPrev" class="px-3 py-1.5 rounded-lg border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors disabled:opacity-40 disabled:pointer-events-none" @click="prev">{{ t('review.prev') }}</button>
-                  <button :disabled="!hasNext" class="px-3 py-1.5 rounded-lg border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors disabled:opacity-40 disabled:pointer-events-none" @click="next">{{ t('review.next') }}</button>
+                  <button :disabled="!hasPrev" class="min-h-[40px] px-3 py-1.5 rounded-lg border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors disabled:opacity-40 disabled:pointer-events-none" @click="prev">{{ t('review.prev') }}</button>
+                  <button :disabled="!hasNext" class="min-h-[40px] px-3 py-1.5 rounded-lg border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors disabled:opacity-40 disabled:pointer-events-none" @click="next">{{ t('review.next') }}</button>
                 </div>
               </div>
 
-              <input v-model="paper!.meta.title" class="mt-4 w-full border border-ink/12 rounded-lg px-3.5 py-2.5 font-semibold text-[15px] bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" :placeholder="t('review.phTitle')" />
+              <input v-model="paper!.meta.title" class="mt-4 w-full min-w-0 border border-ink/12 rounded-lg px-3.5 py-2.5 font-semibold text-[15px] bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 break-words" :placeholder="t('review.phTitle')" />
 
-              <div v-if="showRendered" class="mt-3 w-full border border-ink/12 rounded-xl p-3.5 text-[15px] leading-relaxed bg-white min-h-[104px] cursor-text" :title="t('review.titleClickEdit')" @click="showRendered = false">
+              <div v-if="showRendered" class="mt-3 w-full border border-ink/12 rounded-xl p-3.5 text-[15px] leading-relaxed bg-white min-h-[104px] cursor-text break-words overflow-hidden" :title="t('review.titleClickEdit')" @click="showRendered = false">
                 <MathText :text="q.text || ''" />
               </div>
-              <textarea v-else v-model="q.text" rows="4" class="mt-3 w-full border border-ink/12 rounded-xl p-3 text-[15px] bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 font-mono text-[13px]" :placeholder="t('review.phQuestion')" @input="markDirty()"></textarea>
+              <textarea v-else v-model="q.text" rows="4" class="mt-3 w-full min-w-0 border border-ink/12 rounded-xl p-3 text-[15px] bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 font-mono text-[13px] break-words" :placeholder="t('review.phQuestion')" @input="markDirty()"></textarea>
 
-              <div class="mt-3 grid sm:grid-cols-2 gap-2.5">
-                <label class="block">
-                  <span class="text-xs font-semibold text-ink/60">{{ t('review.field.type') }}</span>
-                  <select :value="q.type" class="mt-1 w-full border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" @change="q.type = ($event.target as HTMLSelectElement).value as QuestionType; markDirty()">
+              <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <label class="block min-w-0">
+                  <span class="text-xs font-semibold text-ink/60 break-words">{{ t('review.field.type') }}</span>
+                  <select :value="q.type" class="mt-1 w-full min-w-0 border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 min-h-[40px]" @change="q.type = ($event.target as HTMLSelectElement).value as QuestionType; markDirty()">
                     <option v-for="t in TYPE_OPTIONS" :key="t.value" :value="t.value">{{ t.label }}</option>
                   </select>
                 </label>
-                <label class="block">
-                  <span class="text-xs font-semibold text-ink/60">{{ t('review.field.subject') }}</span>
-                  <input v-model="q.subject" class="mt-1 w-full border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" :placeholder="t('review.phSubject')" @input="markDirty()" />
+                <label class="block min-w-0">
+                  <span class="text-xs font-semibold text-ink/60 break-words">{{ t('review.field.subject') }}</span>
+                  <input v-model="q.subject" class="mt-1 w-full min-w-0 border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 break-words" :placeholder="t('review.phSubject')" @input="markDirty()" />
                 </label>
-                <label class="block">
-                  <span class="text-xs font-semibold text-ink/60">{{ t('review.field.section') }}</span>
-                  <input v-model="q.section" class="mt-1 w-full border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" :placeholder="t('review.phSection')" @input="markDirty()" />
+                <label class="block min-w-0">
+                  <span class="text-xs font-semibold text-ink/60 break-words">{{ t('review.field.section') }}</span>
+                  <input v-model="q.section" class="mt-1 w-full min-w-0 border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 break-words" :placeholder="t('review.phSection')" @input="markDirty()" />
                 </label>
-                <label class="block">
-                  <span class="text-xs font-semibold text-ink/60">{{ t('review.field.topic') }}</span>
-                  <input v-model="q.topic" class="mt-1 w-full border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" :placeholder="t('review.phTopic')" @input="markDirty()" />
+                <label class="block min-w-0">
+                  <span class="text-xs font-semibold text-ink/60 break-words">{{ t('review.field.topic') }}</span>
+                  <input v-model="q.topic" class="mt-1 w-full min-w-0 border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 break-words" :placeholder="t('review.phTopic')" @input="markDirty()" />
                 </label>
               </div>
 
-              <div v-if="q.options" class="mt-4 grid gap-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-ink/70">{{ t('review.options') }}</span>
-                  <label class="flex items-center gap-1.5 text-xs font-medium text-ink/60 cursor-pointer">
+              <div v-if="q.options" class="mt-4 grid gap-1.5 min-w-0">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="text-xs font-bold text-ink/70 break-words">{{ t('review.options') }}</span>
+                  <label class="flex items-center gap-1.5 text-xs font-medium text-ink/60 cursor-pointer min-h-[40px]">
                     <input type="checkbox" :checked="q.hasDiagram" @change="toggleDiagram(selIdx)" class="accent-pen" /> {{ t('review.hasDiagram') }}
                   </label>
                 </div>
-                <div :class="optionsCompact(q) ? 'grid sm:grid-cols-2 gap-2' : 'grid gap-1.5'">
-                  <div v-for="(opt, oi) in q.options" :key="oi" :class="['rounded-xl border transition-colors', isCorrect(q, oi) ? 'border-correct/60 bg-correct/[0.06]' : 'border-ink/10 bg-paper hover:border-ink/25']">
-                    <div class="flex items-center gap-2 px-2.5 py-2">
+                <div :class="optionsCompact(q) ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' : 'grid gap-1.5'">
+                  <div v-for="(opt, oi) in q.options" :key="oi" :class="['rounded-xl border transition-colors min-w-0 overflow-hidden', isCorrect(q, oi) ? 'border-correct/60 bg-correct/[0.06]' : 'border-ink/10 bg-paper hover:border-ink/25']">
+                    <div class="flex items-center gap-2 px-2.5 py-2 min-h-[40px]">
                       <span :class="['font-mono text-xs w-5 shrink-0', isCorrect(q, oi) ? 'text-green-700 font-bold' : 'text-ink/45']">{{ String.fromCharCode(65+oi) }}.</span>
-                      <span v-if="showRendered" class="flex-1 min-w-0 text-sm text-ink cursor-text break-words [&_.katex]:text-[0.98em]" :title="t('review.clickToEdit') + opt" @click="showRendered = false"><MathText :text="opt" /></span>
-                      <input v-else :value="opt" @input="q.options![oi] = ($event.target as HTMLInputElement).value; markDirty()" class="flex-1 min-w-0 bg-transparent text-sm text-ink focus:outline-none" :placeholder="t('review.phOption')" />
+                      <span v-if="showRendered" class="flex-1 min-w-0 text-sm text-ink cursor-text break-words break-all [&_.katex]:text-[0.98em]" :title="t('review.clickToEdit') + opt" @click="showRendered = false"><MathText :text="opt" /></span>
+                      <input v-else :value="opt" @input="q.options![oi] = ($event.target as HTMLInputElement).value; markDirty()" class="flex-1 min-w-0 bg-transparent text-sm text-ink focus:outline-none break-words" :placeholder="t('review.phOption')" />
                       <span v-if="isCorrect(q, oi)" class="shrink-0 px-1.5 py-0.5 rounded-full bg-correct text-white font-mono text-[8px] font-bold">✓</span>
                     </div>
                   </div>
@@ -300,70 +303,163 @@ function jumpTo(i: number) { selIdx.value = i }
               </div>
 
               <div class="mt-4 flex flex-wrap gap-2.5 items-center text-sm">
-                <span class="text-xs font-semibold text-ink/60">{{ t('review.answer') }}</span>
-                <input v-model="q.answer" class="border border-ink/12 rounded-lg px-2.5 py-1.5 text-sm w-24 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" :placeholder="t('review.phAnswer')" @input="markDirty()" />
-                <span v-if="q.type==='msq'" class="text-xs font-semibold text-ink/60">{{ t('review.answersLabel') }}<input :value="(q.answers||[]).join(',')" @input="q.answers = ($event.target as HTMLInputElement).value.split(',').map(s=>s.trim()).filter(Boolean); markDirty()" class="border border-ink/12 rounded-lg px-2 py-1.5 text-xs w-28 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" /></span>
-                <span class="ml-auto text-xs font-semibold text-ink/60">{{ t('review.marks') }} <input v-model.number="q.marks" type="number" class="w-14 border border-ink/12 rounded-lg px-2 py-1.5 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" @input="markDirty()" /> {{ t('review.negative') }} <input v-model.number="q.negativeMarks" type="number" class="w-14 border border-ink/12 rounded-lg px-2 py-1.5 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" @input="markDirty()" /></span>
+                <span class="text-xs font-semibold text-ink/60 break-words">{{ t('review.answer') }}</span>
+                <input v-model="q.answer" class="min-h-[40px] border border-ink/12 rounded-lg px-2.5 py-1.5 text-sm w-24 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" :placeholder="t('review.phAnswer')" @input="markDirty()" />
+                <span v-if="q.type==='msq'" class="text-xs font-semibold text-ink/60 flex items-center gap-1.5 flex-wrap break-words">{{ t('review.answersLabel') }}<input :value="(q.answers||[]).join(',')" @input="q.answers = ($event.target as HTMLInputElement).value.split(',').map(s=>s.trim()).filter(Boolean); markDirty()" class="min-h-[40px] border border-ink/12 rounded-lg px-2 py-1.5 text-xs w-28 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" /></span>
+                <span class="ml-auto text-xs font-semibold text-ink/60 flex items-center gap-1.5 flex-wrap break-words">{{ t('review.marks') }} <input v-model.number="q.marks" type="number" class="min-h-[40px] w-14 border border-ink/12 rounded-lg px-2 py-1.5 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" @input="markDirty()" /> {{ t('review.negative') }} <input v-model.number="q.negativeMarks" type="number" class="min-h-[40px] w-14 border border-ink/12 rounded-lg px-2 py-1.5 bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" @input="markDirty()" /></span>
               </div>
 
               <!-- Manual crop per question -->
               <div class="mt-5 border-t border-dashed border-ink/15 pt-3.5">
-                <div class="text-xs font-bold text-ink/70">{{ t('review.diagramCrop') }}</div>
+                <div class="text-xs font-bold text-ink/70 break-words">{{ t('review.diagramCrop') }}</div>
                 <div v-if="q.diagrams?.length" class="mt-2.5 flex gap-2.5 flex-wrap">
                   <div v-for="(d,didx) in q.diagrams" :key="didx" class="relative group">
                     <img :src="d" class="w-28 rounded-lg border border-ink/10" loading="lazy" decoding="async" />
-                    <button class="absolute -top-1.5 -right-1.5 bg-redmargin text-white rounded-full w-5.5 h-5.5 grid place-items-center text-xs shadow" @click="q.diagrams!.splice(didx,1); markDirty()">×</button>
+                    <button class="absolute -top-1.5 -right-1.5 bg-redmargin text-white rounded-full w-6 h-6 min-w-[24px] min-h-[24px] grid place-items-center text-xs shadow" @click="q.diagrams!.splice(didx,1); markDirty()">×</button>
                   </div>
                 </div>
-                <button class="mt-2.5 px-4 py-2 rounded-lg border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors" @click="cropPlaceholder(selIdx)">{{ q.hasDiagram ? t('review.cropAdd') : t('review.cropBtn') }}</button>
-                <p class="font-hand text-lg text-ink/45 mt-1">{{ t('review.cropHint') }}</p>
+                <button class="mt-2.5 min-h-[40px] px-4 py-2 rounded-lg border-2 border-ink/12 text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors break-words" @click="cropPlaceholder(selIdx)">{{ q.hasDiagram ? t('review.cropAdd') : t('review.cropBtn') }}</button>
+                <p class="font-hand text-lg text-ink/45 mt-1 break-words">{{ t('review.cropHint') }}</p>
               </div>
             </template>
             <div v-else class="h-full grid place-items-center">
-              <p class="text-sm text-ink/45">{{ t('review.selectQ') }}</p>
+              <p class="text-sm text-ink/45 break-words">{{ t('review.selectQ') }}</p>
             </div>
           </main>
 
-          <!-- c) RIGHT VALIDATION PANEL — collapsible -->
-          <button v-if="!showPanel" @click="showPanel = true" class="rev-zone hidden lg:flex flex-col items-center gap-2 px-2 py-4 self-stretch rounded-xl bg-white ring-1 ring-ink/[0.06] hover:ring-pen/40 transition-all" :title="t('review.titleShowVal')">
-            <span class="font-mono text-[10px] font-bold tracking-widest text-ink/50" style="writing-mode: vertical-rl;">{{ t('review.valVertical') }}</span>
+          <!-- c) RIGHT VALIDATION PANEL — desktop collapsible -->
+          <button v-if="!showPanel" @click="showPanel = true" class="rev-zone hidden lg:flex flex-col items-center gap-2 px-2 py-4 self-stretch rounded-xl bg-white ring-1 ring-ink/[0.06] hover:ring-pen/40 transition-all min-h-[40px]" :title="t('review.titleShowVal')">
+            <span class="font-mono text-[10px] font-bold tracking-widest text-ink/50 break-words" style="writing-mode: vertical-rl;">{{ t('review.valVertical') }}</span>
             <span :class="['w-6 h-6 rounded-full grid place-items-center text-[10px] font-bold', errCount ? 'bg-redmargin/15 text-redmargin' : 'bg-correct/15 text-green-700']">{{ errCount || warnCount || "✓" }}</span>
           </button>
           <transition enter-active-class="transition-all duration-300 ease-out" enter-from-class="opacity-0 -mr-80" leave-active-class="transition-all duration-200 ease-in" leave-to-class="opacity-0 -mr-80">
             <aside v-show="showPanel" class="rev-zone hidden lg:flex w-80 shrink-0 flex-col rounded-xl bg-white shadow-[0_14px_40px_-22px_rgba(35,32,58,0.3)] ring-1 ring-ink/[0.06] overflow-hidden">
             <div class="px-4 py-3 border-b border-ink/[0.08] bg-paper/60 flex items-start justify-between gap-2">
-              <div>
-                <div class="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">{{ t('review.valHeader') }}</div>
-                <div class="mt-1.5 flex gap-2 text-[11px] font-bold">
-                  <span :class="errCount ? 'bg-redmargin/[0.12] text-redmargin' : 'bg-correct/[0.12] text-green-700'" class="px-2 py-0.5 rounded-full">{{ errCount }} {{ t('review.errors') }}</span>
-                  <span :class="warnCount ? 'bg-hlyellow/50 text-ink' : 'bg-ink/[0.05] text-ink/45'" class="px-2 py-0.5 rounded-full">{{ warnCount }} {{ t('review.warnings') }}</span>
+              <div class="min-w-0">
+                <div class="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50 break-words">{{ t('review.valHeader') }}</div>
+                <div class="mt-1.5 flex gap-2 text-[11px] font-bold flex-wrap">
+                  <span :class="errCount ? 'bg-redmargin/[0.12] text-redmargin' : 'bg-correct/[0.12] text-green-700'" class="px-2 py-0.5 rounded-full break-words">{{ errCount }} {{ t('review.errors') }}</span>
+                  <span :class="warnCount ? 'bg-hlyellow/50 text-ink' : 'bg-ink/[0.05] text-ink/45'" class="px-2 py-0.5 rounded-full break-words">{{ warnCount }} {{ t('review.warnings') }}</span>
                 </div>
               </div>
-              <button @click="showPanel = false" :title="t('review.titleCollapse')" class="shrink-0 w-7 h-7 rounded-lg hover:bg-ink/5 grid place-items-center text-ink/45">»</button>
+              <button @click="showPanel = false" :title="t('review.titleCollapse')" class="shrink-0 w-8 h-8 min-w-[32px] min-h-[32px] rounded-lg hover:bg-ink/5 grid place-items-center text-ink/45">»</button>
             </div>
             <div class="flex-1 overflow-y-auto p-2.5 space-y-1.5">
               <template v-if="valIssues.length">
                 <button
                   v-for="(iss, ii) in valIssues"
                   :key="ii"
-                  class="w-full text-left flex items-start gap-2 px-3 py-2 rounded-lg border text-xs transition-colors"
+                  class="w-full text-left flex items-start gap-2 px-3 py-2 rounded-lg border text-xs transition-colors min-h-[40px] break-words"
                   :class="[iss.level === 'error' ? 'bg-redmargin/[0.07] border-redmargin/25 hover:border-redmargin/60' : 'bg-hlyellow/[0.18] border-hlyellow/60 hover:border-hlyellow', selIdx === iss.index ? 'ring-2 ring-pen/40' : '']"
                   @click="jumpTo(iss.index)"
                 >
                   <span class="mt-1 w-1.5 h-1.5 rounded-full shrink-0" :class="iss.level === 'error' ? 'bg-redmargin' : 'bg-hlyellow'" aria-hidden="true"></span>
-                  <span class="text-ink/80 leading-snug">{{ iss.msg }}</span>
+                  <span class="text-ink/80 leading-snug break-words break-all">{{ iss.msg }}</span>
                 </button>
               </template>
               <div v-else class="mt-8 text-center">
                 <div class="mx-auto w-10 h-10 rounded-full bg-correct/[0.12] grid place-items-center text-green-700 font-bold">✓</div>
-                <p class="mt-2.5 text-sm font-display font-bold">{{ t('review.allPass') }}</p>
-                <p class="text-xs text-ink/45 mt-1">{{ t('review.allPassSub') }}</p>
+                <p class="mt-2.5 text-sm font-display font-bold break-words">{{ t('review.allPass') }}</p>
+                <p class="text-xs text-ink/45 mt-1 break-words">{{ t('review.allPassSub') }}</p>
               </div>
             </div>
           </aside>
           </transition>
         </div>
       </div>
+
+      <!-- Mobile floating drawer triggers — visible only < lg -->
+      <div class="fixed bottom-4 left-4 right-4 z-40 flex justify-between gap-3 lg:hidden pointer-events-none">
+        <button @click="showMobileNav = true" class="pointer-events-auto min-h-[44px] px-5 py-3 rounded-full bg-ink text-white text-sm font-bold shadow-lg flex items-center gap-2 break-words">
+          ☰ {{ t('review.filter.all') }} <span class="bg-white/20 px-2 py-0.5 rounded-full text-xs font-mono">{{ filteredQuestions.length }}</span>
+        </button>
+        <button @click="showMobileVal = true" class="pointer-events-auto min-h-[44px] px-5 py-3 rounded-full bg-white border border-ink/15 text-sm font-bold shadow-lg flex items-center gap-2 break-words">
+          {{ t('review.validation') }} <span :class="['px-2 py-0.5 rounded-full text-xs font-mono', errCount ? 'bg-redmargin text-white' : warnCount ? 'bg-hlyellow text-ink' : 'bg-correct text-white']">{{ errCount || warnCount || "✓" }}</span>
+        </button>
+      </div>
+
+      <!-- Mobile Questions Drawer -->
+      <Teleport to="body">
+        <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0" leave-active-class="transition duration-200 ease-in" leave-to-class="opacity-0">
+          <div v-if="showMobileNav" class="fixed inset-0 z-50 lg:hidden">
+            <div class="absolute inset-0 bg-ink/40 backdrop-blur-sm" @click="showMobileNav = false"></div>
+            <div class="absolute left-0 top-0 bottom-0 w-[88%] max-w-[360px] bg-white shadow-2xl flex flex-col overflow-hidden">
+              <div class="shrink-0 p-3 border-b border-ink/[0.08] flex items-center justify-between gap-2">
+                <div class="font-display font-bold text-base truncate">Questions</div>
+                <button @click="showMobileNav = false" class="min-h-[40px] min-w-[40px] w-10 h-10 rounded-full bg-paper border border-ink/10 grid place-items-center text-ink/60">✕</button>
+              </div>
+              <div class="shrink-0 p-3 border-b border-ink/[0.08] space-y-2.5 bg-paper/40">
+                <select v-model="typeFilter" class="w-full min-w-0 border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pen/40 min-h-[40px]">
+                  <option v-for="f in TYPE_FILTERS" :key="f.value" :value="f.value">{{ f.label }}</option>
+                </select>
+                <label class="flex items-center gap-2 text-xs font-medium text-ink/65 cursor-pointer select-none min-h-[40px]">
+                  <input type="checkbox" v-model="diagramsOnly" class="accent-pen" /> {{ t('review.diagramsOnly') }}
+                </label>
+              </div>
+              <div class="flex-1 overflow-y-auto p-2 space-y-1.5">
+                <button
+                  v-for="{ i, q: item } in filteredQuestions"
+                  :key="item.id"
+                  class="relative w-full text-left rounded-lg bg-white ring-1 overflow-hidden transition-all group min-h-[40px]"
+                  :class="selIdx === i ? 'ring-pen bg-pen/[0.05]' : 'ring-ink/[0.08] hover:ring-ink/25'"
+                  @click="jumpToMobile(i)"
+                >
+                  <span class="absolute inset-y-0 left-0 w-1" :class="!(item.answer ?? '').trim() ? 'bg-redmargin' : item.hasDiagram ? 'bg-hlyellow' : 'bg-transparent'"></span>
+                  <div class="px-2.5 py-2 pl-4">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="font-mono text-[11px] font-bold bg-paper border border-ink/10 rounded px-1.5 py-0.5">Q{{ item.number }}</span>
+                      <span class="font-mono text-[9px] uppercase tracking-wider bg-ink/[0.06] text-ink/60 rounded px-1.5 py-0.5 break-words">{{ item.type }}</span>
+                      <span v-if="item.pageNo" class="font-mono text-[10px] bg-hlyellow/60 text-ink rounded px-1.5 py-0.5">p.{{ item.pageNo }}</span>
+                    </div>
+                    <p class="mt-1.5 text-xs leading-snug text-ink/75 line-clamp-2 break-words">{{ item.text || '—' }}</p>
+                  </div>
+                </button>
+                <p v-if="!filteredQuestions.length" class="text-xs text-ink/45 text-center py-6 break-words">{{ t('review.noMatch') }}</p>
+              </div>
+              <div class="shrink-0 px-3 py-3 border-t border-ink/[0.08] flex items-center justify-between gap-2 bg-paper/40">
+                <span class="font-mono text-[10px] text-ink/45 break-words">{{ filteredQuestions.length }}/{{ totalQ }} {{ t('review.questionCount') }}</span>
+                <span class="font-mono text-[10px] text-ink/45">Q{{ (q?.number ?? 1) }}/{{ totalQ }}</span>
+              </div>
+            </div>
+          </div>
+        </Transition>
+        <Transition enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0" leave-active-class="transition duration-200 ease-in" leave-to-class="opacity-0">
+          <div v-if="showMobileVal" class="fixed inset-0 z-50 lg:hidden">
+            <div class="absolute inset-0 bg-ink/40 backdrop-blur-sm" @click="showMobileVal = false"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-[88%] max-w-[360px] bg-white shadow-2xl flex flex-col overflow-hidden">
+              <div class="shrink-0 px-4 py-3 border-b border-ink/[0.08] bg-paper/60 flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50 break-words">{{ t('review.valHeader') }}</div>
+                  <div class="mt-1.5 flex gap-2 text-[11px] font-bold flex-wrap">
+                    <span :class="errCount ? 'bg-redmargin/[0.12] text-redmargin' : 'bg-correct/[0.12] text-green-700'" class="px-2 py-0.5 rounded-full">{{ errCount }} {{ t('review.errors') }}</span>
+                    <span :class="warnCount ? 'bg-hlyellow/50 text-ink' : 'bg-ink/[0.05] text-ink/45'" class="px-2 py-0.5 rounded-full">{{ warnCount }} {{ t('review.warnings') }}</span>
+                  </div>
+                </div>
+                <button @click="showMobileVal = false" class="shrink-0 min-h-[40px] min-w-[40px] w-10 h-10 rounded-full bg-white border border-ink/10 grid place-items-center text-ink/60">✕</button>
+              </div>
+              <div class="flex-1 overflow-y-auto p-2.5 space-y-1.5">
+                <template v-if="valIssues.length">
+                  <button
+                    v-for="(iss, ii) in valIssues"
+                    :key="ii"
+                    class="w-full text-left flex items-start gap-2 px-3 py-2.5 rounded-lg border text-xs transition-colors min-h-[44px] break-words"
+                    :class="[iss.level === 'error' ? 'bg-redmargin/[0.07] border-redmargin/25' : 'bg-hlyellow/[0.18] border-hlyellow/60', selIdx === iss.index ? 'ring-2 ring-pen/40' : '']"
+                    @click="jumpToMobile(iss.index)"
+                  >
+                    <span class="mt-1 w-1.5 h-1.5 rounded-full shrink-0" :class="iss.level === 'error' ? 'bg-redmargin' : 'bg-hlyellow'"></span>
+                    <span class="text-ink/80 leading-snug break-words break-all flex-1">{{ iss.msg }}</span>
+                  </button>
+                </template>
+                <div v-else class="mt-8 text-center px-4">
+                  <div class="mx-auto w-10 h-10 rounded-full bg-correct/[0.12] grid place-items-center text-green-700 font-bold">✓</div>
+                  <p class="mt-2.5 text-sm font-display font-bold break-words">{{ t('review.allPass') }}</p>
+                  <p class="text-xs text-ink/45 mt-1 break-words">{{ t('review.allPassSub') }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
     </template>
 
     <DiagramCropper v-if="cropFor!==null && paper" :pdfBuffer="pdfBuffer" :initialPage="(paper.questions[cropFor]?.pageNo || 1)" @cropped="onCropped" @close="cropFor=null" />
@@ -380,5 +476,8 @@ function jumpTo(i: number) { selIdx.value = i }
   transform: translateX(-50%) rotate(-1.8deg);
   background: url('/images/notebook/tape-washi.webp') center/contain no-repeat;
   filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
+}
+@media (max-width: 390px) {
+  .tape { width: 200px; height: 50px; top: -20px; }
 }
 </style>

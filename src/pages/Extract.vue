@@ -472,21 +472,21 @@ void (async () => {
       <div class="mt-10 grid gap-8">
         <!-- Step I — GEM -->
         <!-- Flow tabs -->
-        <div class="sticky top-24 z-30 flex gap-2 px-1">
-          <button @click="activeTab='gem'" :class="['px-5 py-2.5 rounded-xl text-sm font-bold transition-all', activeTab==='gem' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">{{ t('extract.tab.gem') }}</button>
-          <button @click="activeTab='agent'" :class="['px-5 py-2.5 rounded-xl text-sm font-bold transition-all', activeTab==='agent' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">{{ t('extract.tab.agent') }}</button>
+        <div class="sticky top-24 z-30 flex gap-2 px-1 overflow-x-auto">
+          <button @click="activeTab='gem'" :class="['min-h-[40px] px-5 py-2.5 rounded-xl text-sm font-bold transition-all shrink-0', activeTab==='gem' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">{{ t('extract.tab.gem') }}</button>
+          <button @click="activeTab='agent'" :class="['min-h-[40px] px-5 py-2.5 rounded-xl text-sm font-bold transition-all shrink-0', activeTab==='agent' ? 'bg-pen text-white shadow-[0_10px_25px_-12px_rgba(47,95,224,0.6)]' : 'bg-white border border-ink/12 text-ink/60 hover:text-ink']">{{ t('extract.tab.agent') }}</button>
         </div>
 
         <!-- ═══ TAB 1 · GEM — paste JSON ═══ -->
         <div v-show="activeTab==='gem'" class="grid gap-6">
-          <div class="tape-card relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" style="transform: rotate(-0.3deg)" @mousemove="handleSpotlight">
+          <div class="tape-card relative rounded-lg bg-white p-4 lg:p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card overflow-hidden" style="transform: rotate(-0.3deg)" @mousemove="handleSpotlight">
             <div class="tape" aria-hidden="true"></div>
-            <div class="flex items-center gap-2.5 mb-2">
-              <span class="w-9 h-9 rounded-xl bg-pen/10 grid place-items-center"><Sparkles class="w-4.5 h-4.5 text-pen" /></span>
-              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-pen">{{ t('extract.gem.label') }}</span>
+            <div class="flex items-center gap-2.5 mb-2 min-w-0">
+              <span class="w-9 h-9 rounded-xl bg-pen/10 grid place-items-center shrink-0"><Sparkles class="w-4.5 h-4.5 text-pen" /></span>
+              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-pen break-words">{{ t('extract.gem.label') }}</span>
             </div>
-            <div class="text-2xl font-bold font-display tracking-tight">{{ t('extract.gem.title') }}</div>
-            <div class="mt-5 grid md:grid-cols-3 gap-3">
+            <div class="text-xl lg:text-2xl font-bold font-display tracking-tight break-words">{{ t('extract.gem.title') }}</div>
+            <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div class="rounded-2xl border border-ink/10 bg-paper p-4">
                 <div class="font-hand text-2xl text-pen leading-none">1</div>
                 <p class="mt-2 text-[13px] text-ink/65 leading-snug">{{ t('extract.gem.step1') }}</p>
@@ -505,14 +505,14 @@ void (async () => {
                 <ClipboardPaste class="w-5 h-5 text-ink/35 mt-2" />
               </div>
             </div>
-            <div class="mt-5 grid md:grid-cols-[3fr_1fr] gap-3">
-              <div class="relative rounded-2xl border border-ink/12 bg-paper overflow-hidden focus-within:border-pen/50">
+            <div class="mt-5 grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-3">
+              <div class="relative min-w-0 rounded-2xl border border-ink/12 bg-paper overflow-hidden focus-within:border-pen/50">
                 <div class="absolute inset-0 grid place-items-center pointer-events-none select-none">
                   <img :src="jsonSvg" alt="" aria-hidden="true" class="w-14 h-14 opacity-[0.07]" />
                 </div>
-                <textarea v-model="pasteText" rows="12" :placeholder="t('extract.gem.pastePlaceholder')" class="relative w-full min-h-[250px] bg-transparent p-4 font-mono text-xs text-ink focus:outline-none placeholder:text-ink/30"></textarea>
+                <textarea v-model="pasteText" rows="12" :placeholder="t('extract.gem.pastePlaceholder')" class="relative w-full min-w-0 min-h-[250px] bg-transparent p-4 font-mono text-xs text-ink focus:outline-none placeholder:text-ink/30 break-words"></textarea>
               </div>
-              <label class="relative rounded-2xl border-2 border-dashed border-ink/15 flex flex-col items-center justify-center gap-2 text-center p-3 cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors min-h-[250px]">
+              <label class="relative min-w-0 rounded-2xl border-2 border-dashed border-ink/15 flex flex-col items-center justify-center gap-2 text-center p-3 cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors min-h-[250px]">
                 <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
                 <span class="relative inline-block pointer-events-none select-none">
                   <img :src="pdfSvg" alt="" class="w-14 h-14 opacity-80" />
@@ -529,31 +529,31 @@ void (async () => {
               </label>
             </div>
             <div class="mt-4 flex flex-wrap gap-3">
-              <button :disabled="parsing" class="px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5" @click="handlePasteParse">{{ parsing ? t('extract.gem.parsing') : t('extract.gem.parseBtn') }} <ArrowRight v-if="!parsing" class="w-4 h-4 inline ml-1" /></button>
-              <button class="px-5 py-3 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors" @click="pasteText=''">{{ t('extract.gem.clear') }}</button>
+              <button :disabled="parsing" class="min-h-[44px] px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5" @click="handlePasteParse">{{ parsing ? t('extract.gem.parsing') : t('extract.gem.parseBtn') }} <ArrowRight v-if="!parsing" class="w-4 h-4 inline ml-1" /></button>
+              <button class="min-h-[44px] px-5 py-3 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors" @click="pasteText=''">{{ t('extract.gem.clear') }}</button>
             </div>
-            <div class="mt-4 flex gap-2">
-              <input v-model="pasteUrl" :placeholder="t('extract.gem.urlPlaceholder')" class="flex-1 bg-paper border border-ink/12 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pen/50 placeholder:text-ink/35" />
-              <button class="px-5 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors" @click="handleUrlFetch">{{ t('extract.gem.fetchUrl') }}</button>
+            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+              <input v-model="pasteUrl" :placeholder="t('extract.gem.urlPlaceholder')" class="flex-1 min-w-0 w-full bg-paper border border-ink/12 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pen/50 placeholder:text-ink/35 break-all" />
+              <button class="min-h-[44px] px-5 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-semibold text-ink/70 hover:border-ink/30 hover:text-ink transition-colors shrink-0" @click="handleUrlFetch">{{ t('extract.gem.fetchUrl') }}</button>
             </div>
-            <div v-if="error" class="mt-4 p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ error }}</div>
-            <div v-if="issuesText" class="mt-2 p-4 bg-hlyellow/40 border border-hlyellow rounded-2xl text-xs text-ink/75 whitespace-pre-wrap">{{ issuesText }}</div>
+            <div v-if="error" class="mt-4 p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap break-words break-all overflow-hidden">{{ error }}</div>
+            <div v-if="issuesText" class="mt-2 p-4 bg-hlyellow/40 border border-hlyellow rounded-2xl text-xs text-ink/75 whitespace-pre-wrap break-words break-all overflow-hidden">{{ issuesText }}</div>
           </div>
         </div>
 
         <!-- ═══ TAB 2 · AI AGENT ═══ -->
         <div v-show="activeTab==='agent'" class="grid gap-6">
           <div class="flex items-center justify-end">
-            <button type="button" @click="showSettings = true" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-ink/15 bg-white text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors shadow-sm">
+            <button type="button" @click="showSettings = true" class="min-h-[40px] inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-ink/15 bg-white text-xs font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors shadow-sm">
               <Settings class="w-3.5 h-3.5" /> {{ t('extract.agent.settingsBtn') }}
             </button>
           </div>
-          <div class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
-            <div class="flex items-center gap-2.5 mb-2">
-              <span class="w-9 h-9 rounded-xl bg-hlgreen grid place-items-center"><UploadCloud class="w-4.5 h-4.5 text-ink" /></span>
-              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60">{{ t('extract.agent.stepLabel') }}</span>
+          <div class="rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card overflow-hidden" @mousemove="handleSpotlight">
+            <div class="flex items-center gap-2.5 mb-2 min-w-0">
+              <span class="w-9 h-9 rounded-xl bg-hlgreen grid place-items-center shrink-0"><UploadCloud class="w-4.5 h-4.5 text-ink" /></span>
+              <span class="font-mono text-[11px] font-bold tracking-[0.25em] text-ink/60 break-words">{{ t('extract.agent.stepLabel') }}</span>
             </div>
-            <div class="text-xl font-bold font-display tracking-tight">{{ t('extract.agent.uploadTitle') }}</div>
+            <div class="text-lg lg:text-xl font-bold font-display tracking-tight break-words">{{ t('extract.agent.uploadTitle') }}</div>
             <label class="mt-4 block border-2 border-dashed border-ink/15 rounded-2xl p-7 text-center cursor-pointer hover:border-pen/50 hover:bg-pen/[0.03] transition-colors">
               <input type="file" accept="application/pdf" class="hidden" @change="(e)=>{onPdf(e); onPdfAgent()}" />
               <span class="relative inline-block pointer-events-none select-none">
@@ -571,12 +571,12 @@ void (async () => {
           </div>
 
         <!-- AI Agent tab — page-chunked extraction -->
-        <div v-show="activeTab==='agent'" class="rounded-lg bg-white p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card" @mousemove="handleSpotlight">
+        <div v-show="activeTab==='agent'" class="rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] spotlight-card overflow-hidden" @mousemove="handleSpotlight">
           <div class="space-y-4">
             <!-- Provider + model pick -->
-            <div class="flex items-center justify-between gap-3 rounded-xl bg-paper border border-ink/10 px-4 py-2.5">
-              <span class="font-mono text-[11px] text-ink/60 truncate">⚙ {{ activeProvider ? activeProvider.name : t('extract.agent.noProvider') }} <span class="text-ink/35">·</span> {{ activeModel || t('extract.agent.noModel') }}</span>
-              <button @click="showSettings=true" class="text-[11px] font-bold text-pen hover:underline shrink-0">{{ t('extract.agent.change') }}</button>
+            <div class="flex items-center justify-between gap-2 lg:gap-3 rounded-xl bg-paper border border-ink/10 px-3 lg:px-4 py-2.5 min-h-[40px]">
+              <span class="font-mono text-[11px] text-ink/60 truncate min-w-0 break-all">⚙ {{ activeProvider ? activeProvider.name : t('extract.agent.noProvider') }} <span class="text-ink/35">·</span> {{ activeModel || t('extract.agent.noModel') }}</span>
+              <button @click="showSettings=true" class="min-h-[40px] px-3 py-1 text-[11px] font-bold text-pen hover:underline shrink-0">{{ t('extract.agent.change') }}</button>
             </div>
 
             <!-- ⚙ Settings modal — preconfigured + local providers -->
@@ -598,8 +598,8 @@ void (async () => {
 
                   <div>
                     <div class="font-mono text-[10px] font-bold tracking-[0.25em] text-ink/45 mb-2">{{ t('extract.settings.preconfigured') }}</div>
-                    <div class="grid sm:grid-cols-2 gap-2.5">
-                      <div v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" :class="['relative rounded-2xl border-2 p-3 transition-all overflow-hidden', !presetReady(p) ? 'border-ink/10 opacity-50 grayscale cursor-not-allowed' : activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" :class="['relative rounded-2xl border-2 p-3 transition-all overflow-hidden min-w-0', !presetReady(p) ? 'border-ink/10 opacity-50 grayscale cursor-not-allowed' : activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
                         <div v-if="!presetReady(p)" class="absolute inset-0 z-10 grid place-items-center">
                           <span class="rotate-[-12deg] border-[3px] border-redmargin text-redmargin font-mono font-extrabold tracking-widest text-[10px] uppercase px-3 py-1 rounded-md bg-white/70">{{ t('extract.settings.envNotAvailable') }}</span>
                         </div>
@@ -622,8 +622,8 @@ void (async () => {
                     <div class="flex items-center justify-between mb-2">
                       <div class="font-mono text-[10px] font-bold tracking-[0.25em] text-ink/45">{{ t('extract.settings.localTitle') }}</div>
                     </div>
-                    <div class="grid sm:grid-cols-2 gap-2.5">
-                      <div v-for="p in providerList.filter(x => !x.isPreset)" :key="p.id" :class="['rounded-2xl border-2 p-3 transition-all', activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div v-for="p in providerList.filter(x => !x.isPreset)" :key="p.id" :class="['rounded-2xl border-2 p-3 transition-all min-w-0', activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
                         <div class="w-full flex items-center justify-between gap-2">
                           <button class="flex items-center gap-1.5 min-w-0" @click="selectProvider(p.id)">
                             <span class="text-sm font-extrabold font-display text-ink truncate">{{ p.name }}</span>
@@ -648,16 +648,16 @@ void (async () => {
                   </div>
 
                   <!-- Add / Edit local form -->
-                  <div v-if="formOpen" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3">
-                    <div class="grid md:grid-cols-2 gap-3">
-                      <label class="text-xs font-semibold text-ink/70">{{ t('extract.settings.form.name') }}
-                        <input v-model="formName" :placeholder="t('extract.settings.form.namePh')" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                  <div v-if="formOpen" class="rounded-xl border border-dashed border-pen/40 bg-pen/[0.04] p-4 space-y-3 overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <label class="text-xs font-semibold text-ink/70 min-w-0">{{ t('extract.settings.form.name') }}
+                        <input v-model="formName" :placeholder="t('extract.settings.form.namePh')" class="mt-1 w-full min-w-0 border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
                       </label>
-                      <label class="text-xs font-semibold text-ink/70">{{ t('extract.settings.form.url') }}
-                        <input v-model="formUrl" :placeholder="t('extract.settings.form.urlPh')" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40" />
+                      <label class="text-xs font-semibold text-ink/70 min-w-0">{{ t('extract.settings.form.url') }}
+                        <input v-model="formUrl" :placeholder="t('extract.settings.form.urlPh')" class="mt-1 w-full min-w-0 border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40 break-all" />
                       </label>
                     </div>
-                    <div class="grid md:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <label class="text-xs font-semibold text-ink/70">{{ t('extract.settings.form.response') }}
                         <select v-model="formResponse" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
                           <option value="openai-completions">{{ t('extract.settings.form.resp1') }}</option>
@@ -669,9 +669,9 @@ void (async () => {
                       </label>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                      <button type="button" :disabled="formFetching" @click="formFetch" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/75 hover:border-pen hover:text-pen transition-colors disabled:opacity-50">{{ formFetching ? t('extract.settings.form.fetching') : t('extract.settings.form.fetch') }}</button>
-                      <button type="button" @click="formSave" class="px-3.5 py-2 rounded-lg bg-pen text-white text-xs font-bold">{{ formEditingId ? t('extract.settings.form.update') : t('extract.settings.form.save') }}</button>
-                      <button type="button" @click="formOpen=false" class="px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/60 hover:text-ink">{{ t('extract.settings.form.cancel') }}</button>
+                      <button type="button" :disabled="formFetching" @click="formFetch" class="min-h-[40px] px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/75 hover:border-pen hover:text-pen transition-colors disabled:opacity-50">{{ formFetching ? t('extract.settings.form.fetching') : t('extract.settings.form.fetch') }}</button>
+                      <button type="button" @click="formSave" class="min-h-[40px] px-3.5 py-2 rounded-lg bg-pen text-white text-xs font-bold">{{ formEditingId ? t('extract.settings.form.update') : t('extract.settings.form.save') }}</button>
+                      <button type="button" @click="formOpen=false" class="min-h-[40px] px-3.5 py-2 rounded-lg border border-ink/15 bg-paper text-xs font-bold text-ink/60 hover:text-ink">{{ t('extract.settings.form.cancel') }}</button>
                     </div>
                     <label v-if="formModels.length" class="block text-xs font-semibold text-ink/70">{{ t('extract.settings.form.defaultModel') }}
                       <select v-model="formModelPick" class="mt-1 w-full border border-ink/15 rounded-lg px-2.5 py-2 bg-white text-ink focus:outline-none focus:ring-2 focus:ring-pen/40">
@@ -698,13 +698,13 @@ void (async () => {
             />
 
             <div class="flex flex-wrap gap-3">
-              <button :disabled="agentRunning" @click="startAgent(false)" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5"><Play class="w-4 h-4" /> {{ agentRunning ? t('extract.agent.starting') : t('extract.agent.startBtn') }}</button>
-              <button v-if="resumeAvailable && !agentRunning" @click="startAgent(true)" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-correct/50 text-green-700 text-sm font-bold hover:bg-correct/[0.07] transition-colors"><RotateCcw class="w-4 h-4" /> {{ t('extract.agent.resume') }}</button>
-              <button v-if="agentRunning" @click="cancelAgent" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-redmargin/40 text-redmargin text-sm font-bold hover:bg-redmargin/[0.06]"><X class="w-4 h-4" /> {{ t('extract.agent.cancel') }}</button>
+              <button :disabled="agentRunning" @click="startAgent(false)" class="min-h-[44px] inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pen text-white text-sm font-bold disabled:opacity-50 transition-transform hover:-translate-y-0.5"><Play class="w-4 h-4" /> {{ agentRunning ? t('extract.agent.starting') : t('extract.agent.startBtn') }}</button>
+              <button v-if="resumeAvailable && !agentRunning" @click="startAgent(true)" class="min-h-[44px] inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-correct/50 text-green-700 text-sm font-bold hover:bg-correct/[0.07] transition-colors"><RotateCcw class="w-4 h-4" /> {{ t('extract.agent.resume') }}</button>
+              <button v-if="agentRunning" @click="cancelAgent" class="min-h-[44px] inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-redmargin/40 text-redmargin text-sm font-bold hover:bg-redmargin/[0.06]"><X class="w-4 h-4" /> {{ t('extract.agent.cancel') }}</button>
             </div>
 
-            <div v-if="agentProgress.length" class="space-y-2">
-              <div class="grid grid-cols-8 sm:grid-cols-12 gap-1.5">
+            <div v-if="agentProgress.length" class="space-y-2 overflow-hidden">
+              <div class="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-12 gap-1.5">
                 <div v-for="p in agentProgress" :key="p.index" :title="t('extract.agent.pagePrefix') + (p.index+1) + (p.note ? ' — ' + p.note : '')" class="h-7 rounded-md grid place-items-center font-mono text-[10px]" :class="[p.status==='done' ? 'bg-correct/15 text-green-700' : p.status==='running' ? 'bg-pen text-white animate-pulse' : p.status==='failed' ? 'bg-redmargin text-white' : 'bg-ink/[0.06] text-ink/40']">{{ p.index+1 }}</div>
               </div>
               <div class="font-mono text-[11px] text-ink/50">{{ agentProgress.filter(x => x.status==='done').length }}/{{ agentProgress.length }} {{ t('extract.agent.pagesDone') }}{{ ocrUsed ? ' · ' + t('extract.agent.ocrUsedNote') : '' }}</div>
@@ -715,31 +715,31 @@ void (async () => {
         </div>
 
         <!-- Past sessions manager -->
-        <div v-if="pastSessions.length || draftSession" class="mt-6 rounded-2xl bg-white p-5 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.22)] ring-1 ring-ink/[0.06]">
-          <div class="flex items-center justify-between mb-3">
-            <div class="font-display font-bold tracking-tight text-sm">Previous Tests</div>
-            <span class="font-mono text-[10px] text-ink/40">{{ pastSessions.length }} attempts · stored locally</span>
+        <div v-if="pastSessions.length || draftSession" class="mt-6 rounded-2xl bg-white p-4 lg:p-5 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.22)] ring-1 ring-ink/[0.06] overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="font-display font-bold tracking-tight text-sm break-words">Previous Tests</div>
+            <span class="font-mono text-[10px] text-ink/40 break-words">{{ pastSessions.length }} attempts · stored locally</span>
           </div>
           <div v-if="pastSessions.length" class="space-y-1.5">
-            <div v-for="row in pastSessions" :key="row.id" class="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2 rounded-xl border border-ink/10 hover:border-ink/25 transition-colors">
-              <span :class="['font-mono text-xs font-bold px-2 py-0.5 rounded-full', row.pct >= 60 ? 'bg-correct/[0.12] text-green-700' : row.pct >= 35 ? 'bg-hlyellow/60 text-ink' : 'bg-redmargin/[0.1] text-redmargin']">{{ row.pct }}%</span>
-              <span class="text-sm font-semibold text-ink truncate min-w-0 flex-1">{{ row.title }}</span>
-              <span class="font-mono text-[10px] text-ink/45">{{ row.score }}</span>
-              <span class="font-mono text-[10px] text-ink/35 hidden sm:inline">{{ row.when }}</span>
-              <span class="flex gap-1.5 ml-auto">
-                <button @click="openReport(row)" title="View report" class="px-2.5 py-1 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Report</button>
-                <button @click="retake(row)" title="Retake" class="px-2.5 py-1 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Retake</button>
-                <button @click="deleteSession(row)" title="Delete" class="px-2.5 py-1 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
+            <div v-for="row in pastSessions" :key="row.id" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 rounded-xl border border-ink/10 hover:border-ink/25 transition-colors min-w-0">
+              <span :class="['font-mono text-xs font-bold px-2 py-0.5 rounded-full shrink-0', row.pct >= 60 ? 'bg-correct/[0.12] text-green-700' : row.pct >= 35 ? 'bg-hlyellow/60 text-ink' : 'bg-redmargin/[0.1] text-redmargin']">{{ row.pct }}%</span>
+              <span class="text-sm font-semibold text-ink truncate min-w-0 flex-1 break-words">{{ row.title }}</span>
+              <span class="font-mono text-[10px] text-ink/45 shrink-0">{{ row.score }}</span>
+              <span class="font-mono text-[10px] text-ink/35 hidden sm:inline break-words">{{ row.when }}</span>
+              <span class="flex flex-wrap gap-1.5 ml-auto">
+                <button @click="openReport(row)" title="View report" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Report</button>
+                <button @click="retake(row)" title="Retake" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Retake</button>
+                <button @click="deleteSession(row)" title="Delete" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
               </span>
             </div>
           </div>
-          <div v-if="draftSession" class="mt-2.5 pt-2.5 border-t border-dashed border-ink/15 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2">
-            <span class="font-mono text-[10px] font-bold uppercase tracking-wider bg-hlblue px-2 py-0.5 rounded-full">draft</span>
-            <span class="text-sm font-semibold text-ink truncate flex-1">{{ draftSession.title }}</span>
-            <span class="font-mono text-[10px] text-ink/45">{{ draftSession.qs }} questions · {{ draftSession.when }}</span>
-            <span class="flex gap-1.5 ml-auto">
-              <button @click="openDraft" class="px-2.5 py-1 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Open in Review</button>
-              <button @click="deleteDraft" title="Delete draft" class="px-2.5 py-1 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
+          <div v-if="draftSession" class="mt-2.5 pt-2.5 border-t border-dashed border-ink/15 flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 min-w-0">
+            <span class="font-mono text-[10px] font-bold uppercase tracking-wider bg-hlblue px-2 py-0.5 rounded-full shrink-0">draft</span>
+            <span class="text-sm font-semibold text-ink truncate flex-1 min-w-0 break-words">{{ draftSession.title }}</span>
+            <span class="font-mono text-[10px] text-ink/45 break-words">{{ draftSession.qs }} questions · {{ draftSession.when }}</span>
+            <span class="flex flex-wrap gap-1.5 ml-auto">
+              <button @click="openDraft" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">Open in Review</button>
+              <button @click="deleteDraft" title="Delete draft" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
             </span>
           </div>
           <div v-if="!pastSessions.length && !draftSession" class="text-xs text-ink/45 py-2">No previous sessions yet — your tests will appear here.</div>
@@ -817,8 +817,12 @@ void (async () => {
   left: 50%;
   width: 260px;
   height: 66px;
+  max-width: 92%;
   transform: translateX(-50%) rotate(-1.8deg);
   background: url('/images/notebook/tape-washi.webp') center/contain no-repeat;
   filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
+}
+@media (max-width: 390px) {
+  .tape { width: 190px; height: 50px; top: -20px; }
 }
 </style>

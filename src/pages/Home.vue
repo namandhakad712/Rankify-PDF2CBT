@@ -10,10 +10,10 @@
     <!-- ═══════════ NAV ═══════════ -->
     <header ref="navEl" class="fixed top-0 inset-x-0 z-50 -translate-y-20 opacity-0">
       <nav class="mx-auto max-w-6xl px-5">
-        <div class="mt-4 flex items-center justify-between rounded-2xl border border-ink/[0.08] bg-white/85 pl-5 pr-2.5 py-2.5 shadow-[0_2px_20px_-8px_rgba(35,32,58,0.15)] backdrop-blur-md">
-          <RouterLink to="/" class="flex items-baseline gap-1.5">
-            <span class="font-display font-bold text-xl tracking-tight text-ink">Rankify</span>
-            <span class="font-hand text-lg text-redmargin -rotate-6 inline-block">pdf→cbt</span>
+        <div class="mt-4 flex items-center justify-between gap-2 rounded-2xl border border-ink/[0.08] bg-white/85 pl-4 lg:pl-5 pr-2.5 py-2.5 shadow-[0_2px_20px_-8px_rgba(35,32,58,0.15)] backdrop-blur-md overflow-hidden">
+          <RouterLink to="/" class="flex items-baseline gap-1.5 shrink-0">
+            <span class="font-display font-bold text-lg lg:text-xl tracking-tight text-ink">Rankify</span>
+            <span class="font-hand text-base lg:text-lg text-redmargin -rotate-6 inline-block">pdf→cbt</span>
           </RouterLink>
           <div class="hidden md:flex items-center gap-7 text-[15px] font-medium text-ink/60">
             <a href="#how" class="hover:text-ink transition-colors nb-anchor">{{ t('home.nav.how') }}</a>
@@ -21,14 +21,14 @@
             <a href="#faq" class="hover:text-ink transition-colors nb-anchor">{{ t('home.nav.faq') }}</a>
             <RouterLink to="/about" class="hover:text-ink transition-colors">{{ t('nav.about') }}</RouterLink>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 shrink-0">
             <LangSwitch />
             <RouterLink
               to="/extract"
-              class="group relative inline-flex items-center gap-2 rounded-xl bg-pen px-5 py-2.5 text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap"
+              class="group relative inline-flex items-center gap-2 rounded-xl bg-pen px-4 lg:px-5 py-2.5 text-[14px] lg:text-[15px] font-semibold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0 whitespace-nowrap min-h-[40px]"
             >
               {{ t('nav.cta') }}
-              <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight class="w-4 h-4 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </RouterLink>
           </div>
         </div>
@@ -37,8 +37,8 @@
 
     <main>
       <!-- ═══════════ HERO ═══════════ -->
-      <section class="paper relative overflow-hidden pt-36 pb-20 md:pt-44 md:pb-28">
-        <div class="mx-auto max-w-6xl px-5 grid lg:grid-cols-[1.1fr_0.9fr] gap-14 items-center">
+      <section class="paper relative overflow-hidden pt-28 lg:pt-36 pb-16 lg:pb-20 md:pt-44 md:pb-28">
+        <div class="mx-auto max-w-6xl px-5 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8 lg:gap-14 items-center">
           <!-- Copy -->
           <div>
             <div ref="heroBadge" class="opacity-0 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white px-4 py-1.5 text-[13px] font-semibold text-ink/70 mb-7">
@@ -61,31 +61,31 @@
               {{ t('hero.sub') }}
             </p>
 
-            <div ref="heroCtas" class="opacity-0 mt-9 flex flex-wrap items-center gap-4">
+            <div ref="heroCtas" class="opacity-0 mt-9 flex flex-wrap items-center gap-3 lg:gap-4">
               <RouterLink
                 to="/extract"
                 data-sticker-trigger
-                class="group relative inline-flex items-center gap-2.5 rounded-2xl bg-pen px-7 py-4 text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(47,95,224,0.55)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(47,95,224,0.6)]"
+                class="group relative inline-flex items-center gap-2.5 rounded-2xl bg-pen px-6 lg:px-7 py-3.5 lg:py-4 text-base font-bold text-white shadow-[0_10px_30px_-10px_rgba(47,95,224,0.55)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-10px_rgba(47,95,224,0.6)] min-h-[44px]"
               >
                 <span class="relative z-10 flex items-center gap-2">{{ t('hero.cta1') }}
                   <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               </RouterLink>
-              <a href="#how" class="nb-anchor inline-flex items-center gap-2 rounded-2xl border-2 border-ink/12 px-7 py-[14px] text-base font-bold text-ink/75 hover:border-ink/30 hover:text-ink transition-colors">
+              <a href="#how" class="nb-anchor inline-flex items-center gap-2 rounded-2xl border-2 border-ink/12 px-6 lg:px-7 py-3 lg:py-[14px] text-base font-bold text-ink/75 hover:border-ink/30 hover:text-ink transition-colors min-h-[44px]">
                 {{ t('hero.cta2') }}
               </a>
-              <span ref="note1" class="font-hand text-xl text-ink/55 -rotate-3 opacity-0 inline-block">{{ t('hero.note') }}</span>
+              <span ref="note1" class="font-hand text-lg lg:text-xl text-ink/55 -rotate-3 opacity-0 inline-block break-words">{{ t('hero.note') }}</span>
             </div>
           </div>
 
           <!-- Interactive mini exam sheet -->
-          <div class="relative">
+          <div class="relative min-w-0 overflow-hidden">
             <img src="/images/notebook/hero-stack.webp" alt="" fetchpriority="high" decoding="async" class="hidden lg:block absolute -top-10 -right-8 w-52 pointer-events-none select-none z-20" style="filter: drop-shadow(0 16px 32px rgba(35,32,58,0.15));" ref="heroFloat" />
             <img src="/images/notebook/floating-notebook-pdf.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute -bottom-8 -left-6 w-32 pointer-events-none select-none opacity-90 rotate-3 z-20" style="filter: drop-shadow(0 10px 20px rgba(35,32,58,0.12));" />
-            <div ref="examSheet" class="relative mx-auto max-w-md rotate-[1.2deg] rounded-xl bg-white shadow-[0_24px_60px_-24px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07]">
+            <div ref="examSheet" class="relative mx-auto max-w-md rotate-[0.8deg] lg:rotate-[1.2deg] rounded-xl bg-white shadow-[0_24px_60px_-24px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07] overflow-hidden">
               <!-- sheet margin -->
-              <div class="pointer-events-none absolute inset-y-0 left-11 w-px bg-redmargin/40"></div>
-              <div class="px-6 pl-16 pt-6 pb-7">
+              <div class="pointer-events-none absolute inset-y-0 left-8 lg:left-11 w-px bg-redmargin/40"></div>
+              <div class="px-4 lg:px-6 pl-10 lg:pl-16 pt-6 pb-7">
                 <div class="flex items-center justify-between border-b border-dashed border-ink/15 pb-3">
                   <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/45">mock test · auto-generated</span>
                   <span class="font-mono text-[10px] font-medium text-correct">● live preview</span>
@@ -96,14 +96,14 @@
                   <button
                     v-for="opt in q1opts"
                     :key="opt.k"
-                    class="qopt group flex w-full items-center gap-3 rounded-lg border px-3.5 py-2.5 text-left text-[15px] transition-all"
+                    class="qopt group flex w-full items-center gap-3 rounded-lg border px-3.5 py-2.5 text-left text-[15px] transition-all min-h-[44px] break-words"
                     :class="picked1 === opt.k
                       ? (opt.k === 'D' ? 'border-correct/60 bg-correct/[0.07] text-ink' : 'border-redmargin/60 bg-redmargin/[0.06] text-ink')
                       : 'border-ink/10 bg-paper hover:border-ink/25 text-ink/75'"
                     @click="picked1 = opt.k"
                   >
                     <span class="grid h-6 w-6 shrink-0 place-items-center rounded-md border text-[12px] font-bold" :class="picked1 === opt.k ? (opt.k === 'D' ? 'border-correct bg-correct text-white' : 'border-redmargin bg-redmargin text-white') : 'border-ink/20 text-ink/50'">{{ opt.k }}</span>
-                    <span class="flex-1">{{ opt.t }}</span>
+                    <span class="flex-1 break-words min-w-0">{{ opt.t }}</span>
                     <svg v-if="picked1 === opt.k && opt.k === 'D'" class="w-5 h-5 text-correct shrink-0 tick-pop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                     <svg v-else-if="picked1 === opt.k" class="w-5 h-5 text-redmargin shrink-0 tick-pop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                   </button>
@@ -146,17 +146,17 @@
       </section>
 
       <!-- ═══════════ HOW IT WORKS ═══════════ -->
-      <section id="how" class="paper relative py-24 md:py-32 overflow-hidden">
+      <section id="how" class="paper relative py-16 lg:py-24 md:py-32 overflow-hidden">
         <ImageTrail :items="trailImages" :threshold="70" class="z-10" />
         <div class="mx-auto max-w-6xl px-5 relative z-20">
           <div class="max-w-xl">
             <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">{{ t('how.instructions') }}</div>
-            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl leading-[1.05]">{{ t('how.headline') }}</h2>
-            <p class="mt-4 font-hand text-2xl text-ink/50 -rotate-1">{{ t('how.sub') }}</p>
+            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-3xl lg:text-4xl md:text-6xl leading-[1.05] break-words">{{ t('how.headline') }}</h2>
+            <p class="mt-4 font-hand text-xl lg:text-2xl text-ink/50 -rotate-1 break-words">{{ t('how.sub') }}</p>
           </div>
 
-          <div class="mt-14 grid md:grid-cols-3 gap-7 md:gap-6">
-            <div v-for="(s, i) in steps" :key="'step' + i" data-sticker-trigger class="tape-card group relative rounded-lg bg-white p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] transition-transform duration-300 hover:-translate-y-1.5" :style="{ transform: `rotate(${s.tilt}deg)` }">
+          <div class="mt-10 lg:mt-14 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-7 md:gap-6">
+            <div v-for="(s, i) in steps" :key="'step' + i" data-sticker-trigger class="tape-card group relative rounded-lg bg-white p-6 lg:p-7 pt-9 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] transition-transform duration-300 hover:-translate-y-1.5 overflow-hidden" :style="{ transform: `rotate(${s.tilt}deg)` }">
               <div class="tape" aria-hidden="true"></div>
               <div class="flex items-start justify-between">
                 <span class="font-display text-5xl font-extrabold text-ink/10 group-hover:text-hlyellow transition-colors">{{ s.roman }}</span>
@@ -171,18 +171,18 @@
       </section>
 
       <!-- ═══════════ FEATURES · STICKY NOTES ═══════════ -->
-      <section id="features" class="relative bg-[#F4EFE3] border-y-2 border-ink/[0.07] py-24 md:py-32 overflow-hidden">
+      <section id="features" class="relative bg-[#F4EFE3] border-y-2 border-ink/[0.07] py-16 lg:py-24 md:py-32 overflow-hidden">
         <img src="/images/notebook/sticker-pack.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute -top-6 right-6 w-56 pointer-events-none select-none opacity-90 rotate-2" style="filter: drop-shadow(0 12px 24px rgba(35,32,58,0.12));" />
         <div class="mx-auto max-w-6xl px-5 relative">
           <div class="flex flex-wrap items-end justify-between gap-6">
             <div class="max-w-xl">
               <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">stuck to the fridge</div>
-              <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl leading-[1.05]">Why students<br />keep it <span class="font-hand font-semibold text-[1.1em]">pinned.</span></h2>
+              <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-3xl lg:text-4xl md:text-6xl leading-[1.05] break-words">Why students<br />keep it <span class="font-hand font-semibold text-[1.1em]">pinned.</span></h2>
             </div>
-            <p class="font-hand text-2xl text-ink/45 rotate-2">hover them, they wake up</p>
+            <p class="font-hand text-xl lg:text-2xl text-ink/45 rotate-2 break-words">hover them, they wake up</p>
           </div>
 
-          <div class="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
+          <div class="mt-10 lg:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-x-7 lg:gap-y-10">
             <div
               v-for="(f, i) in features"
               :key="'feat' + i"
@@ -221,14 +221,14 @@
       </section>
 
       <!-- ═══════════ SYLLABUS CHECKLIST ═══════════ -->
-      <section class="relative bg-white border-y-2 border-ink/[0.07] py-24 md:py-32">
-        <div class="mx-auto max-w-5xl px-5 grid lg:grid-cols-[0.9fr_1.1fr] gap-12 items-center">
-          <div>
+      <section class="relative bg-white border-y-2 border-ink/[0.07] py-16 lg:py-24 md:py-32">
+        <div class="mx-auto max-w-5xl px-5 grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-12 items-center">
+          <div class="min-w-0">
             <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">coverage check</div>
-            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl leading-[1.05]">Every question<br />type you get <span class="relative inline-block"><span class="hl absolute inset-x-[-5px] inset-y-[14%] -z-0 rounded-sm bg-hlgreen origin-left scale-x-0"></span><span class="relative z-10">marked</span></span> on.</h2>
-            <p class="mt-5 text-[16px] leading-relaxed text-ink/60 max-w-sm">School unit tests, board papers, university semesters, entrance mocks — the schema doesn't care. Text stays exactly in your language.</p>
+            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-3xl lg:text-4xl md:text-6xl leading-[1.05] break-words">Every question<br />type you get <span class="relative inline-block"><span class="hl absolute inset-x-[-5px] inset-y-[14%] -z-0 rounded-sm bg-hlgreen origin-left scale-x-0"></span><span class="relative z-10">marked</span></span> on.</h2>
+            <p class="mt-5 text-[15px] lg:text-[16px] leading-relaxed text-ink/60 max-w-sm break-words">School unit tests, board papers, university semesters, entrance mocks — the schema doesn't care. Text stays exactly in your language.</p>
           </div>
-          <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             <li v-for="(qt, i) in qtypes" :key="'qt' + i" class="check-row flex items-center gap-3.5 border-b border-dashed border-ink/10 pb-3.5">
               <span class="check-box grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-ink/25 bg-paper">
                 <svg class="check-tick w-4 h-4 text-correct" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -240,9 +240,9 @@
       </section>
 
       <!-- ═══════════ REPORT CARD ═══════════ -->
-      <section class="paper relative py-24 md:py-32">
+      <section class="paper relative py-16 lg:py-24 md:py-32">
         <div class="mx-auto max-w-3xl px-5">
-          <div ref="reportCardRef" class="relative overflow-hidden rounded-2xl bg-white p-8 md:p-12 shadow-[0_30px_70px_-30px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07] rotate-[-0.6deg]">
+          <div ref="reportCardRef" class="relative overflow-hidden rounded-2xl bg-white p-4 lg:p-8 md:p-12 shadow-[0_30px_70px_-30px_rgba(35,32,58,0.35)] ring-1 ring-ink/[0.07] rotate-[-0.4deg] lg:rotate-[-0.6deg]">
             <div class="flex items-center justify-between border-b-2 border-ink/10 pb-5">
               <div>
                 <div class="font-mono text-[10px] uppercase tracking-[0.3em] text-ink/45">{{ t('report.term') }}</div>
@@ -251,11 +251,11 @@
               <div class="font-hand text-2xl text-ink/40 -rotate-3 hidden sm:block">{{ t('report.subtitle') }}</div>
             </div>
             <div class="divide-y divide-dashed divide-ink/10">
-              <div v-for="(r, i) in report" :key="'rc' + i" class="flex items-center gap-4 py-5">
-                <span class="font-display font-bold text-ink text-lg md:text-xl tracking-tight">{{ r.subject }}</span>
-                <span class="flex-1 border-b border-dotted border-ink/25 mx-1"></span>
-                <span class="font-mono text-sm text-ink/55 tabular-nums">{{ r.detail }}</span>
-                <span class="grade grid h-11 w-11 shrink-0 rotate-6 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-xl font-bold text-redmargin bg-redmargin/[0.04]">{{ r.grade }}</span>
+              <div v-for="(r, i) in report" :key="'rc' + i" class="flex items-center gap-2 lg:gap-4 py-4 lg:py-5 min-w-0">
+                <span class="font-display font-bold text-ink text-base lg:text-lg md:text-xl tracking-tight break-words min-w-0">{{ r.subject }}</span>
+                <span class="flex-1 border-b border-dotted border-ink/25 mx-1 hidden sm:block"></span>
+                <span class="font-mono text-xs lg:text-sm text-ink/55 tabular-nums break-words min-w-0 text-right sm:text-left flex-1 sm:flex-none">{{ r.detail }}</span>
+                <span class="grade grid h-10 w-10 lg:h-11 lg:w-11 shrink-0 rotate-6 place-items-center rounded-full border-[2.5px] border-redmargin font-hand text-lg lg:text-xl font-bold text-redmargin bg-redmargin/[0.04]">{{ r.grade }}</span>
               </div>
             </div>
             <p class="mt-6 font-hand text-2xl text-pen rotate-[-1deg] text-right">{{ t('report.signature') }}: <span class="border-b-2 border-dashed border-ink/30 px-6">{{ t('report.signature.yours') }}</span></p>
@@ -264,17 +264,17 @@
       </section>
 
       <!-- ═══════════ FAQ ═══════════ -->
-      <section id="faq" class="relative bg-white border-t-2 border-ink/[0.07] py-24 md:py-32">
+      <section id="faq" class="relative bg-white border-t-2 border-ink/[0.07] py-16 lg:py-24 md:py-32">
         <div class="mx-auto max-w-3xl px-5">
           <div class="text-center mb-12">
             <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">raise your hand</div>
-            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-4xl md:text-6xl">Asked in every <span class="font-hand font-semibold text-[1.1em]">class.</span></h2>
+            <h2 data-reveal class="font-display font-extrabold tracking-tight text-ink text-3xl lg:text-4xl md:text-6xl break-words">Asked in every <span class="font-hand font-semibold text-[1.1em]">class.</span></h2>
           </div>
           <div class="divide-y divide-ink/10 border-y-2 border-ink/[0.08]">
             <div v-for="(fq, i) in faqs" :key="'fq' + i" class="group">
-              <button class="flex w-full items-center justify-between gap-6 py-6 text-left" :aria-expanded="openFaq === i" @click="openFaq = openFaq === i ? -1 : i">
-                <span class="font-display font-bold text-ink/85 group-hover:text-ink text-lg md:text-xl tracking-tight transition-colors">{{ fq.q }}</span>
-                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-ink/15 text-ink/60 transition-all duration-300" :class="openFaq === i ? 'rotate-45 border-pen text-pen' : ''">
+              <button class="flex w-full items-center justify-between gap-4 lg:gap-6 py-5 lg:py-6 text-left min-h-[44px]" :aria-expanded="openFaq === i" @click="openFaq = openFaq === i ? -1 : i">
+                <span class="font-display font-bold text-ink/85 group-hover:text-ink text-base lg:text-lg md:text-xl tracking-tight transition-colors break-words min-w-0">{{ fq.q }}</span>
+                <span class="grid h-10 w-10 lg:h-9 lg:w-9 shrink-0 place-items-center rounded-full border-2 border-ink/15 text-ink/60 transition-all duration-300" :class="openFaq === i ? 'rotate-45 border-pen text-pen' : ''">
                   <Plus class="w-4 h-4" />
                 </span>
               </button>
@@ -291,35 +291,35 @@
     </main>
 
     <!-- ═══════════ FOOTER ═══════════ -->
-    <footer class="relative overflow-hidden bg-ink rounded-t-[3rem] mx-auto">
+    <footer class="relative overflow-hidden bg-ink rounded-t-[2rem] lg:rounded-t-[3rem] mx-auto">
       <div class="absolute inset-0">
         <Dither :wave-speed="0" :wave-frequency="1.9" :wave-amplitude="0.26" :color-num="4" :pixel-size="2" :mouse-radius="0.3" />
       </div>
       <img src="/images/notebook/footer-doodle.webp" alt="" loading="lazy" decoding="async" class="hidden lg:block absolute right-8 -top-10 w-44 pointer-events-none select-none invert opacity-20 rotate-3" />
-      <div class="mx-auto max-w-6xl px-5 pt-16 pb-8 relative z-10">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-10">
-          <div>
+      <div class="mx-auto max-w-6xl px-5 pt-10 lg:pt-16 pb-8 relative z-10">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 lg:gap-10">
+          <div class="min-w-0">
             <div class="flex items-baseline gap-2">
-              <span class="font-display font-extrabold text-cream text-3xl tracking-tight">Rankify</span>
-              <span class="font-hand text-xl text-hlyellow -rotate-6">pdf→cbt</span>
+              <span class="font-display font-extrabold text-cream text-2xl lg:text-3xl tracking-tight">Rankify</span>
+              <span class="font-hand text-lg lg:text-xl text-hlyellow -rotate-6">pdf→cbt</span>
             </div>
-            <p class="mt-3 max-w-xs text-[15px] leading-relaxed text-cream/60">{{ t('footer.subtitle') }}</p>
+            <p class="mt-3 max-w-xs text-[14px] lg:text-[15px] leading-relaxed text-cream/60 break-words">{{ t('footer.subtitle') }}</p>
           </div>
-          <nav class="flex flex-col items-start md:items-end gap-3.5" aria-label="Footer">
-            <RouterLink to="/extract" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.extract') }}</RouterLink>
-            <RouterLink to="/getting-started" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.gettingStarted') }}</RouterLink>
-            <RouterLink to="/about" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.about') }}</RouterLink>
-            <RouterLink to="/privacy" class="font-display font-bold text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors">{{ t('footer.link.privacy') }}</RouterLink>
+          <nav class="flex flex-col items-start md:items-end gap-3 lg:gap-3.5 min-w-0" aria-label="Footer">
+            <RouterLink to="/extract" class="font-display font-bold text-lg lg:text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors min-h-[40px] flex items-center break-words">{{ t('footer.link.extract') }}</RouterLink>
+            <RouterLink to="/getting-started" class="font-display font-bold text-lg lg:text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors min-h-[40px] flex items-center break-words">{{ t('footer.link.gettingStarted') }}</RouterLink>
+            <RouterLink to="/about" class="font-display font-bold text-lg lg:text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors min-h-[40px] flex items-center break-words">{{ t('footer.link.about') }}</RouterLink>
+            <RouterLink to="/privacy" class="font-display font-bold text-lg lg:text-xl tracking-tight text-cream/90 hover:text-hlyellow transition-colors min-h-[40px] flex items-center break-words">{{ t('footer.link.privacy') }}</RouterLink>
           </nav>
-          <button class="relative h-36 w-36 md:h-40 md:w-40 shrink-0 text-cream/75 hover:text-hlyellow transition-colors" aria-label="Back to top" @click="toTop">
+          <button class="relative h-32 w-32 lg:h-36 lg:w-36 md:h-40 md:w-40 shrink-0 text-cream/75 hover:text-hlyellow transition-colors min-h-[44px]" aria-label="Back to top" @click="toTop">
             <CircularText :text="t('footer.back') + '  •  ' + t('footer.back') + '  •  '" :spin-duration="14" on-hover="speedUp" class-name="w-full h-full" />
             <ArrowUp class="absolute inset-0 m-auto w-6 h-6" />
           </button>
         </div>
-        <div class="mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent" style="-webkit-text-stroke: 2px rgba(251,248,241,0.28)" aria-hidden="true">RANKIFY</div>
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 border-cream/[0.12] pt-6 font-mono text-[10px] uppercase tracking-[0.25em] text-cream/45">
-          <span>{{ t('footer.copyright') }}</span>
-          <span class="font-hand text-lg normal-case tracking-normal text-hlyellow" style="text-shadow: 0 0 14px rgba(255,216,77,0.6), 0 0 38px rgba(255,216,77,0.3);">{{ t('footer.students') }}</span>
+        <div class="mt-8 lg:mt-12 select-none text-center font-display font-extrabold leading-[0.8] tracking-[-0.04em] text-[18vw] md:text-[13rem] text-transparent break-words" style="-webkit-text-stroke: 1.5px rgba(251,248,241,0.28)" aria-hidden="true">RANKIFY</div>
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 border-cream/[0.12] pt-6 font-mono text-[10px] uppercase tracking-[0.25em] text-cream/45 break-words">
+          <span class="break-words">{{ t('footer.copyright') }}</span>
+          <span class="font-hand text-base lg:text-lg normal-case tracking-normal text-hlyellow break-words" style="text-shadow: 0 0 14px rgba(255,216,77,0.6), 0 0 38px rgba(255,216,77,0.3);">{{ t('footer.students') }}</span>
         </div>
       </div>
     </footer>
@@ -748,15 +748,23 @@ useHead({
   left: 50%;
   width: 260px;
   height: 66px;
+  max-width: 92%;
   transform: translateX(-50%) rotate(-1.8deg);
   background: url('/images/notebook/tape-washi.webp') center/contain no-repeat;
   filter: drop-shadow(0 4px 10px rgba(35,32,58,0.12));
+}
+
+@media (max-width: 390px) {
+  .tape { width: 190px; height: 50px; top: -20px; }
 }
 
 .sticky-note .tape {
   width: 190px;
   height: 50px;
   top: -22px;
+}
+@media (max-width: 390px) {
+  .sticky-note .tape { width: 150px; height: 40px; top: -18px; }
 }
 
 /* highlighter */
