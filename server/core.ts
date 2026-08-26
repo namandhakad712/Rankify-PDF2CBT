@@ -44,18 +44,32 @@ const jsonOut = (status: number, json: unknown) => ({ status, json })
 export async function handleStatus(): Promise<{ status: number; json: unknown }> {
   type P = { id: string; name: string; endpoint: string; response?: string; envKey?: string; docsUrl?: string; models?: unknown[] }
   let presets: { id: string; name: string; endpoint: string; response: string; envKey: string; docsUrl?: string; models: string[] }[] = []
-  try {
-    const p = path.join(process.cwd(), "src/config/providers.yaml")
-    const f = YAML.parse(fs.readFileSync(p, "utf8")) as { providers?: P[] }
-    presets = (f.providers || []).map((x) => ({
-      id: x.id, name: x.name, endpoint: x.endpoint.replace(/\/+$/, ""),
-      response: x.response || "openai-completions", envKey: x.envKey || "",
-      docsUrl: x.docsUrl, models: (x.models || []).map((m: unknown) => typeof m === "string" ? m : (m as { id: string }).id),
-    }))
-  } catch { /* none */ }
+  let yamlOk = false
+  let yamlError: string | null = null
+  for (const candidate of [
+    path.join(process.cwd(), "src/config/providers.yaml"),
+    path.join(process.cwd(), "../src/config/providers.yaml"),
+    path.join(process.cwd(), "../../src/config/providers.yaml"),
+  ]) {
+    try {
+      const f = YAML.parse(fs.readFileSync(candidate, "utf8")) as { providers?: P[] }
+      presets = (f.providers || []).map((x) => ({
+        id: x.id, name: x.name, endpoint: x.endpoint.replace(/\/+$/, ""),
+        response: x.response || "openai-completions", envKey: x.envKey || "",
+        docsUrl: x.docsUrl, models: (x.models || []).map((m: unknown) => typeof m === "string" ? m : (m as { id: string }).id),
+      }))
+      yamlOk = true
+      break
+    } catch (e) { yamlError = e instanceof Error ? e.message.slice(0,120) : String(e) }
+  }
+  // Fallback hardcoded list so env check works even if yaml bundling fails
+  const FIXED_KEYS = ["GROQ_API_KEY","MISTRAL_API_KEY","NVIDIA_API_KEY","POOLSIDE_API_KEY","OPENCODE_API_KEY","INFERX_API_KEY"]
+  const allKeys = new Set([...presets.map(p=>p.envKey).filter(Boolean) as string[], ...FIXED_KEYS])
   const envKeys: Record<string, boolean> = {}
-  for (const p of presets) if (p.envKey) envKeys[p.envKey] = !!getEnv(p.envKey)
-  return jsonOut(200, { presets, envKeys })
+  for (const k of allKeys) envKeys[k] = !!getEnv(k)
+  // Debug: list which env keys exist in process.env without exposing values
+  const envSeen = Object.keys(process.env).filter(k => k.includes("API_KEY")).sort()
+  return jsonOut(200, { presets, envKeys, debug: { yamlOk, yamlError, cwd: process.cwd(), envSeen, nodeEnv: process.env.VERCEL_ENV || process.env.NODE_ENV || null } })
 }
 
 export async function handleChat(opts: {

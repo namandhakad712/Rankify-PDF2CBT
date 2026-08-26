@@ -43,24 +43,23 @@ providers:
   - id: groq
     name: Groq
     priority: 6
-    endpoint: https://api.groq.com/openai/v1
+    endpoint: https://api.groq.com/openai/v1/chat/completions
     response: openai-completions
     envKey: GROQ_API_KEY
-    docsUrl: https://console.groq.com/docs/rate-limits
+    docsUrl: https://console.groq.com/docs/models
     models:
-      - id: llama-3.3-70b-versatile
-        contextWindow: 131072
-        maxTokens: 32768
       - id: openai/gpt-oss-120b
         contextWindow: 131072
         maxTokens: 65536
-      - id: llama-3.1-8b-instant
-        contextWindow: 131072
-        maxTokens: 8192
       - id: openai/gpt-oss-20b
         contextWindow: 131072
         maxTokens: 65536
-      - qwen/qwen3-32b
+      - id: groq/compound
+        contextWindow: 131072
+        maxTokens: 8192
+      - id: groq/compound-mini
+        contextWindow: 131072
+        maxTokens: 8192
 
   - id: mistral
     name: Mistral
@@ -68,16 +67,17 @@ providers:
     endpoint: https://api.mistral.ai/v1
     response: openai-completions
     envKey: MISTRAL_API_KEY
-    docsUrl: https://docs.mistral.ai/getting-started/models
+    docsUrl: https://docs.mistral.ai/models
     contextWindow: 131072
     maxTokens: 8192
     models:
-      - mistral-medium-2508
-      - mistral-medium-2505
-      - id: ministral-8b-2512
-        contextWindow: 131072
-        maxTokens: 8192
-      - mistral-small-2603
+      - id: labs-leanstral-1-5-1
+        contextWindow: 256000
+        maxTokens: 128000
+      - id: ministral-14b-2512
+        contextWindow: 256000
+      - id: mistral-medium-2508
+        contextWindow: 256000
 
   - id: nvidia
     name: NVIDIA NIM
@@ -154,9 +154,12 @@ providers:
     envKey: OPENCODE_CUSTOM_API_KEY
     docsUrl: https://docs.opencode.ai/
     models:
+      - id: nemotron-3-ultra-free
+        contextWindow: 1000000
+        maxTokens: 128000
       - id: big-pickle
         contextWindow: 128000
         maxTokens: 32000
-      - id: x-preview-f-free
+      - id: nemotron-3.5-lightning-free
         contextWindow: 1000000
-        maxTokens: 128000
+        maxTokens: 128000  
