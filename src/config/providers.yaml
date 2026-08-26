@@ -118,10 +118,10 @@ providers:
     envKey: AGNES_API_KEY
     docsUrl: https://docs.agnes-ai.com/
     models:
-      - id: agnes-2.0-flash
+      - id: agnes-2.5-flash
         contextWindow: 512000
         maxTokens: 32000
-      - id: agnes-2.5-flash
+      - id: agnes-2.0-flash
         contextWindow: 512000
         maxTokens: 32000
 
