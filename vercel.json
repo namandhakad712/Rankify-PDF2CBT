@@ -30,9 +30,9 @@
   "functions": {
     "api/agent/chat.ts": {
       "maxDuration": 30,
-      "includeFiles": "src/config/providers.yaml"
+      "includeFiles": "src/config/providers.yaml, server/**"
     },
-    "api/agent/ocr.ts": { "maxDuration": 60, "includeFiles": "src/config/providers.yaml" },
-    "api/agent/status.ts": { "includeFiles": "src/config/providers.yaml" }
+    "api/agent/ocr.ts": { "maxDuration": 60, "includeFiles": "src/config/providers.yaml, server/**" },
+    "api/agent/status.ts": { "includeFiles": "src/config/providers.yaml, server/**" }
   }
 }

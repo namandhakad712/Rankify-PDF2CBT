@@ -1,7 +1,7 @@
 // Vercel Serverless — thin wrapper over server/core.ts (shared with Vite dev shim)
 export const maxDuration = 60
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { handleOcr } from "../../server/core"
+import { handleOcr } from "../../server/core.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*")

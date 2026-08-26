@@ -1,6 +1,6 @@
 // Vercel Serverless — reports which provider env keys are configured (booleans only)
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { handleStatus } from "../../server/core"
+import { handleStatus } from "../../server/core.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*")
