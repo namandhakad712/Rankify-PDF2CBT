@@ -72,7 +72,7 @@
               <a href="https://www.producthunt.com/products/rankify-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rankify-3" target="_blank" rel="noopener noreferrer" class="block">
                 <img alt="Rankify on Product Hunt" width="250" height="54" src="/ph-badge.svg" class="block" />
               </a>
-              <a href="https://github.com/sponsors/namandhakad712" target="_blank" rel="noopener noreferrer" class="group/sponsor relative inline-flex items-center gap-2.5 lg:gap-3 rounded-2xl bg-white border-2 border-redmargin/15 px-5 lg:px-6 py-2.5 lg:py-3 shadow-[0_10px_28px_-14px_rgba(242,109,109,0.38)] hover:shadow-[0_16px_32px_-14px_rgba(242,109,109,0.48)] hover:-translate-y-0.5 hover:rotate-0 rotate-[-0.7deg] transition-all min-h-[48px]">
+              <button @click="showSponsorChoice = true" class="group/sponsor relative inline-flex items-center gap-2.5 lg:gap-3 rounded-2xl bg-white border-2 border-redmargin/15 px-5 lg:px-6 py-2.5 lg:py-3 shadow-[0_10px_28px_-14px_rgba(242,109,109,0.38)] hover:shadow-[0_16px_32px_-14px_rgba(242,109,109,0.48)] hover:-translate-y-0.5 hover:rotate-0 rotate-[-0.7deg] transition-all min-h-[48px]">
                 <img src="/images/notebook/stickers/heart-red.webp" alt="" width="56" height="56" class="w-11 h-11 lg:w-[52px] lg:h-[52px] object-contain shrink-0 sponsor-heart -ml-1" loading="lazy" decoding="async" />
                 <span class="font-display font-extrabold text-[20px] lg:text-[22px] tracking-tight leading-none text-ink group-hover/sponsor:text-redmargin transition-colors">{{ t('hero.sponsor') }}</span>
                 <span class="hidden sm:inline font-hand text-[20px] lg:text-[22px] leading-none text-ink/55 group-hover/sponsor:text-ink/70 -ml-1">{{ t('hero.sponsorKeep') }}</span>
@@ -82,9 +82,45 @@
                   {{ t('hero.sponsorTooltip') }}
                   <span class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-ink ring-1 ring-white/10"></span>
                 </span>
-              </a>
+              </button>
               <span ref="note1" class="font-hand text-lg lg:text-xl text-ink/55 -rotate-3 opacity-0 inline-block break-words">{{ t('hero.note') }}</span>
             </div>
+            <!-- Sponsor choice — UPI vs GitHub -->
+            <Teleport to="body">
+              <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" leave-active-class="transition duration-150 ease-in" leave-to-class="opacity-0">
+                <div v-if="showSponsorChoice" class="fixed inset-0 z-[100] flex items-center justify-center p-5">
+                  <div class="absolute inset-0 bg-ink/40 backdrop-blur-sm" @click="showSponsorChoice = false"></div>
+                  <div class="relative z-10 w-full max-w-sm bg-white rounded-2xl shadow-[0_30px_80px_-20px_rgba(35,32,58,0.45)] ring-1 ring-ink/[0.08] p-6">
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 class="font-display font-extrabold text-lg tracking-tight">{{ t('hero.sponsorChoiceTitle') }}</h3>
+                        <p class="mt-1 text-sm text-ink/60 leading-snug">{{ t('hero.sponsorChoiceSub') }}</p>
+                      </div>
+                      <button @click="showSponsorChoice = false" class="shrink-0 w-8 h-8 rounded-full hover:bg-ink/5 grid place-items-center text-ink/40">✕</button>
+                    </div>
+                    <div class="mt-5 grid gap-3">
+                      <a href="https://buymeachai.ezee.li/naman" target="_blank" rel="noopener noreferrer" @click="showSponsorChoice = false" class="group flex items-center gap-3 rounded-xl border-2 border-hlyellow bg-hlyellow/15 px-4 py-3.5 hover:bg-hlyellow/25 transition-colors">
+                        <span class="grid h-11 w-11 place-items-center rounded-xl bg-white border border-hlyellow text-xl shadow-sm">🇮🇳</span>
+                        <span class="flex-1 text-left min-w-0">
+                          <span class="font-display font-bold text-sm text-ink block">{{ t('hero.sponsorUpiTitle') }}</span>
+                          <span class="font-mono text-[11px] text-ink/55">{{ t('hero.sponsorUpiSub') }}</span>
+                        </span>
+                        <span class="text-ink/30 group-hover:text-ink/60">→</span>
+                      </a>
+                      <a href="https://github.com/sponsors/namandhakad712" target="_blank" rel="noopener noreferrer" @click="showSponsorChoice = false" class="group flex items-center gap-3 rounded-xl border-2 border-ink/10 bg-white px-4 py-3.5 hover:border-pen hover:bg-pen/[0.04] transition-colors">
+                        <span class="grid h-11 w-11 place-items-center rounded-xl bg-ink text-white text-lg shadow-sm">♥</span>
+                        <span class="flex-1 text-left min-w-0">
+                          <span class="font-display font-bold text-sm text-ink block">{{ t('hero.sponsorGithubTitle') }}</span>
+                          <span class="font-mono text-[11px] text-ink/55">{{ t('hero.sponsorGithubSub') }}</span>
+                        </span>
+                        <span class="text-ink/30 group-hover:text-ink/60">→</span>
+                      </a>
+                    </div>
+                    <button @click="showSponsorChoice = false" class="mt-4 w-full py-2.5 text-sm font-semibold text-ink/50 hover:text-ink transition-colors">{{ t('hero.sponsorLater') }}</button>
+                  </div>
+                </div>
+              </Transition>
+            </Teleport>
 
           </div>
 
@@ -374,6 +410,7 @@ const trailImages = [
 ]
 
 const openFaq = ref(-1)
+const showSponsorChoice = ref(false)
 const picked1 = ref('')
 const q1opts = [
   { k: 'A', t: 'Equal to its velocity' },

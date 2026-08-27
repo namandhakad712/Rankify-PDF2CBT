@@ -33,6 +33,27 @@ function applyCustom() {
   const v = parseInt(customMins.value, 10)
   if (!isNaN(v) && v >= 5 && v <= 600) setPreset(v)
 }
+/* ── 4. font size + fullscreen ── */
+const fontLevel = ref(1) // 0 small 1 normal 2 large 3 xl
+try { const s = localStorage.getItem("rpdf2cbt-font"); if (s) fontLevel.value = Math.min(3, Math.max(0, parseInt(s,10)||1)) } catch {}
+watch(fontLevel, v => { try { localStorage.setItem("rpdf2cbt-font", String(v)) } catch {} })
+function incFont() { if (fontLevel.value < 3) fontLevel.value++ }
+function decFont() { if (fontLevel.value > 0) fontLevel.value-- }
+const qFontClass = computed(() => {
+  const m = ["text-[14px] lg:text-[15px]", "text-[15px] lg:text-[16px]", "text-[17px] lg:text-[18px]", "text-[19px] lg:text-[20px]"]
+  return m[fontLevel.value] || m[1]
+})
+const isFullscreen = ref(false)
+function toggleFullscreen() {
+  const el = document.getElementById("test-root")
+  if (!el) return
+  if (!document.fullscreenElement) el.requestFullscreen?.()
+  else document.exitFullscreen?.()
+}
+function onFsChange() { isFullscreen.value = !!document.fullscreenElement }
+onMounted(() => { document.addEventListener("fullscreenchange", onFsChange) })
+onBeforeUnmount(() => { document.removeEventListener("fullscreenchange", onFsChange) })
+
 const practiceFeedback = computed(() => {
   if (!practiceMode.value || !q.value) return null
   const a = answers.value[q.value.id]
@@ -284,7 +305,7 @@ watch(timeLeft, (val) => {
       <button class="mt-4 px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/review')">{{ t('test.empty.cta') }}</button>
     </div>
   </div>
-  <div v-else class="min-h-screen lg:h-screen lg:overflow-hidden bg-paper flex flex-col text-ink">
+  <div id="test-root" v-else class="min-h-screen lg:h-screen lg:overflow-hidden bg-paper flex flex-col text-ink">
     <!-- exam header -->
     <div class="bg-white/90 backdrop-blur border-b-2 border-ink/[0.07] px-4 lg:px-5 py-3 flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30">
       <div class="font-display font-bold flex items-center gap-2.5 tracking-tight min-w-0 flex-1">
@@ -292,7 +313,15 @@ watch(timeLeft, (val) => {
         <span class="truncate break-words min-w-0">{{ paper.meta.title }}</span>
         <span class="hidden sm:inline font-mono text-[10px] text-ink/35">· {{ paper.meta.durationMinutes }} min preset</span>
       </div>
-      <div class="flex items-center gap-2 lg:gap-3 shrink-0">
+      <div class="flex items-center gap-1.5 lg:gap-2 shrink-0">
+        <div class="hidden sm:flex items-center gap-1 rounded-full border border-ink/10 bg-paper p-1">
+          <button @click="decFont" :disabled="fontLevel===0" class="w-7 h-7 grid place-items-center rounded-full text-xs font-bold hover:bg-white disabled:opacity-30" title="Smaller font">A-</button>
+          <button @click="incFont" :disabled="fontLevel===3" class="w-7 h-7 grid place-items-center rounded-full text-sm font-bold hover:bg-white disabled:opacity-30" title="Larger font">A+</button>
+        </div>
+        <button @click="toggleFullscreen" :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen — hall feel'" class="hidden lg:grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/60 hover:text-ink hover:border-ink/20 transition-colors">
+          <svg v-if="!isFullscreen" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v5H3M16 3v5h5M3 16v5h5M16 16v5h5"/></svg>
+        </button>
         <button @click="practiceMode = !practiceMode" :class="['min-h-[40px] px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors', practiceMode ? 'bg-hlyellow border-hlyellow text-ink' : 'bg-paper border-ink/12 text-ink/60 hover:border-ink/30']" :title="practiceMode ? 'Exit practice — back to timed exam' : 'Practice: instant feedback, no timer'">{{ practiceMode ? '✓ Practice' : 'Practice' }}</button>
         <div class="relative">
           <button v-if="!practiceMode" @click="showPresetMenu = !showPresetMenu" class="timer-display min-h-[40px] flex items-center gap-1.5 font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums border" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse border-redmargin/20' : 'bg-paper text-ink/70 border-ink/10 hover:border-pen/40'">{{ fmt }} <span class="text-[10px] opacity-50">▼</span></button>
@@ -327,7 +356,7 @@ watch(timeLeft, (val) => {
               <button @click="toggleBookmark" :title="bookmarks[q.id] ? 'Remove bookmark (B)' : 'Bookmark doubt (B)'" :class="['ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors', bookmarks[q.id] ? 'bg-hlyellow border-hlyellow text-ink' : 'bg-paper border-ink/15 text-ink/50 hover:border-hlyellow hover:text-ink']">{{ bookmarks[q.id] ? '★ Bookmarked' : '☆ Bookmark' }}</button>
             </div>
             <div class="mt-1 font-mono text-[10px] text-ink/35 hidden sm:block">Keys: 1-4 select · M mark · N/P next/prev · C clear · B bookmark</div>
-            <div class="mt-3.5 text-[15px] lg:text-[16px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden"><MathText :text="q.text" /></div>
+            <div :class="['mt-3.5 leading-relaxed whitespace-pre-wrap break-words overflow-hidden', qFontClass]"><MathText :text="q.text" /></div>
             <div v-if="q.diagrams?.length" class="mt-3 flex gap-2.5 flex-wrap">
               <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 max-w-full rounded-lg border border-ink/10 bg-white" />
             </div>
