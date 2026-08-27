@@ -186,24 +186,73 @@ function jumpToMobile(i: number) { selIdx.value = i; showMobileNav.value = false
 async function exportPDF() {
   if (!paper.value) return
   exportBusy.value = true
+  let wrapper: HTMLElement | null = null
   try {
-    const html2pdf = (await import('html2pdf.js')).default
+    const { default: html2pdf } = await import('html2pdf.js')
     const el = buildExportHTML()
-    document.body.appendChild(el)
-    await html2pdf()
+    // off-screen wrapper — stays rendered so html2canvas can measure it
+    wrapper = document.createElement('div')
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;background:#fff;overflow:visible;'
+    wrapper.appendChild(el)
+    document.body.appendChild(wrapper)
+
+    // wait for diagram images (data-URL crops) to decode
+    const imgs = Array.from(el.querySelectorAll('img')) as HTMLImageElement[]
+    await Promise.all(imgs.map(img => img.complete && img.naturalWidth > 0
+      ? Promise.resolve()
+      : new Promise<void>(res => {
+          const t = setTimeout(() => res(), 2500)
+          img.onload = () => { clearTimeout(t); res() }
+          img.onerror = () => { clearTimeout(t); res() }
+        })))
+
+    // wait for KaTeX / in-app fonts
+    if ((document as any).fonts?.ready) {
+      try { await (document as any).fonts.ready } catch {}
+    }
+    await new Promise(r => setTimeout(r, 280))
+
+    const fnameBase = (paper.value.meta.title || 'question-paper').replace(/[^a-z0-9\-_ ]/gi, '_').slice(0, 48)
+    await (html2pdf() as any)
       .set({
-        margin: [12, 14, 12, 14],
-        filename: `${paper.value.meta.title || 'question-paper'}.pdf`,
-        image: { type: 'jpeg', quality: 0.92 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      } as any)
+        margin: 10,
+        filename: `${fnameBase}-${exportFormat.value}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          scrollX: 0,
+          scrollY: 0,
+          logging: false,
+          windowWidth: el.scrollWidth,
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] },
+      })
       .from(el)
       .save()
-    document.body.removeChild(el)
+
+    if (wrapper.parentNode) document.body.removeChild(wrapper)
+    wrapper = null
   } catch (e) {
     console.error('Export failed', e)
+    if (wrapper?.parentNode) document.body.removeChild(wrapper)
+    // Fallback: print dialog (always works, Save as PDF)
+    try {
+      const el2 = buildExportHTML()
+      const w = window.open('', '_blank')
+      if (w) {
+        w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(paper.value?.meta.title || 'paper')}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><style>body{margin:0;padding:16px;font-family:system-ui,sans-serif;color:#23203a}@media print{body{padding:0}}</style></head><body>${el2.innerHTML}</body></html>`)
+        w.document.close()
+        setTimeout(() => { w.focus(); w.print() }, 600)
+      } else {
+        alert('PDF generation failed — please allow popups and try again, or use Ctrl+P → Save as PDF.')
+      }
+    } catch {}
   } finally {
+    if (wrapper?.parentNode) document.body.removeChild(wrapper as HTMLElement)
     exportBusy.value = false
     showExportDialog.value = false
   }
@@ -211,77 +260,115 @@ async function exportPDF() {
 
 function buildExportHTML() {
   const p = paper.value!
-  const mode = exportFormat.value
-  const showAnswers = mode === 'teacher' || mode === 'student'
-  const answersAtEnd = mode === 'teacher'
+  const mode = exportFormat.value // 'student' | 'teacher' | 'blank'
+  // Spec: student = ticked + inline/ highlighted; teacher = NO tick, key at end; blank = nothing
+  const isStudent = mode === 'student'
+  const isTeacher = mode === 'teacher'
+  const showTick = isStudent
+  const showInlineAnswer = isStudent
+  const answersAtEnd = isTeacher
 
   const div = document.createElement('div')
-  div.style.cssText = 'font-family: system-ui, -apple-system, sans-serif; color: #23203a; padding: 20px; max-width: 700px; margin: 0 auto; font-size: 13px; line-height: 1.6;'
+  // 210mm container — html2pdf clones computed styles, so width + padding reliable
+  div.style.cssText = 'font-family: system-ui, -apple-system, Segoe UI, sans-serif; color:#23203a; background:#fff; padding:18px 20px; width:100%; box-sizing:border-box; font-size:13px; line-height:1.55;'
 
   let html = `
-    <div style="text-align:center; margin-bottom: 24px; border-bottom: 2px solid #23203a20; padding-bottom: 16px;">
-      <div style="font-size: 22px; font-weight: 800; letter-spacing: -0.03em;">${esc(p.meta.title)}</div>
-      <div style="font-size: 11px; color: #23203a80; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.15em;">
-        ${esc(p.meta.exam || '')} · ${p.meta.durationMinutes} min · ${p.questions.length} questions · ${p.meta.totalMarks || ''} marks
+    <div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #23203a18; padding-bottom:14px;">
+      <div style="font-size:20px; font-weight:800; letter-spacing:-0.03em; line-height:1.2;">${esc(p.meta.title)}</div>
+      <div style="font-size:10.5px; color:#23203a70; margin-top:6px; text-transform:uppercase; letter-spacing:0.14em;">
+        ${esc(p.meta.exam || 'Question Paper')} · ${p.meta.durationMinutes} min · ${p.questions.length} questions${p.meta.totalMarks ? ' · ' + p.meta.totalMarks + ' marks' : ''}
       </div>
+      ${isStudent ? '<div style="display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#1FA45C;background:#1FA45C12;border:1px solid #1FA45C30;padding:3px 8px;border-radius:999px;">Student Copy — Answers Highlighted</div>' : ''}
+      ${isTeacher ? '<div style="display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#2F5FE0;background:#2F5FE012;border:1px solid #2F5FE030;padding:3px 8px;border-radius:999px;">Teacher Copy — Answer Key at End</div>' : ''}
+      ${mode === 'blank' ? '<div style="display:inline-block;margin-top:8px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#23203a60;background:#23203a08;border:1px solid #23203a15;padding:3px 8px;border-radius:999px;">Blank Paper — No Answers</div>' : ''}
     </div>
   `
 
-  const ansMap: Record<string, string> = {};
+  // build answer map once (for inline and key)
+  const ansMap: Record<string, string> = {}
   p.questions.forEach(q => {
     if (q.type === 'msq') {
-      ansMap[q.id] = (q.answers || []).map(i => String.fromCharCode(65 + Number(i))).join(', ');
-    } else if (q.options && /^\d+$/.test(q.answer)) {
-      ansMap[q.id] = String.fromCharCode(64 + Number(q.answer)) + '. ' + esc(q.options[Number(q.answer) - 1] || '');
+      const letters = (q.answers || []).map(i => String.fromCharCode(65 + Number(i))).join(', ')
+      ansMap[q.id] = letters || '—'
+    } else if (q.options && q.options.length > 0 && /^\d+$/.test(String(q.answer ?? '').trim())) {
+      const idx = Number(String(q.answer).trim()) - 1
+      const letter = String.fromCharCode(65 + idx)
+      const txt = q.options[idx] ? ` ${esc(q.options[idx].slice(0, 70))}` : ''
+      ansMap[q.id] = `${letter}.${txt}`
+    } else if (q.answer && String(q.answer).trim()) {
+      ansMap[q.id] = esc(String(q.answer).trim().slice(0, 120))
     } else {
-      ansMap[q.id] = esc(q.answer || '—');
+      ansMap[q.id] = '—'
     }
   })
 
   p.questions.forEach((q, qi) => {
     const opts = q.options || []
     const hasOpts = opts.length > 0
+    const isMCQ = q.type === 'mcq' || q.type === 'true-false'
+    const isMSQ = q.type === 'msq'
+
     const optsHTML = hasOpts ? opts.map((o, oi) => {
       const letter = String.fromCharCode(65 + oi)
-      const isAns = q.type === 'msq'
+      const isAns = isMSQ
         ? (q.answers || []).includes(String(oi))
-        : String(oi + 1) === String(q.answer || '')
-      const mark = isAns && mode !== 'blank' ? ' ✓' : ''
-      return `<div style="padding: 4px 0 4px 24px;">${letter}. ${renderLatex(o || '')}${mark ? `<span style="color:#1FA45C;font-weight:bold;">${mark}</span>` : ''}</div>`
+        : isMCQ ? String(oi + 1) === String(q.answer ?? '').trim() : false
+      const tick = showTick && isAns ? ' <span style="color:#1FA45C;font-weight:800;">✓</span>' : ''
+      const rowBg = showTick && isAns ? 'background:#1FA45C0f;border-color:#1FA45C45;' : 'background:#fff;border-color:#23203a12;'
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:6px 10px;margin:4px 0 0 18px;border:1px solid #23203a12;border-radius:8px;${rowBg}">${`<span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;min-width:18px;color:${showTick && isAns ? '#1FA45C' : '#23203a55'}">${letter}.</span>`}<span style="flex:1;min-width:0;word-break:break-word;">${renderLatex(o || '')}${tick}</span></div>`
     }).join('') : ''
 
-    const answerLine = showAnswers && !answersAtEnd && hasOpts
-      ? `<div style="font-size:11px; color:#1FA45C; margin-top:4px;">Answer: ${ansMap[q.id]}</div>`
-      : ''
+    // inline answer: only student (ticked) — NAT/fill also shown there
+    let answerLine = ''
+    if (showInlineAnswer) {
+      if (hasOpts) {
+        answerLine = `<div style="margin:6px 0 0 18px;font-size:11px;color:#1FA45C;"><span style="font-weight:700;">Answer:</span> ${ansMap[q.id]}</div>`
+      } else if (String(q.answer || '').trim()) {
+        answerLine = `<div style="margin:6px 0 0 18px;font-size:11px;color:#1FA45C;"><span style="font-weight:700;">Answer:</span> ${ansMap[q.id]}</div>`
+      }
+    }
+
+    // NAT/fill hint when blank/teacher (no inline answer)
+    let blankLine = ''
+    if (!showInlineAnswer && !hasOpts && (q.type === 'nat' || q.type === 'fill-blank')) {
+      blankLine = `<div style="margin:8px 0 0 18px;border-bottom:1px dashed #23203a30;height:18px;"></div>`
+    }
 
     const diagHTML = (q.diagrams || []).map(d =>
-      `<div style="margin-top:8px;"><img src="${d}" style="max-height:140px; max-width:100%; border:1px solid #23203a15; border-radius:6px;" /></div>`
+      `<div style="margin:8px 0 0 18px;"><img src="${d}" style="max-height:150px;max-width:100%;border:1px solid #23203a14;border-radius:8px;display:block;" /></div>`
     ).join('')
 
+    // passage / match rendering: keep full text; options handled above
     html += `
-      <div style="page-break-inside:avoid; margin-bottom:14px; padding:10px 12px; border:1px solid #23203a12; border-radius:6px; background: ${qi % 2 === 0 ? '#faf8f4' : '#fff'};">
-        <div style="font-weight:700; font-size:13px;">Q${q.number}. <span style="font-weight:400;">${renderLatex(q.text)}</span></div>
+      <div style="page-break-inside:avoid; margin-bottom:12px; padding:12px 12px 10px; border:1px solid #23203a10; border-radius:10px; background:${qi % 2 === 0 ? '#FBF8F1' : '#fff'};">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;background:#23203a;color:#fff;padding:2px 7px;border-radius:999px;white-space:nowrap;">Q${q.number}</span>
+          <span style="flex:1;min-width:0;font-size:13px;line-height:1.5;word-break:break-word;">${renderLatex(q.text)}</span>
+          <span style="font-size:10px;color:#23203a55;white-space:nowrap;margin-left:6px;">[${q.type.toUpperCase()}]</span>
+        </div>
         ${diagHTML}
         ${optsHTML}
         ${answerLine}
-        <div style="font-size:10px; color:#23203a60; margin-top:4px;">[${q.type.toUpperCase()}] ${q.subject || 'General'} · ${q.marks} marks${q.negativeMarks ? ' · −' + q.negativeMarks : ''}</div>
+        ${blankLine}
+        <div style="font-size:10px;color:#23203a55;margin-top:6px;padding-left:18px;">${esc(q.subject || 'General')}${q.topic ? ' · ' + esc(q.topic) : ''} · ${q.marks} mark${q.marks !== 1 ? 's' : ''}${q.negativeMarks ? ' · −' + q.negativeMarks : ''}${q.pageNo ? ' · p.' + q.pageNo : ''}</div>
       </div>
     `
   })
 
   if (answersAtEnd) {
     html += `
-      <div style="page-break-before:always; margin-top:24px; padding-top:16px; border-top:2px solid #23203a20;">
-        <div style="font-size:16px; font-weight:800; margin-bottom:12px;">Answer Key</div>
+      <div style="page-break-before:always; margin-top:18px; padding-top:14px; border-top:2.5px solid #23203a18;">
+        <div style="font-size:15px; font-weight:800; letter-spacing:-0.02em; margin-bottom:10px;">Answer Key — Teacher Copy</div>
+        <div style="columns:2; column-gap:18px;">
     `
     p.questions.forEach(q => {
-      html += `<div style="padding:3px 0; font-size:12px;">Q${q.number}. <b>${ansMap[q.id]}</b></div>`
+      html += `<div style="break-inside:avoid; padding:4px 0; font-size:11.5px; border-bottom:1px dashed #23203a10; display:flex; gap:8px;"><span style="font-family:ui-monospace,monospace;font-weight:700;min-width:36px;">Q${q.number}.</span><b style="flex:1; word-break:break-word;">${ansMap[q.id]}</b></div>`
     })
-    html += `</div>`
+    html += `</div></div>`
   }
 
   html += `
-    <div style="text-align:center; margin-top:24px; font-size:10px; color:#23203a40; border-top:1px solid #23203a12; padding-top:8px;">
+    <div style="text-align:center; margin-top:18px; font-size:9.5px; color:#23203a35; border-top:1px solid #23203a0e; padding-top:8px;">
       Generated by Rankify PDF2CBT · rankify-pdf2cbt.vercel.app
     </div>
   `
