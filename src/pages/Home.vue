@@ -21,7 +21,14 @@
             <a href="#faq" class="hover:text-ink transition-colors nb-anchor">{{ t('home.nav.faq') }}</a>
             <RouterLink to="/about" class="hover:text-ink transition-colors">{{ t('nav.about') }}</RouterLink>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex items-center gap-1.5 lg:gap-2 shrink-0">
+            <a href="https://github.com/namandhakad712/Rankify-PDF2CBT" target="_blank" rel="noopener noreferrer" class="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-ink/10 bg-white px-3 py-2.5 text-sm font-semibold text-ink/70 hover:text-ink hover:border-ink/20 hover:bg-paper transition-colors min-h-[40px]" aria-label="GitHub — open source" title="Open source on GitHub">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="shrink-0"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+              <span class="hidden lg:inline">GitHub</span>
+            </a>
+            <a href="https://github.com/namandhakad712/Rankify-PDF2CBT" target="_blank" rel="noopener noreferrer" class="sm:hidden grid h-10 w-10 place-items-center rounded-xl border border-ink/10 bg-white text-ink/70 hover:text-ink transition-colors" aria-label="GitHub">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
             <LangSwitch />
             <RouterLink
               to="/extract"
@@ -65,8 +72,16 @@
               <a href="https://www.producthunt.com/products/rankify-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rankify-3" target="_blank" rel="noopener noreferrer" class="block">
                 <img alt="Rankify on Product Hunt" width="250" height="54" src="/ph-badge.svg" class="block" />
               </a>
-              <a href="#how" class="nb-anchor inline-flex items-center gap-2 rounded-2xl border-2 border-ink/12 px-6 lg:px-7 py-3 lg:py-[14px] text-base font-bold text-ink/75 hover:border-ink/30 hover:text-ink transition-colors min-h-[44px]">
-                {{ t('hero.cta2') }}
+              <a href="https://github.com/sponsors/namandhakad712" target="_blank" rel="noopener noreferrer" class="group/sponsor relative inline-flex items-center gap-2.5 lg:gap-3 rounded-2xl bg-white border-2 border-redmargin/15 px-5 lg:px-6 py-2.5 lg:py-3 shadow-[0_10px_28px_-14px_rgba(242,109,109,0.38)] hover:shadow-[0_16px_32px_-14px_rgba(242,109,109,0.48)] hover:-translate-y-0.5 hover:rotate-0 rotate-[-0.7deg] transition-all min-h-[48px]">
+                <img src="/images/notebook/stickers/heart-red.webp" alt="" width="56" height="56" class="w-11 h-11 lg:w-[52px] lg:h-[52px] object-contain shrink-0 sponsor-heart -ml-1" loading="lazy" decoding="async" />
+                <span class="font-display font-extrabold text-[20px] lg:text-[22px] tracking-tight leading-none text-ink group-hover/sponsor:text-redmargin transition-colors">{{ t('hero.sponsor') }}</span>
+                <span class="hidden sm:inline font-hand text-[20px] lg:text-[22px] leading-none text-ink/55 group-hover/sponsor:text-ink/70 -ml-1">{{ t('hero.sponsorKeep') }}</span>
+                <span class="grid h-7 w-7 lg:h-8 lg:w-8 place-items-center rounded-full bg-redmargin text-white text-[13px] lg:text-[14px] leading-none group-hover/sponsor:scale-110 transition-transform shadow-sm shrink-0">♥</span>
+                <!-- tooltip -->
+                <span class="pointer-events-none absolute left-1/2 top-[calc(100%+14px)] z-20 w-72 -translate-x-1/2 rounded-xl bg-ink px-4 py-3 text-center text-[13px] leading-relaxed font-medium text-cream opacity-0 shadow-xl ring-1 ring-white/10 group-hover/sponsor:opacity-100 group-hover/sponsor:translate-y-0 translate-y-1 transition-all duration-200">
+                  {{ t('hero.sponsorTooltip') }}
+                  <span class="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-ink ring-1 ring-white/10"></span>
+                </span>
               </a>
               <span ref="note1" class="font-hand text-lg lg:text-xl text-ink/55 -rotate-3 opacity-0 inline-block break-words">{{ t('hero.note') }}</span>
             </div>
@@ -826,5 +841,25 @@ useHead({
 
 @media (prefers-reduced-motion: reduce) {
   .tick-pop { animation: none; }
+}
+
+/* sponsor heart — notebook sticker beat */
+.sponsor-heart {
+  animation: heartBeat 1.45s ease-in-out infinite;
+  filter: drop-shadow(0 2px 6px rgba(242,109,109,0.35));
+  transform-origin: center;
+}
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1) rotate(-6deg); }
+  14% { transform: scale(1.22) rotate(-2deg); }
+  28% { transform: scale(0.92) rotate(-8deg); }
+  42% { transform: scale(1.15) rotate(-4deg); }
+  60% { transform: scale(1) rotate(-6deg); }
+}
+.group\/sponsor:hover .sponsor-heart {
+  animation-duration: 0.75s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-heart { animation: none; }
 }
 </style>

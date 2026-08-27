@@ -40,6 +40,9 @@ const dicts: Record<Locale, Dict> = {
     'hero.cta1': 'Make my first test',
     'hero.cta2': 'See how it works',
     'hero.note': 'no signups, promise!',
+    'hero.sponsor': 'Sponsor',
+    'hero.sponsorKeep': '— keep it alive',
+    'hero.sponsorTooltip': 'Your chai keeps Rankify free for every student — thank you ❤️',
 
     'how.instructions': 'instructions',
     'nolist.headline': 'What you will never find here',
@@ -606,6 +609,9 @@ const dicts: Record<Locale, Dict> = {
     'hero.cta1': 'मेरा पहला टेस्ट बनाएं',
     'hero.cta2': 'कैसे काम करता है देखें',
     'hero.note': 'नो सिगनअप्स, प्रॉमिस!',
+    'hero.sponsor': 'स्पॉन्सर',
+    'hero.sponsorKeep': '— इसे ज़िंदा रखें',
+    'hero.sponsorTooltip': 'आपकी चाय Rankify को हर छात्र के लिए फ्री रखती है — धन्यवाद ❤️',
 
     'how.headline': 'तीन स्टेप्स। वो है पूरा सिलेबस।',
     'how.sub': 'अपनी सुबह की अलार्म से भी आसान, ट्रस्ट',
@@ -1174,6 +1180,9 @@ const dicts: Record<Locale, Dict> = {
     'hero.cta1': 'Mera pehla test banao',
     'hero.cta2': ' Dekho kaise kaam karta hai',
     'hero.note': 'no signups, promise!',
+    'hero.sponsor': 'Sponsor',
+    'hero.sponsorKeep': '— keep it alive',
+    'hero.sponsorTooltip': 'Aapki chai Rankify ko har student ke liye free rakhti hai — thank you ❤️',
 
     'how.headline': 'Teen steps. Wohi poora syllabus hai.',
     'how.sub': 'tumhari subah ki alarm se bhi aasaan, trust',
