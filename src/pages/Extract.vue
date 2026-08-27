@@ -202,6 +202,8 @@ const keyMode = computed(() => {
   if (p.isPreset) return p.envKey ? `server env (${p.envKey})` : "BYOK"
   return p.apiKey ? "client ✓" : "direct, no key"
 })
+const streakInfoExtract = ref<{count:number;best:number;lastDate:string}|null>(null)
+try { const raw = localStorage.getItem("rpdf2cbt-streak"); if (raw) { const s = JSON.parse(raw); if (s.count) streakInfoExtract.value = s } } catch {}
 
 function refreshProviders() {
   providerList.value = loadProviders()
@@ -566,9 +568,12 @@ void (async () => {
     <div class="max-w-4xl mx-auto px-5">
       <button class="text-sm font-medium text-ink/50 hover:text-ink transition-colors" @click="router.push('/')">{{ t('extract.backHome') }}</button>
 
-      <div class="mt-5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-ink/10 bg-white text-[13px] font-semibold text-ink/70 ex-hero-badge">
-        <span class="h-2 w-2 rounded-full bg-correct"></span>
-        {{ t('extract.badge') }}
+      <div class="mt-5 flex flex-wrap items-center gap-2 ex-hero-badge">
+        <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-ink/10 bg-white text-[13px] font-semibold text-ink/70">
+          <span class="h-2 w-2 rounded-full bg-correct"></span>
+          {{ t('extract.badge') }}
+        </span>
+        <span v-if="streakInfoExtract" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-hlyellow border border-hlyellow text-xs font-bold text-ink">🔥 {{ streakInfoExtract.count }} day streak · best {{ streakInfoExtract.best }}</span>
       </div>
       <h1 class="ex-title text-4xl md:text-6xl font-display font-extrabold tracking-tight mt-3">
         {{ t('extract.title.1') }}<span class="relative inline-block">{{ t('extract.title.2') }}<span class="absolute inset-x-[-4px] inset-y-[14%] -z-10 rounded-sm bg-hlyellow"></span></span>

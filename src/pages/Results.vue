@@ -8,7 +8,7 @@ gsap.registerPlugin(ScrollTrigger)
 import { t } from "@/lib/i18n"
 const router = useRouter()
 
-interface LastResult { paper: import("@/types").UniversalPaper; answers: Record<string,string>; createdAt: number }
+interface LastResult { paper: import("@/types").UniversalPaper; answers: Record<string,string | string[]>; createdAt: number; timeSpent?: Record<string, number>; bookmarks?: Record<string, boolean> }
 const result = ref<LastResult | null>(null)
 const scoreDisplay = ref(0)
 
@@ -152,6 +152,36 @@ const takenMeta = computed(() => ({
   duration: result.value ? `${result.value.paper.meta.durationMinutes} min` : "—",
 }))
 
+/* ── 12. per-question time analytics ── */
+const timeAnalytics = computed(() => {
+  const r: any = result.value as any
+  if (!r?.timeSpent || !r?.paper?.questions) return null
+  const entries = r.paper.questions.map((qq: any) => ({
+    id: qq.id,
+    num: qq.number,
+    text: qq.text?.slice(0, 60) || "",
+    secs: r.timeSpent[qq.id] || 0,
+    verdict: verdictOf(qq),
+  }))
+  const totalSec = entries.reduce((a: number, x: any) => a + x.secs, 0)
+  const avg = entries.length ? Math.round(totalSec / entries.length) : 0
+  const sorted = [...entries].sort((a: any, b: any) => b.secs - a.secs)
+  const slowest = sorted.slice(0, 5)
+  const fastest = [...entries].sort((a: any, b: any) => a.secs - b.secs).slice(0, 3)
+  const fmt = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s/60)}m ${s%60}s`
+  return { entries, totalSec, avg, slowest, fastest, fmt }
+})
+
+/* ── 9. streak ── */
+const streakInfo = computed(() => {
+  try {
+    const raw = localStorage.getItem("rpdf2cbt-streak")
+    if (!raw) return null
+    const s = JSON.parse(raw)
+    return s.count ? s : null
+  } catch { return null }
+})
+
 function exportPdf() { window.print() }
 
 const grade = computed(() => {
@@ -286,6 +316,25 @@ const grade = computed(() => {
               </div>
               <span class="font-mono text-[10px] text-ink/50 w-10 lg:w-12 text-right tabular-nums shrink-0">{{ v.correct }}/{{ v.total }}</span>
             </div>
+          </div>
+        </div>
+
+        <!-- 12. time analytics -->
+        <div v-if="timeAnalytics" class="mt-6 rounded-2xl bg-white p-4 lg:p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.25)] overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="font-display font-bold tracking-tight text-sm">Time analytics</div>
+            <div class="font-mono text-[11px] text-ink/45">avg {{ timeAnalytics.fmt(timeAnalytics.avg) }} · total {{ timeAnalytics.fmt(timeAnalytics.totalSec) }}</div>
+          </div>
+          <div class="mt-3 grid gap-2">
+            <div class="font-mono text-[10px] font-bold tracking-wider text-ink/45 uppercase">Slowest 5 — revise time management</div>
+            <div v-for="e in timeAnalytics.slowest" :key="e.id" class="flex items-center gap-3 px-3 py-2 rounded-xl border" :class="e.verdict==='c' ? 'bg-correct/[0.05] border-correct/20' : e.verdict==='w' ? 'bg-redmargin/[0.05] border-redmargin/20' : 'bg-paper border-ink/10'">
+              <span class="font-mono text-xs font-bold w-10 shrink-0">Q{{ e.num }}</span>
+              <span class="flex-1 min-w-0 text-xs text-ink/70 truncate">{{ e.text }}</span>
+              <span :class="['font-mono text-xs font-bold px-2 py-0.5 rounded-full shrink-0', e.secs > 180 ? 'bg-redmargin text-white' : e.secs > 90 ? 'bg-hlyellow text-ink' : 'bg-ink/10 text-ink/60']">{{ timeAnalytics.fmt(e.secs) }}</span>
+            </div>
+          </div>
+          <div v-if="streakInfo" class="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-hlyellow/20 border border-hlyellow text-xs font-semibold text-ink">
+            <span class="text-base">🔥</span> Streak: <b>{{ streakInfo.count }} day{{ streakInfo.count>1?'s':'' }}</b> · Best {{ streakInfo.best }} · keep going!
           </div>
         </div>
 

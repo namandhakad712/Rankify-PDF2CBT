@@ -14,6 +14,45 @@ const answers = ref<Record<string, string | string[]>>({})
 const status = ref<Record<string, "notVisited"|"notAnswered"|"answered"|"marked"|"markedAnswered">>({})
 const timeLeft = ref(0)
 let timer: number | null = null
+/* ── 1. timer presets ── */
+const PRESETS = [15, 30, 60, 90, 120, 180]
+const showPresetMenu = ref(false)
+const customMins = ref("")
+function setPreset(mins: number) {
+  if (!paper.value) return
+  paper.value.meta.durationMinutes = mins
+  timeLeft.value = mins * 60
+  // persist so back/refresh keeps it
+  localStorage.setItem("rpdf2cbt-current", JSON.stringify(paper.value))
+  showPresetMenu.value = false
+}
+function applyCustom() {
+  const v = parseInt(customMins.value, 10)
+  if (!isNaN(v) && v >= 5 && v <= 600) setPreset(v)
+}
+
+/* ── 2. bookmarks / doubt ── */
+const bookmarks = ref<Record<string, boolean>>({})
+function toggleBookmark() {
+  if (!q.value) return
+  bookmarks.value[q.value.id] = !bookmarks.value[q.value.id]
+  try { localStorage.setItem("rpdf2cbt-bookmarks", JSON.stringify(bookmarks.value)) } catch {}
+}
+
+/* ── 12. per-question timer analytics ── */
+const timeSpent = ref<Record<string, number>>({})
+let activeQId: string | null = null
+let tickStart = Date.now()
+function startQTimer(qId: string) {
+  activeQId = qId
+  tickStart = Date.now()
+}
+function flushQTimer() {
+  if (!activeQId) return
+  const delta = Math.round((Date.now() - tickStart) / 1000)
+  if (delta > 0) timeSpent.value[activeQId] = (timeSpent.value[activeQId] || 0) + delta
+  tickStart = Date.now()
+}
 
 const q = computed(() => paper.value?.questions[idx.value] ?? null)
 const total = computed(() => paper.value?.questions.length ?? 0)
@@ -26,17 +65,31 @@ onMounted(async () => {
     if (rec) paper.value = rec.paper
   }
   if (!paper.value) return
+  // restore bookmarks
+  try { bookmarks.value = JSON.parse(localStorage.getItem("rpdf2cbt-bookmarks") || "{}") } catch { bookmarks.value = {} }
   timeLeft.value = paper.value.meta.durationMinutes * 60
   paper.value.questions.forEach((qq) => {
     if (!status.value[qq.id]) status.value[qq.id] = "notVisited"
+    if (timeSpent.value[qq.id] == null) timeSpent.value[qq.id] = 0
   })
   status.value[paper.value.questions[0].id] = "notAnswered"
+  startQTimer(paper.value.questions[0].id)
   timer = window.setInterval(() => {
-    if (timeLeft.value > 0) timeLeft.value -= 1
+    if (timeLeft.value > 0) {
+      timeLeft.value -= 1
+      // also accumulate per-q (1s granularity)
+      if (activeQId) timeSpent.value[activeQId] = (timeSpent.value[activeQId] || 0) + 1
+    }
   }, 1000)
+  // 4. keyboard nav
+  window.addEventListener("keydown", onKey)
 })
 
-onBeforeUnmount(() => { if (timer) clearInterval(timer) })
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+  window.removeEventListener("keydown", onKey)
+  flushQTimer()
+})
 
 function selectOption(optIdx: string) {
   if (!q.value) return
@@ -51,12 +104,34 @@ function selectOption(optIdx: string) {
   status.value[q.value.id] = "answered"
 }
 
+/* ── 4. keyboard ── */
+function onKey(e: KeyboardEvent) {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return
+  if (showPresetMenu.value) return
+  const k = e.key.toLowerCase()
+  if (k >= '1' && k <= '4' && q.value?.options) {
+    const oi = parseInt(k, 10) - 1
+    if (oi < q.value.options.length) {
+      e.preventDefault()
+      if (q.value.type === 'msq') selectOption(String(oi))
+      else selectOption(String(oi + 1))
+    }
+  } else if (k === 'm') { e.preventDefault(); mark() }
+  else if (k === 'n') { e.preventDefault(); if (idx.value < total.value - 1) go(idx.value + 1) }
+  else if (k === 'p') { e.preventDefault(); if (idx.value > 0) go(idx.value - 1) }
+  else if (k === 'c') { e.preventDefault(); clearResponse() }
+  else if (k === 'b') { e.preventDefault(); toggleBookmark() }
+}
+
 function go(n: number) {
   if (!paper.value) return
   if (n < 0 || n >= total.value) return
+  flushQTimer()
   const nextId = paper.value.questions[n].id
   if (status.value[nextId] === "notVisited") status.value[nextId] = "notAnswered"
   idx.value = n
+  startQTimer(nextId)
 }
 
 function mark() {
@@ -106,15 +181,32 @@ const counts = computed(() => {
   for (const qq of paper.value?.questions || []) c[status.value[qq.id] || "notVisited"]++
   return c
 })
+const bookmarkCount = computed(() => Object.values(bookmarks.value).filter(Boolean).length)
 
 function submit() {
   if (!paper.value) return
+  flushQTimer()
+  // 9. streak — local daily
+  try {
+    const today = new Date().toISOString().slice(0, 10)
+    const raw = localStorage.getItem("rpdf2cbt-streak")
+    const s = raw ? JSON.parse(raw) : { count: 0, lastDate: "", best: 0 }
+    if (s.lastDate !== today) {
+      const yest = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+      s.count = s.lastDate === yest ? s.count + 1 : 1
+      s.lastDate = today
+      s.best = Math.max(s.best || 0, s.count)
+      localStorage.setItem("rpdf2cbt-streak", JSON.stringify(s))
+    }
+  } catch {}
   const result = {
     paperId: "current",
     paper: paper.value,
     answers: { ...answers.value },
     status: { ...status.value },
     timeLeft: timeLeft.value,
+    timeSpent: { ...timeSpent.value },
+    bookmarks: { ...bookmarks.value },
     createdAt: Date.now(),
   }
   localStorage.setItem("rpdf2cbt-last-result", JSON.stringify(result))
@@ -171,12 +263,27 @@ watch(timeLeft, (val) => {
       <div class="font-display font-bold flex items-center gap-2.5 tracking-tight min-w-0 flex-1">
         <span class="w-2.5 h-2.5 rounded-full bg-correct shrink-0"></span>
         <span class="truncate break-words min-w-0">{{ paper.meta.title }}</span>
+        <span class="hidden sm:inline font-mono text-[10px] text-ink/35">· {{ paper.meta.durationMinutes }} min preset</span>
       </div>
       <div class="flex items-center gap-2 lg:gap-3 shrink-0">
-        <div class="timer-display min-h-[40px] flex items-center font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse' : 'bg-paper text-ink/70 border border-ink/10'">{{ fmt }}</div>
+        <div class="relative">
+          <button @click="showPresetMenu = !showPresetMenu" class="timer-display min-h-[40px] flex items-center gap-1.5 font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums border" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse border-redmargin/20' : 'bg-paper text-ink/70 border-ink/10 hover:border-pen/40'">{{ fmt }} <span class="text-[10px] opacity-50">▼</span></button>
+          <div v-if="showPresetMenu" class="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl ring-1 ring-ink/10 p-3 z-50">
+            <div class="font-mono text-[10px] font-bold tracking-wider text-ink/50 mb-2">TIMER PRESET — tap to switch</div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button v-for="m in PRESETS" :key="m" @click="setPreset(m)" :class="['py-2 rounded-lg text-xs font-bold border transition-colors', paper.meta.durationMinutes===m ? 'bg-pen text-white border-pen' : 'bg-paper border-ink/10 hover:border-pen text-ink/70']">{{ m }}m</button>
+            </div>
+            <div class="flex gap-1.5 mt-2.5">
+              <input v-model="customMins" placeholder="Custom mins (5-600)" type="number" class="flex-1 min-w-0 border border-ink/15 rounded-lg px-2.5 py-2 text-xs bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40" />
+              <button @click="applyCustom" class="px-4 py-2 rounded-lg bg-ink text-white text-xs font-bold hover:bg-ink/90">Set</button>
+            </div>
+            <button @click="showPresetMenu=false" class="mt-2 w-full py-1.5 text-[11px] text-ink/40 hover:text-ink">Close</button>
+          </div>
+        </div>
         <button class="min-h-[40px] px-5 py-2.5 rounded-xl bg-pen hover:bg-pen/90 text-white text-sm font-bold transition-colors" @click="submit">{{ t('test.submit') }}</button>
       </div>
     </div>
+    <div v-if="showPresetMenu" class="fixed inset-0 z-20" @click="showPresetMenu=false"></div>
 
     <div class="flex-1 lg:min-h-0 flex flex-col lg:flex-row">
       <!-- question sheet — fills all leftover space, seamless white -->
@@ -188,7 +295,9 @@ watch(timeLeft, (val) => {
               <span class="break-words">{{ q.type.toUpperCase() }}</span><span class="text-ink/25">·</span>
               <span class="truncate break-words min-w-0">{{ q.subject || t('test.general') }}</span>
               <span v-if="q.hasDiagram" class="bg-hlyellow text-ink px-2 py-0.5 rounded-full font-sans font-bold normal-case tracking-normal break-words">{{ t('test.diagramBelow') }}</span>
+              <button @click="toggleBookmark" :title="bookmarks[q.id] ? 'Remove bookmark (B)' : 'Bookmark doubt (B)'" :class="['ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors', bookmarks[q.id] ? 'bg-hlyellow border-hlyellow text-ink' : 'bg-paper border-ink/15 text-ink/50 hover:border-hlyellow hover:text-ink']">{{ bookmarks[q.id] ? '★ Bookmarked' : '☆ Bookmark' }}</button>
             </div>
+            <div class="mt-1 font-mono text-[10px] text-ink/35 hidden sm:block">Keys: 1-4 select · M mark · N/P next/prev · C clear · B bookmark</div>
             <div class="mt-3.5 text-[15px] lg:text-[16px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden"><MathText :text="q.text" /></div>
             <div v-if="q.diagrams?.length" class="mt-3 flex gap-2.5 flex-wrap">
               <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 max-w-full rounded-lg border border-ink/10 bg-white" />
@@ -251,12 +360,13 @@ watch(timeLeft, (val) => {
           <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-redmargin inline-block"></span> {{ t('test.legend.notAnswered') }} ({{ counts.notAnswered }})</div>
           <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"></span> {{ t('test.legend.marked') }} ({{ counts.marked }})</div>
           <div class="flex items-center gap-1.5"><span class="relative w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"><span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-correct border border-white"></span></span> {{ t('test.legend.ansMarked') }} ({{ counts.markedAnswered }})</div>
-          <div class="flex items-center gap-1.5 col-span-2"><span class="w-3.5 h-3.5 rounded bg-paper border border-dashed border-ink/35 inline-block"></span> {{ t('test.legend.notVisited') }} ({{ counts.notVisited }})</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-paper border border-dashed border-ink/35 inline-block"></span> {{ t('test.legend.notVisited') }} ({{ counts.notVisited }})</div>
+          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-hlyellow border border-hlyellow inline-block grid place-items-center text-[9px]">★</span> Bookmarks ({{ bookmarkCount }})</div>
         </div>
 
         <div class="flex-1 min-h-0 overflow-y-auto px-4 py-4 overflow-x-hidden">
           <div class="grid grid-cols-5 gap-2 lg:grid-cols-5">
-            <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-10 h-10 min-h-[40px] min-w-[40px] rounded-lg text-xs font-bold transition-all relative grid place-items-center', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='markedAnswered' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='marked' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='notAnswered' ? 'bg-redmargin text-white' : 'bg-paper border border-dashed border-ink/30 text-ink/45']">{{ qq.number }}<span v-if="status[qq.id]==='markedAnswered'" class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-correct border border-white"></span></button>
+            <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-10 h-10 min-h-[40px] min-w-[40px] rounded-lg text-xs font-bold transition-all relative grid place-items-center', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='markedAnswered' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='marked' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='notAnswered' ? 'bg-redmargin text-white' : 'bg-paper border border-dashed border-ink/30 text-ink/45', bookmarks[qq.id] ? 'ring-1 ring-hlyellow' : '']">{{ qq.number }}<span v-if="status[qq.id]==='markedAnswered'" class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-correct border border-white"></span><span v-if="bookmarks[qq.id]" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-hlyellow border-2 border-white grid place-items-center text-[8px] leading-none">★</span></button>
           </div>
 
           <div class="mt-5 grid grid-cols-2 gap-2">

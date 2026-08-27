@@ -1,6 +1,7 @@
 import { defineConfig, type Connect, type ViteDevServer } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
 // Dev shim — runs the Vercel serverless functions locally so /api/agent/*
@@ -39,7 +40,29 @@ function vercelApiDev() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), vercelApiDev()],
+  plugins: [vue(), tailwindcss(), VitePWA({
+    registerType: 'autoUpdate',
+    includeAssets: ['images/notebook/*', 'pdf.worker.min.*'],
+    manifest: {
+      name: 'Rankify PDF2CBT',
+      short_name: 'Rankify',
+      description: 'Any PDF → real CBT exam. Offline capable.',
+      theme_color: '#2F5FE0',
+      background_color: '#FBF8F1',
+      display: 'standalone',
+      start_url: '/',
+      icons: [
+        { src: '/images/notebook/tape-washi.webp', sizes: '192x192', type: 'image/webp' },
+        { src: '/images/notebook/tape-washi.webp', sizes: '512x512', type: 'image/webp', purpose: 'any maskable' }
+      ]
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,woff,woff2,webp,svg}'],
+      runtimeCaching: [
+        { urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i, handler: 'CacheFirst', options: { cacheName: 'cdn-cache', expiration: { maxEntries: 30, maxAgeSeconds: 60*60*24*30 } } }
+      ]
+    }
+  }), vercelApiDev()],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
