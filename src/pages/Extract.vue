@@ -398,11 +398,51 @@ function cancelAgent() { abortCtl?.abort() }
 interface SessionRow { id: number; title: string; when: string; score: string; pct: number; paper: import("@/types").UniversalPaper; resultId?: number }
 const pastSessions = ref<SessionRow[]>([])
 const draftSession = ref<{ title: string; when: string; qs: number } | null>(null)
+/* storage health — warn at 15 papers / 75% quota */
+const STORAGE_LIMIT = 15
+const storageEstimate = ref<{ usage: number; quota: number; pct: number } | null>(null)
+const searchQuery = ref("")
+const sessionPage = ref(1)
+const SESSION_PAGE_SIZE = 10
+const exportBusyId = ref<number | null>(null)
+
+const totalStored = computed(() => pastSessions.value.length + (draftSession.value ? 1 : 0))
+const showStorageWarning = computed(() => totalStored.value >= STORAGE_LIMIT)
+const storageWarningLevel = computed(() => {
+  if (totalStored.value >= STORAGE_LIMIT + 5) return "critical"
+  if (totalStored.value >= STORAGE_LIMIT) return "warn"
+  if ((storageEstimate.value?.pct ?? 0) >= 80) return "critical"
+  if ((storageEstimate.value?.pct ?? 0) >= 65) return "warn"
+  return "ok"
+})
+
+const filteredSessions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return pastSessions.value
+  return pastSessions.value.filter(r => r.title.toLowerCase().includes(q) || r.when.toLowerCase().includes(q))
+})
+const totalFilteredPages = computed(() => Math.max(1, Math.ceil(filteredSessions.value.length / SESSION_PAGE_SIZE)))
+const paginatedSessions = computed(() => {
+  const start = (sessionPage.value - 1) * SESSION_PAGE_SIZE
+  return filteredSessions.value.slice(start, start + SESSION_PAGE_SIZE)
+})
+watch(searchQuery, () => { sessionPage.value = 1 })
+watch(filteredSessions, () => { if (sessionPage.value > totalFilteredPages.value) sessionPage.value = totalFilteredPages.value })
+
+async function refreshStorageEstimate() {
+  try {
+    if (navigator.storage?.estimate) {
+      const e: any = await navigator.storage.estimate()
+      const pct = e.quota ? Math.round(((e.usage || 0) / e.quota) * 100) : 0
+      storageEstimate.value = { usage: e.usage || 0, quota: e.quota || 0, pct }
+    }
+  } catch {}
+}
 
 async function loadSessions() {
   try {
     const db = getDB()
-    const rows = await db.results.orderBy("createdAt").reverse().limit(12).toArray()
+    const rows = await db.results.orderBy("createdAt").reverse().toArray()
     pastSessions.value = rows.map((r) => ({
       id: r.id!,
       title: r.paper?.meta?.title || t("extract.past.untitled"),
@@ -414,9 +454,51 @@ async function loadSessions() {
     }))
     const draft = await db.papers.get("review")
     draftSession.value = draft?.paper ? { title: draft.paper.meta?.title || t("extract.past.untitledDraft"), when: new Date(draft.updatedAt).toLocaleString(), qs: draft.paper.questions?.length || 0 } : null
+    void refreshStorageEstimate()
   } catch { /* table missing on old DBs */ }
 }
 void loadSessions()
+
+function exportPaperJSON(row: SessionRow) {
+  try {
+    exportBusyId.value = row.id
+    const fname = `${(row.title || 'paper').replace(/[^a-z0-9-_ ]/gi, '_').slice(0, 40)}-${row.id}.json`
+    const blob = new Blob([JSON.stringify(row.paper, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fname
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1200)
+  } finally {
+    setTimeout(() => { exportBusyId.value = null }, 600)
+  }
+}
+function exportDraftJSON() {
+  if (!draftSession.value) return
+  getDB().papers.get("review").then(rec => {
+    if (!rec?.paper) return
+    const fname = `${(rec.paper.meta?.title || 'draft').replace(/[^a-z0-9-_ ]/gi, '_').slice(0, 40)}-draft.json`
+    const blob = new Blob([JSON.stringify(rec.paper, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fname
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1200)
+  })
+}
+async function exportAllJSON() {
+  if (!pastSessions.value.length) return
+  const all = pastSessions.value.map(r => r.paper)
+  const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `rankify-export-${new Date().toISOString().slice(0,10)}-${all.length}papers.json`
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1200)
+}
 
 async function openReport(row: SessionRow) {
   const db = getDB()
@@ -443,9 +525,13 @@ async function deleteDraft() {
   if (!window.confirm(t("extract.past.delDraftQ"))) return
   await getDB().papers.delete("review")
   draftSession.value = null
+  void loadSessions()
 }
 
 async function openDraft() { router.push("/review") }
+function scrollToPastManager() {
+  document.getElementById('past-manager')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 function goReview() {
   resultInfo.value = null
@@ -734,30 +820,67 @@ void (async () => {
           </div>
         </div>
 
+        <!-- Storage health banner — shows at 15+ papers or 65%+ quota -->
+        <div v-if="showStorageWarning || (storageEstimate && storageEstimate.pct >= 65)" :class="['rounded-2xl border-2 p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center', storageWarningLevel==='critical' ? 'bg-redmargin/[0.06] border-redmargin/30' : 'bg-hlyellow/25 border-hlyellow']">
+          <div class="shrink-0 w-10 h-10 rounded-xl grid place-items-center text-lg" :class="storageWarningLevel==='critical' ? 'bg-redmargin text-white' : 'bg-hlyellow text-ink'">⚠</div>
+          <div class="flex-1 min-w-0">
+            <div class="font-display font-bold text-sm" :class="storageWarningLevel==='critical' ? 'text-redmargin' : 'text-ink'">{{ totalStored >= STORAGE_LIMIT ? `Storage almost full — ${totalStored}/${STORAGE_LIMIT}+ papers` : `Storage getting full — ${storageEstimate?.pct ?? 0}% used` }}</div>
+            <div class="text-xs text-ink/60 mt-0.5 leading-snug">Browser IndexedDB is limited (Safari ~50MB). Export old papers as JSON before deleting — otherwise they'll be lost on "Clear site data". You have <b>{{ totalStored }} papers</b> saved{{ storageEstimate ? ` · ${ (storageEstimate.usage/1024/1024).toFixed(1)} / ${(storageEstimate.quota/1024/1024).toFixed(0)} MB (${storageEstimate.pct}%)` : '' }}.</div>
+          </div>
+          <div class="flex flex-wrap gap-2 shrink-0">
+            <button @click="exportAllJSON" class="min-h-[40px] px-4 py-2 rounded-xl bg-ink text-white text-xs font-bold hover:bg-ink/90 transition-colors">⤓ Export all JSON</button>
+            <button @click="scrollToPastManager" class="min-h-[40px] px-4 py-2 rounded-xl border-2 border-ink/15 bg-white text-xs font-bold text-ink/70 hover:border-ink/30">Manage →</button>
+          </div>
+        </div>
+
         <!-- Past sessions manager -->
-        <div v-if="pastSessions.length || draftSession" class="mt-6 rounded-2xl bg-white p-4 lg:p-5 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.22)] ring-1 ring-ink/[0.06] overflow-hidden">
+        <div id="past-manager" v-if="pastSessions.length || draftSession" class="mt-6 rounded-2xl bg-white p-4 lg:p-5 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.22)] ring-1 ring-ink/[0.06] overflow-hidden">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div class="font-display font-bold tracking-tight text-sm break-words">{{ t('extract.past.title') }}</div>
-            <span class="font-mono text-[10px] text-ink/40 break-words">{{ pastSessions.length }} {{ t('extract.past.attempts') }}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-[10px] text-ink/40 break-words">{{ filteredSessions.length }}/{{ pastSessions.length }} {{ t('extract.past.attempts') }}</span>
+              <button v-if="pastSessions.length > 1" @click="exportAllJSON" class="hidden sm:inline-flex min-h-[28px] px-2.5 py-1 rounded-lg bg-paper border border-ink/12 text-[10px] font-bold text-ink/60 hover:border-pen hover:text-pen transition-colors">⤓ Export all</button>
+            </div>
           </div>
-          <div v-if="pastSessions.length" class="space-y-1.5">
-            <div v-for="row in pastSessions" :key="row.id" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 rounded-xl border border-ink/10 hover:border-ink/25 transition-colors min-w-0">
+
+          <!-- search + quota hint -->
+          <div v-if="pastSessions.length > 5" class="flex flex-col sm:flex-row gap-2 mb-3">
+            <div class="flex-1 relative">
+              <input v-model="searchQuery" placeholder="Search papers…" class="w-full border border-ink/12 rounded-xl pl-9 pr-3 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 placeholder:text-ink/35" />
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink/35 text-sm">⌕</span>
+            </div>
+            <span v-if="storageEstimate" class="hidden lg:inline-flex items-center font-mono text-[10px] text-ink/40 px-2.5 py-2 rounded-xl bg-paper border border-ink/10">{{ storageEstimate.pct }}% storage · {{ totalStored }} papers</span>
+          </div>
+
+          <div v-if="paginatedSessions.length" class="space-y-1.5">
+            <div v-for="row in paginatedSessions" :key="row.id" class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 rounded-xl border border-ink/10 hover:border-ink/25 transition-colors min-w-0">
               <span :class="['font-mono text-xs font-bold px-2 py-0.5 rounded-full shrink-0', row.pct >= 60 ? 'bg-correct/[0.12] text-green-700' : row.pct >= 35 ? 'bg-hlyellow/60 text-ink' : 'bg-redmargin/[0.1] text-redmargin']">{{ row.pct }}%</span>
               <span class="text-sm font-semibold text-ink truncate min-w-0 flex-1 break-words">{{ row.title }}</span>
               <span class="font-mono text-[10px] text-ink/45 shrink-0">{{ row.score }}</span>
               <span class="font-mono text-[10px] text-ink/35 hidden sm:inline break-words">{{ row.when }}</span>
               <span class="flex flex-wrap gap-1.5 ml-auto">
+                <button @click="exportPaperJSON(row)" :disabled="exportBusyId===row.id" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors disabled:opacity-40">{{ exportBusyId===row.id ? '…' : '⤓ JSON' }}</button>
                 <button @click="openReport(row)" :title="t('extract.past.viewReportT')" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ t('extract.past.report') }}</button>
                 <button @click="retake(row)" :title="t('extract.past.retake')" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ t('extract.past.retake') }}</button>
                 <button @click="deleteSession(row)" :title="t('extract.past.deleteT')" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
               </span>
             </div>
           </div>
+          <div v-else-if="pastSessions.length && !filteredSessions.length" class="text-xs text-ink/45 py-6 text-center">No papers match "{{ searchQuery }}" — clear search to see all {{ pastSessions.length }}.</div>
+
+          <!-- pagination -->
+          <div v-if="totalFilteredPages > 1" class="mt-3 flex items-center justify-between gap-2 pt-3 border-t border-ink/[0.06]">
+            <button :disabled="sessionPage<=1" @click="sessionPage--" class="min-h-[36px] px-3 py-1.5 rounded-lg border border-ink/12 text-xs font-bold text-ink/60 hover:text-ink disabled:opacity-30 disabled:pointer-events-none">← Prev</button>
+            <span class="font-mono text-[11px] text-ink/45">{{ sessionPage }} / {{ totalFilteredPages }} · {{ filteredSessions.length }} papers</span>
+            <button :disabled="sessionPage>=totalFilteredPages" @click="sessionPage++" class="min-h-[36px] px-3 py-1.5 rounded-lg border border-ink/12 text-xs font-bold text-ink/60 hover:text-ink disabled:opacity-30 disabled:pointer-events-none">Next →</button>
+          </div>
+
           <div v-if="draftSession" class="mt-2.5 pt-2.5 border-t border-dashed border-ink/15 flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 min-w-0">
             <span class="font-mono text-[10px] font-bold uppercase tracking-wider bg-hlblue px-2 py-0.5 rounded-full shrink-0">{{ t('extract.past.draftBadge') }}</span>
             <span class="text-sm font-semibold text-ink truncate flex-1 min-w-0 break-words">{{ draftSession.title }}</span>
             <span class="font-mono text-[10px] text-ink/45 break-words">{{ draftSession.qs }} {{ t('extract.past.questionsWord') }} · {{ draftSession.when }}</span>
             <span class="flex flex-wrap gap-1.5 ml-auto">
+              <button @click="exportDraftJSON" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">⤓ JSON</button>
               <button @click="openDraft" class="min-h-[40px] px-3 py-1.5 rounded-lg bg-paper border border-ink/12 text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors">{{ t('extract.past.openReview') }}</button>
               <button @click="deleteDraft" :title="t('extract.past.deleteDraftT')" class="min-h-[40px] min-w-[40px] px-3 py-1.5 rounded-lg border border-redmargin/30 text-[11px] font-bold text-redmargin hover:bg-redmargin/[0.06] transition-colors">✕</button>
             </span>
