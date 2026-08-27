@@ -62,25 +62,26 @@ onBeforeUnmount(() => { ctx?.revert() })
         <div class="about-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(-0.4deg)">
           <div class="tape" aria-hidden="true"></div>
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('about.q1.title') }}</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('about.q1.a') }}<a href="https://ishortn.ink/gemini-gem" class="text-pen underline decoration-wavy underline-offset-2 break-all">GEM JSON paste</a>{{ t('about.q1.b') }}</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('about.q1.a') }}<a href="https://ishortn.ink/gemini-gem" target="_blank" class="text-pen underline decoration-wavy underline-offset-2 break-all">GEM JSON paste</a> · <a href="https://chatgpt.com" target="_blank" class="text-pen underline decoration-wavy underline-offset-2">ChatGPT</a>{{ t('about.q1.b') }}</p>
         </div>
 
         <div class="about-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(0.4deg)">
           <div class="tape" aria-hidden="true"></div>
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('about.q2.title') }}</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words"><code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">UniversalPaper</code>{{ t('about.q2.a') }}<code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">subject</code>{{ t('about.q2.b') }}</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('about.q2.a') }}{{ t('about.q2.b') }}</p>
         </div>
 
         <div class="about-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(-0.3deg)">
           <div class="tape" aria-hidden="true"></div>
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('about.q3.title') }}</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('about.q3.a') }}<code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">Extract → AI Agent</code>{{ t('about.q3.b') }}<a href="https://github.com/namandhakad712/Rankify-PDF2CBT" class="text-pen underline decoration-wavy underline-offset-2 break-all">GitHub</a>{{ t('about.q3.c') }}</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('about.q3.a') }}</p>
         </div>
 
         <div class="about-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(0.5deg)">
           <div class="tape" aria-hidden="true"></div>
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('about.q4.title') }}</h2>
-          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('about.q4.a') }}<a href="https://polyformproject.org/licenses/noncommercial/1.0.0" class="text-pen underline decoration-wavy underline-offset-2 break-all">PolyForm Noncommercial 1.0.0</a>{{ t('about.q4.b') }}</p>
+          <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('about.q4.a') }}<a href="https://github.com/sponsors/namandhakad712" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ink text-white text-xs font-bold hover:bg-ink/90 transition-colors">♥ GitHub Sponsors</a>{{ t('about.q4.b') }}<a href="https://polyformproject.org/licenses/noncommercial/1.0.0" class="text-pen underline decoration-wavy underline-offset-2 break-all">PolyForm Noncommercial 1.0.0</a>{{ t('about.q4.c') }}</p>
+          <p class="mt-3 text-xs text-ink/45">Open on <a href="https://github.com/namandhakad712/Rankify-PDF2CBT" class="text-pen underline">GitHub</a> · Built with Vite + Vue + Tailwind + Dexie + pdfjs-dist.</p>
         </div>
       </div>
 

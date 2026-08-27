@@ -136,6 +136,19 @@ onBeforeUnmount(() => { ctx?.revert() })
             <li class="break-words"><b>{{ t('gs.fix.l5a') }}</b>{{ t('gs.fix.l5b') }}<code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">GROQ_API_KEY</code>{{ t('gs.fix.l5c') }}</li>
           </ul>
         </section>
+
+        <section class="gs-card rounded-lg bg-hlyellow/20 border-2 border-hlyellow p-4 lg:p-7 overflow-hidden">
+          <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('gs.tips.title') }} <span class="font-hand text-lg lg:text-xl text-ink/45 font-normal break-words">{{ t('gs.tips.sub') }}</span></h2>
+          <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed break-words">
+            <li class="break-words"><b>{{ t('gs.tips.l1a') }}</b>{{ t('gs.tips.l1b') }}</li>
+            <li class="break-words"><b>{{ t('gs.tips.l2a') }}</b>{{ t('gs.tips.l2b') }}</li>
+            <li class="break-words"><b>{{ t('gs.tips.l3a') }}</b>{{ t('gs.tips.l3b') }}</li>
+            <li class="break-words"><b>{{ t('gs.tips.l4a') }}</b>{{ t('gs.tips.l4b') }}</li>
+            <li class="break-words"><b>{{ t('gs.tips.l5a') }}</b>{{ t('gs.tips.l5b') }}</li>
+            <li class="break-words"><b>{{ t('gs.tips.l6a') }}</b>{{ t('gs.tips.l6b') }}</li>
+            <li class="break-words"><b>{{ t('gs.tips.l7a') }}</b>{{ t('gs.tips.l7b') }}</li>
+          </ul>
+        </section>
       </div>
     </div>
   </div>
