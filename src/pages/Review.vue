@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppNav from '@/components/AppNav.vue'
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue"
 import { useRouter } from "vue-router"
 import type { UniversalPaper, UniversalQuestion, QuestionType } from "@/types"
 import { getDB } from "@/lib/db"
@@ -76,6 +76,28 @@ onMounted(async () => {
       pdfBuffer.value = master.buffer
     }
   } catch {}
+  // Ctrl+K → focus search
+  const onKey = (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault()
+      searchInputRef.value?.focus()
+    }
+    if (e.key === '/' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+      e.preventDefault()
+      searchInputRef.value?.focus()
+    }
+    if (e.key === 'Escape' && searchQuery.value) {
+      searchQuery.value = ""
+    }
+  }
+  window.addEventListener('keydown', onKey)
+  // store for cleanup
+  ;(window as any).__revSearchKey = onKey
+})
+
+onBeforeUnmount(() => {
+  const k = (window as any).__revSearchKey
+  if (k) window.removeEventListener('keydown', k)
 })
 
 function updateQ(idx: number, patch: Partial<UniversalQuestion>) {
@@ -146,9 +168,12 @@ const TYPE_OPTIONS = computed<{ value: QuestionType; label: string }[]>(() => [
 ])
 const typeFilter = ref("all")
 const diagramsOnly = ref(false)
+const searchQuery = ref("")
+const searchInputRef = ref<HTMLInputElement | null>(null)
 
 const filteredQuestions = computed<{ i: number; q: UniversalQuestion }[]>(() => {
   if (!paper.value) return []
+  const sq = searchQuery.value.trim().toLowerCase()
   return paper.value.questions
     .map((qq, i) => ({ i, q: qq }))
     .filter(({ q }) => {
@@ -157,6 +182,10 @@ const filteredQuestions = computed<{ i: number; q: UniversalQuestion }[]>(() => 
         else if (q.type !== typeFilter.value) return false
       }
       if (diagramsOnly.value && !(q.hasDiagram || (q.diagrams?.length ?? 0) > 0)) return false
+      if (sq) {
+        const hay = `${q.number} ${q.text} ${q.subject || ""} ${q.topic || ""} ${(q.options||[]).join(" ")}`.toLowerCase()
+        if (!hay.includes(sq)) return false
+      }
       return true
     })
 })
@@ -439,12 +468,18 @@ function esc(s: string) {
           <!-- a) LEFT SIDEBAR — desktop only -->
           <aside class="rev-zone hidden lg:flex w-72 shrink-0 flex-col rounded-xl bg-white shadow-[0_14px_40px_-22px_rgba(35,32,58,0.3)] ring-1 ring-ink/[0.06] overflow-hidden">
             <div class="p-3 border-b border-ink/[0.08] space-y-2.5">
+              <div class="relative">
+                <input ref="searchInputRef" v-model="searchQuery" placeholder="Search (Ctrl+K / /)…" class="w-full border border-ink/12 rounded-lg pl-8 pr-7 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 placeholder:text-ink/30" />
+                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/30 text-sm">⌕</span>
+                <button v-if="searchQuery" @click="searchQuery=''" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 grid place-items-center text-ink/40 hover:text-ink text-xs">✕</button>
+              </div>
               <select v-model="typeFilter" class="w-full border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-paper focus:outline-none focus:ring-2 focus:ring-pen/40 min-h-[40px]">
                 <option v-for="f in TYPE_FILTERS" :key="f.value" :value="f.value">{{ f.label }}</option>
               </select>
               <label class="flex items-center gap-2 text-xs font-medium text-ink/65 cursor-pointer select-none min-h-[40px]">
                 <input type="checkbox" v-model="diagramsOnly" class="accent-pen" /> {{ t('review.diagramsOnly') }}
               </label>
+              <div v-if="searchQuery" class="font-mono text-[10px] text-ink/45">{{ filteredQuestions.length }} match{{ filteredQuestions.length===1?'':'es' }} · Esc to clear</div>
             </div>
 
             <div class="flex-1 overflow-y-auto p-2 space-y-1.5">
@@ -621,6 +656,11 @@ function esc(s: string) {
                 <button @click="showMobileNav = false" class="min-h-[40px] min-w-[40px] w-10 h-10 rounded-full bg-paper border border-ink/10 grid place-items-center text-ink/60">✕</button>
               </div>
               <div class="shrink-0 p-3 border-b border-ink/[0.08] space-y-2.5 bg-paper/40">
+                <div class="relative">
+                  <input v-model="searchQuery" placeholder="Search… (Ctrl+K)" class="w-full border border-ink/12 rounded-lg pl-8 pr-7 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pen/40 placeholder:text-ink/30" />
+                  <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/30 text-sm">⌕</span>
+                  <button v-if="searchQuery" @click="searchQuery=''" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 grid place-items-center text-ink/40 text-xs">✕</button>
+                </div>
                 <select v-model="typeFilter" class="w-full min-w-0 border border-ink/12 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-pen/40 min-h-[40px]">
                   <option v-for="f in TYPE_FILTERS" :key="f.value" :value="f.value">{{ f.label }}</option>
                 </select>

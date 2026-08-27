@@ -14,14 +14,17 @@ const answers = ref<Record<string, string | string[]>>({})
 const status = ref<Record<string, "notVisited"|"notAnswered"|"answered"|"marked"|"markedAnswered">>({})
 const timeLeft = ref(0)
 let timer: number | null = null
-/* ── 1. timer presets ── */
+/* ── 1. timer presets + practice mode ── */
 const PRESETS = [15, 30, 60, 90, 120, 180]
 const showPresetMenu = ref(false)
 const customMins = ref("")
+const practiceMode = ref(false)
+try { practiceMode.value = localStorage.getItem("rpdf2cbt-practice") === "1" } catch {}
+watch(practiceMode, v => { try { localStorage.setItem("rpdf2cbt-practice", v ? "1" : "0") } catch {} })
 function setPreset(mins: number) {
   if (!paper.value) return
   paper.value.meta.durationMinutes = mins
-  timeLeft.value = mins * 60
+  if (!practiceMode.value) timeLeft.value = mins * 60
   // persist so back/refresh keeps it
   localStorage.setItem("rpdf2cbt-current", JSON.stringify(paper.value))
   showPresetMenu.value = false
@@ -30,6 +33,30 @@ function applyCustom() {
   const v = parseInt(customMins.value, 10)
   if (!isNaN(v) && v >= 5 && v <= 600) setPreset(v)
 }
+const practiceFeedback = computed(() => {
+  if (!practiceMode.value || !q.value) return null
+  const a = answers.value[q.value.id]
+  if (q.value.type === "msq") {
+    const sel = (a as string[] | undefined) || []
+    if (!sel.length) return null
+    const exp = (q.value.answers || []).slice().sort().join(",")
+    const got = [...sel].sort().join(",")
+    const ok = got === exp
+    return { ok, text: ok ? "Correct!" : `Wrong — correct: ${exp.split(",").map(i=>String.fromCharCode(65+Number(i))).join(", ")}` }
+  }
+  if (q.value.options) {
+    if (!a) return null
+    const ok = String(a) === String(q.value.answer)
+    const expLetter = String.fromCharCode(64 + Number(q.value.answer))
+    return { ok, text: ok ? "Correct!" : `Wrong — correct: ${expLetter}` }
+  }
+  if (q.value.type === "nat" || q.value.type === "fill-blank") {
+    if (!a) return null
+    const ok = String(a).trim() === String(q.value.answer).trim()
+    return { ok, text: ok ? "Correct!" : `Wrong — correct: ${q.value.answer}` }
+  }
+  return null
+})
 
 /* ── 2. bookmarks / doubt ── */
 const bookmarks = ref<Record<string, boolean>>({})
@@ -75,11 +102,11 @@ onMounted(async () => {
   status.value[paper.value.questions[0].id] = "notAnswered"
   startQTimer(paper.value.questions[0].id)
   timer = window.setInterval(() => {
-    if (timeLeft.value > 0) {
+    if (!practiceMode.value && timeLeft.value > 0) {
       timeLeft.value -= 1
-      // also accumulate per-q (1s granularity)
-      if (activeQId) timeSpent.value[activeQId] = (timeSpent.value[activeQId] || 0) + 1
     }
+    // also accumulate per-q (1s granularity) even in practice for analytics
+    if (activeQId) timeSpent.value[activeQId] = (timeSpent.value[activeQId] || 0) + 1
   }, 1000)
   // 4. keyboard nav
   window.addEventListener("keydown", onKey)
@@ -266,8 +293,10 @@ watch(timeLeft, (val) => {
         <span class="hidden sm:inline font-mono text-[10px] text-ink/35">· {{ paper.meta.durationMinutes }} min preset</span>
       </div>
       <div class="flex items-center gap-2 lg:gap-3 shrink-0">
+        <button @click="practiceMode = !practiceMode" :class="['min-h-[40px] px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors', practiceMode ? 'bg-hlyellow border-hlyellow text-ink' : 'bg-paper border-ink/12 text-ink/60 hover:border-ink/30']" :title="practiceMode ? 'Exit practice — back to timed exam' : 'Practice: instant feedback, no timer'">{{ practiceMode ? '✓ Practice' : 'Practice' }}</button>
         <div class="relative">
-          <button @click="showPresetMenu = !showPresetMenu" class="timer-display min-h-[40px] flex items-center gap-1.5 font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums border" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse border-redmargin/20' : 'bg-paper text-ink/70 border-ink/10 hover:border-pen/40'">{{ fmt }} <span class="text-[10px] opacity-50">▼</span></button>
+          <button v-if="!practiceMode" @click="showPresetMenu = !showPresetMenu" class="timer-display min-h-[40px] flex items-center gap-1.5 font-mono text-sm font-bold px-3.5 py-1.5 rounded-lg tabular-nums border" :class="timeLeft < 300 ? 'bg-redmargin/10 text-redmargin animate-pulse border-redmargin/20' : 'bg-paper text-ink/70 border-ink/10 hover:border-pen/40'">{{ fmt }} <span class="text-[10px] opacity-50">▼</span></button>
+          <span v-else class="min-h-[40px] flex items-center font-mono text-xs font-bold px-3 py-1.5 rounded-lg bg-hlyellow/20 border border-hlyellow text-ink">No timer</span>
           <div v-if="showPresetMenu" class="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl ring-1 ring-ink/10 p-3 z-50">
             <div class="font-mono text-[10px] font-bold tracking-wider text-ink/50 mb-2">TIMER PRESET — tap to switch</div>
             <div class="grid grid-cols-3 gap-1.5">
@@ -315,6 +344,10 @@ watch(timeLeft, (val) => {
                   <span class="font-mono text-xs mr-2.5 shrink-0" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span><span class="min-w-0 break-words"><MathText :text="opt" /></span>
                 </button>
               </template>
+            </div>
+            <div v-if="practiceMode && practiceFeedback" :class="['mt-4 px-4 py-3 rounded-xl border-2 text-sm font-semibold flex items-center gap-2', practiceFeedback.ok ? 'bg-correct/[0.08] border-correct/30 text-green-700' : 'bg-redmargin/[0.06] border-redmargin/30 text-redmargin']">
+              <span class="w-7 h-7 rounded-full grid place-items-center text-sm font-bold shrink-0" :class="practiceFeedback.ok ? 'bg-correct text-white' : 'bg-redmargin text-white'">{{ practiceFeedback.ok ? '✓' : '✗' }}</span>
+              <span>{{ practiceFeedback.text }}</span>
             </div>
 
             <div v-if="q.type==='nat'" class="mt-5 flex flex-wrap items-start gap-4 min-w-0">
