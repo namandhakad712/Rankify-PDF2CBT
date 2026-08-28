@@ -211,77 +211,56 @@ const warnCount = computed(() => valIssues.value.filter((x) => x.level === "warn
 function jumpTo(i: number) { selIdx.value = i }
 function jumpToMobile(i: number) { selIdx.value = i; showMobileNav.value = false; showMobileVal.value = false }
 
-/* ── Export to PDF ── */
+/* ── Export to PDF — window.print primary (never blank), html2pdf fallback ── */
 async function exportPDF() {
   if (!paper.value) return
   exportBusy.value = true
-  let wrapper: HTMLElement | null = null
   try {
-    const { default: html2pdf } = await import('html2pdf.js')
     const el = buildExportHTML()
-    // off-screen wrapper — stays rendered so html2canvas can measure it
-    wrapper = document.createElement('div')
-    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;background:#fff;overflow:visible;'
-    wrapper.appendChild(el)
-    document.body.appendChild(wrapper)
-
-    // wait for diagram images (data-URL crops) to decode
-    const imgs = Array.from(el.querySelectorAll('img')) as HTMLImageElement[]
-    await Promise.all(imgs.map(img => img.complete && img.naturalWidth > 0
-      ? Promise.resolve()
-      : new Promise<void>(res => {
-          const t = setTimeout(() => res(), 2500)
-          img.onload = () => { clearTimeout(t); res() }
-          img.onerror = () => { clearTimeout(t); res() }
-        })))
-
-    // wait for KaTeX / in-app fonts
-    if ((document as any).fonts?.ready) {
-      try { await (document as any).fonts.ready } catch {}
+    // Try window.print first — 100% reliable, no html2canvas blank
+    const w = window.open('', '_blank')
+    if (w) {
+      w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(paper.value.meta.title || 'paper')} — ${exportFormat.value}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><style>body{margin:0;padding:20px;font-family:system-ui,Segoe UI,sans-serif;color:#23203a;background:#fff} @media print{body{padding:0} @page{margin:12mm} .no-print{display:none}} img{max-width:100%}</style></head><body>${el.innerHTML}<script>setTimeout(()=>{focus();print()}, 400)<\/script></body></html>`)
+      w.document.close()
+      exportBusy.value = false
+      showExportDialog.value = false
+      return
     }
-    await new Promise(r => setTimeout(r, 280))
-
-    const fnameBase = (paper.value.meta.title || 'question-paper').replace(/[^a-z0-9\-_ ]/gi, '_').slice(0, 48)
-    await (html2pdf() as any)
-      .set({
+    // Fallback: html2pdf if popup blocked
+    let wrapper: HTMLElement | null = null
+    try {
+      const { default: html2pdf } = await import('html2pdf.js')
+      wrapper = document.createElement('div')
+      // keep in viewport but invisible — html2canvas can't capture left:-9999px (blank bug)
+      wrapper.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-1;overflow:visible;'
+      wrapper.appendChild(el)
+      document.body.appendChild(wrapper)
+      const imgs = Array.from(el.querySelectorAll('img')) as HTMLImageElement[]
+      await Promise.all(imgs.map(img => img.complete && img.naturalWidth > 0 ? Promise.resolve() : new Promise<void>(res => {
+        const t = setTimeout(() => res(), 2500)
+        img.onload = () => { clearTimeout(t); res() }
+        img.onerror = () => { clearTimeout(t); res() }
+      })))
+      if ((document as any).fonts?.ready) { try { await (document as any).fonts.ready } catch {} }
+      await new Promise(r => setTimeout(r, 280))
+      const fnameBase = (paper.value.meta.title || 'question-paper').replace(/[^a-z0-9\-_ ]/gi, '_').slice(0, 48)
+      await (html2pdf() as any).set({
         margin: 10,
         filename: `${fnameBase}-${exportFormat.value}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          scrollX: 0,
-          scrollY: 0,
-          logging: false,
-          windowWidth: el.scrollWidth,
-        },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, logging: false, windowWidth: el.scrollWidth },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] },
-      })
-      .from(el)
-      .save()
-
-    if (wrapper.parentNode) document.body.removeChild(wrapper)
-    wrapper = null
+      }).from(el).save()
+      if (wrapper.parentNode) document.body.removeChild(wrapper)
+    } catch (e) {
+      if (wrapper?.parentNode) document.body.removeChild(wrapper as HTMLElement)
+      throw e
+    }
   } catch (e) {
     console.error('Export failed', e)
-    if (wrapper?.parentNode) document.body.removeChild(wrapper)
-    // Fallback: print dialog (always works, Save as PDF)
-    try {
-      const el2 = buildExportHTML()
-      const w = window.open('', '_blank')
-      if (w) {
-        w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(paper.value?.meta.title || 'paper')}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><style>body{margin:0;padding:16px;font-family:system-ui,sans-serif;color:#23203a}@media print{body{padding:0}}</style></head><body>${el2.innerHTML}</body></html>`)
-        w.document.close()
-        setTimeout(() => { w.focus(); w.print() }, 600)
-      } else {
-        alert('PDF generation failed — please allow popups and try again, or use Ctrl+P → Save as PDF.')
-      }
-    } catch {}
+    alert('PDF failed — please use Ctrl+P → Save as PDF, or allow popups and try again.')
   } finally {
-    if (wrapper?.parentNode) document.body.removeChild(wrapper as HTMLElement)
     exportBusy.value = false
     showExportDialog.value = false
   }
