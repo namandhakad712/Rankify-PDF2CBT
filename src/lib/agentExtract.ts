@@ -114,21 +114,22 @@ async function chatOnce(
   messages: ProviderMessage[],
   signal: AbortSignal,
 ): Promise<string> {
-  let wait = 3500
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  let wait = 900
+  for (let attempt = 1; attempt <= 2; attempt++) {
     if (signal.aborted) throw new Error("cancelled")
     try {
-      // per-page timeout 28s (Vercel max 30s) + jitter
       const p = providerChat(entry, { model, messages, responseFormat: { type: "json_object" } })
-      const t = new Promise<never>((_, rej) => setTimeout(() => rej(new Error("408 page timeout 28s")), 28_000))
+      const t = new Promise<never>((_, rej) => setTimeout(() => rej(new Error("408 page timeout 15s")), 15_000))
       return await Promise.race([p, t])
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
+      const is401 = /\b401\b|Missing key|Unauthorized/i.test(msg)
+      if (is401) throw e // don't waste time retrying bad key — fallback to next provider immediately
       const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
       const retryable = /\b429\b|rate.?limit|too many requests|408\b/i.test(msg) || /\b5\d\d\b/.test(msg)
-      if (!retryable || attempt === 3) throw e
-      wait = retryAfter ? Number(retryAfter) * 1000 : wait * 1.9
-      await sleepJitter(Math.min(wait, 45_000))
+      if (!retryable || attempt === 2) throw e
+      wait = retryAfter ? Number(retryAfter) * 1000 : wait * 1.6
+      await sleepJitter(Math.min(wait, 12_000))
     }
   }
   throw new Error("unreachable")
@@ -141,11 +142,14 @@ const sleepJitter = (ms: number) => sleep(ms * (0.85 + Math.random() * 0.3))
 function getBatchConfig(entry: ProviderEntry, model: string): { batchSize: number; concurrency: number; delay: number } {
   const lim = limitsFor(entry, model || entry.models[0] || "")
   const ctx = lim.contextWindow
-  // batch = how many pages per LLM request — bigger context → fewer requests → faster for low-RPM
-  if (ctx >= 800000) return { batchSize: 5, concurrency: 1, delay: 900 } // poolside 1M
-  if (ctx >= 200000) return { batchSize: 3, concurrency: 1, delay: 800 } // labs 256k, agnes 512k
-  if (ctx >= 80000) return { batchSize: 2, concurrency: 2, delay: 600 }
-  return { batchSize: 1, concurrency: 3, delay: 400 }
+  const out = lim.maxTokens
+  // Use ~60% of context for input, 40% for output headroom. Avg page ~1800 chars ≈450 tokens, avg Q ~160 tokens out.
+  // e.g. poolside 1M/32k → 600k input /450 ≈1333 pages theoretical, but output 32k/160≈200 Q → ~50 pages max.
+  // So cap by output: batch 12×4Q=48Q≈7680 tokens <<32k, batch 12×~450=5400 input tokens <<1M → safe.
+  if (ctx >= 800000) return { batchSize: Math.min(12, Math.floor(out / 700)), concurrency: 1, delay: 700 } // poolside 1M/32k → 12
+  if (ctx >= 200000) return { batchSize: Math.min(8, Math.floor(out / 900)), concurrency: 1, delay: 700 } // labs 256k/128k → 8
+  if (ctx >= 80000) return { batchSize: Math.min(4, Math.floor(out / 800)), concurrency: 2, delay: 500 }
+  return { batchSize: Math.min(2, Math.floor(out / 1000)) || 1, concurrency: 3, delay: 400 }
 }
 function getConcurrency(entry: ProviderEntry): number {
   return getBatchConfig(entry, entry.model || entry.models[0] || "").concurrency

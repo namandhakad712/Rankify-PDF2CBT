@@ -821,6 +821,19 @@ void (async () => {
               <div class="font-mono text-[11px] text-ink/50">{{ agentProgress.filter(x => x.status==='done').length }}/{{ agentProgress.length }} {{ t('extract.agent.pagesDone') }}{{ ocrUsed ? ' · ' + t('extract.agent.ocrUsedNote') : '' }}</div>
             </div>
             <div v-if="agentError" class="p-4 bg-redmargin/[0.07] border border-redmargin/30 rounded-2xl text-sm text-redmargin font-medium whitespace-pre-wrap">{{ agentError }}</div>
+            <div v-if="agentError" class="mt-3 p-4 rounded-2xl bg-paper border border-ink/10 text-sm">
+              <div class="font-display font-bold text-sm text-ink">Stuck? Don't wait —</div>
+              <ul class="mt-1.5 list-disc list-inside text-ink/60 space-y-1 leading-relaxed">
+                <li><b>401</b> Missing key → on <code>localhost:5173</code> add <code>.env.local</code> with <code>MISTRAL_API_KEY=...</code> or add a local BYOK provider in Settings.</li>
+                <li><b>502</b> Bad Gateway → provider down or endpoint not in <code>providers.yaml</code>. Tap <b>change</b> to switch model, or use <b>GEM flow</b> (free, no key, 100+ pages, no 20MB limit).</li>
+                <li>Progress shows <code>failed</code> → you still get partial paper if some pages succeeded. Hit <b>Cancel</b> then <b>Resume</b> — checkpoints save per batch.</li>
+              </ul>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button @click="activeTab='gem'" class="px-4 py-2 rounded-xl bg-pen text-white text-xs font-bold hover:-translate-y-0.5 transition-transform">Try GEM flow →</button>
+                <button @click="showSettings=true" class="px-4 py-2 rounded-xl border-2 border-ink/12 bg-white text-xs font-bold text-ink/70 hover:border-ink/30">Switch provider</button>
+              </div>
+              <div class="mt-2 font-mono text-[10px] text-ink/35">Tip: poolside 1M/32k now batches 12 pages/req (was 5) → 46p in 4 req vs 16. labs 256k batches 8. Less waiting, uses your maxTokens.</div>
+            </div>
           </div>
           </div>
         </div>
