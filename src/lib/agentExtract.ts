@@ -137,39 +137,21 @@ async function chatOnce(
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const sleepJitter = (ms: number) => sleep(ms * (0.85 + Math.random() * 0.3))
 
-/** ── Fast path helpers ── */
-const RPS_MAP: Record<string, number> = {
-  // from your Mistral free-tier table + Groq/NVIDIA
-  "labs-leanstral-1-5-1": 0.63,
-  "ministral-3b-2512": 12.5,
-  "ministral-8b-2512": 3.13,
-  "ministral-14b-2512": 0.5,
-  "codestral-2508": 2.08,
-  "mistral-medium-2508": 0.38,
-  "mistral-medium-2505": 0.42,
-  "mistral-large-2512": 0.07,
-  "mistral-small-2603": 0.83,
-  "devstral-2512": 0.83,
-  "groq/compound": 5,
-  "groq/compound-mini": 10,
-  "openai/gpt-oss-120b": 2,
-  "openai/gpt-oss-20b": 5,
-}
-function getRPS(model: string): number {
-  if (RPS_MAP[model] != null) return RPS_MAP[model]
-  for (const [k, v] of Object.entries(RPS_MAP)) if (model.includes(k) || k.includes(model)) return v
-  return 0.6 // safe default for unknown free model
+/** ── Fast path helpers — use YOUR providers.yaml contextWindow/maxTokens, no RPS guess ── */
+function getBatchConfig(entry: ProviderEntry, model: string): { batchSize: number; concurrency: number; delay: number } {
+  const lim = limitsFor(entry, model || entry.models[0] || "")
+  const ctx = lim.contextWindow
+  // batch = how many pages per LLM request — bigger context → fewer requests → faster for low-RPM
+  if (ctx >= 800000) return { batchSize: 5, concurrency: 1, delay: 900 } // poolside 1M
+  if (ctx >= 200000) return { batchSize: 3, concurrency: 1, delay: 800 } // labs 256k, agnes 512k
+  if (ctx >= 80000) return { batchSize: 2, concurrency: 2, delay: 600 }
+  return { batchSize: 1, concurrency: 3, delay: 400 }
 }
 function getConcurrency(entry: ProviderEntry): number {
-  const rps = getRPS(entry.model || entry.models[0] || "")
-  if (rps >= 5) return 3
-  if (rps >= 1) return 2
-  return 1
+  return getBatchConfig(entry, entry.model || entry.models[0] || "").concurrency
 }
 function adaptiveDelay(entry: ProviderEntry): number {
-  const rps = getRPS(entry.model || entry.models[0] || "")
-  // 1100ms per RPS unit + 200ms headroom, clamped 90ms–2000ms
-  return Math.max(90, Math.min(2000, Math.round(1100 / Math.max(rps, 0.07) + 150)))
+  return getBatchConfig(entry, entry.model || entry.models[0] || "").delay
 }
 function isQuestionLike(text: string): boolean {
   if (!text || text.trim().length < 40) return false
@@ -320,8 +302,6 @@ export async function runAgentExtract(opts: {
   const chain = buildFallbackChain(entry, entry.model || "", [entry, ...allProviders])
   const signalRef = signal ?? new AbortController().signal
   const failedPages: { index: number; error: string }[] = []
-  const effDelay = delayMs ?? adaptiveDelay(entry)
-  const concurrency = getConcurrency(entry)
 
   const state: AgentJobState = resumeState?.pages.length === pages.length
     ? { ...resumeState, updatedAt: Date.now(), done: false }
@@ -341,53 +321,87 @@ export async function runAgentExtract(opts: {
     return null
   }
 
-  let nextIdx = 0
-  // find first pending index for resume
-  for (let i = 0; i < pages.length; i++) if (!state.results[String(i)]) { nextIdx = i; break }
-  // if all done, nextIdx stays at 0 but loop will skip
-  let cursor = nextIdx
-  const getNext = (): number | null => {
-    while (cursor < pages.length) {
-      const i = cursor++
-      if (!state.results[String(i)]) return i
+  // ── Context-aware batching — uses YOUR providers.yaml limits, not RPS guess ──
+  // e.g. poolside 1M/32k → batch 5 pages/req, labs 256k/128k → batch 3, small ctx → batch 1
+  function chunkPages(pages: string[], batchSize: number): { indices: number[]; text: string }[] {
+    if (batchSize <= 1) return pages.map((text, i) => ({ indices: [i], text }))
+    const out: { indices: number[]; text: string }[] = []
+    for (let i = 0; i < pages.length; i += batchSize) {
+      const indices = Array.from({ length: Math.min(batchSize, pages.length - i) }, (_, k) => i + k)
+      const text = indices.map(idx => pages[idx]).join("\n\n--- Page Break ---\n\n")
+      out.push({ indices, text })
+    }
+    return out
+  }
+  const { batchSize, concurrency, delay: cfgDelay } = getBatchConfig(entry, entry.model || entry.models[0] || "")
+  const effDelay = delayMs ?? cfgDelay
+  const batches = chunkPages(pages, batchSize)
+  let batchCursor = 0
+  const getNextBatch = (): { indices: number[]; text: string } | null => {
+    while (batchCursor < batches.length) {
+      const b = batches[batchCursor++]
+      if (b.indices.every(idx => state.results[String(idx)])) continue
+      const pending = b.indices.filter(idx => !state.results[String(idx)])
+      if (!pending.length) continue
+      if (pending.length !== b.indices.length) {
+        return { indices: pending, text: pending.map(idx => pages[idx]).join("\n\n--- Page Break ---\n\n") }
+      }
+      return b
     }
     return null
   }
 
-  const processOne = async (i: number) => {
+  const processBatch = async (batch: { indices: number[]; text: string }) => {
     if (signalRef.aborted) return
-    const rawPage = pages[i].trim()
+    const firstIdx = batch.indices[0]
     const charCap = Math.floor((limitsFor(entry, entry.model || "").contextWindow * 3) / 4)
-    const pageText = rawPage.length > charCap ? rawPage.slice(0, charCap) : rawPage
+    const rawText = batch.text.trim()
+    const pageText = rawText.length > charCap ? rawText.slice(0, charCap) : rawText
     const skipNote = shouldSkipLLM(pageText)
     if (skipNote) {
-      progress[i] = { index: i, status: "done", note: skipNote }
-      state.results[String(i)] = { questions: [], lastNum: 0 }
+      for (const idx of batch.indices) {
+        progress[idx] = { index: idx, status: "done", note: skipNote }
+        state.results[String(idx)] = { questions: [], lastNum: 0 }
+      }
       state.updatedAt = Date.now()
       await onCheckpoint?.({ ...state, results: { ...state.results } })
       emit()
       return
     }
-    progress[i] = { index: i, status: "running" }; emit()
+    for (const idx of batch.indices) { progress[idx] = { index: idx, status: "running" } }
+    emit()
     try {
-      const prevTail = i > 0 ? state.pages[i - 1].slice(-800) : ""
-      // knownMax must be recomputed live as other workers finish
+      const prevTail = firstIdx > 0 ? state.pages[firstIdx - 1].slice(-800) : ""
       const knownMax = Object.values(state.results).reduce((m, r) => Math.max(m, r.lastNum), 0)
       const res = await processChunk(chain, pageText, prevTail, knownMax + 1, signalRef)
       if (!res.questions.length) {
-        progress[i] = { index: i, status: "done", note: "no question-like text" }
-        state.results[String(i)] = res
+        for (const idx of batch.indices) {
+          progress[idx] = { index: idx, status: "done", note: "no question-like text" }
+          state.results[String(idx)] = { questions: [], lastNum: 0 }
+        }
         emit()
         return
       }
-      for (const q of res.questions) q.pageNo = i + 1
-      state.results[String(i)] = res
-      progress[i] = { index: i, status: "done" }
+      // distribute pageNo round-robin across batch indices, as you described: compare last vs first, keep richer
+      const perPage = Math.max(1, Math.ceil(res.questions.length / batch.indices.length))
+      res.questions.forEach((q, qi) => {
+        const batchPos = Math.min(Math.floor(qi / perPage), batch.indices.length - 1)
+        q.pageNo = batch.indices[batchPos] + 1
+      })
+      // store under first idx, mark others done for resume
+      state.results[String(firstIdx)] = res
+      for (let k = 1; k < batch.indices.length; k++) {
+        const idx = batch.indices[k]
+        state.results[String(idx)] = { questions: [], lastNum: res.lastNum }
+      }
+      for (const idx of batch.indices) progress[idx] = { index: idx, status: "done" }
     } catch (e: unknown) {
-      if (signalRef.aborted) { progress[i] = { index: i, status: "pending" }; return }
+      if (signalRef.aborted) { for (const idx of batch.indices) progress[idx] = { index: idx, status: "pending" }; return }
       const msg = (e instanceof Error ? e.message : String(e)).slice(0, 400)
-      progress[i] = { index: i, status: "failed", note: msg.split("\n")[0].slice(0, 140) }
-      failedPages.push({ index: i, error: msg })
+      for (const idx of batch.indices) {
+        progress[idx] = { index: idx, status: "failed", note: msg.split("\n")[0].slice(0, 140) }
+        failedPages.push({ index: idx, error: msg })
+      }
     }
     state.updatedAt = Date.now()
     await onCheckpoint?.({ ...state, results: { ...state.results } })
@@ -395,22 +409,19 @@ export async function runAgentExtract(opts: {
   }
 
   if (concurrency === 1) {
-    // sequential with adaptive jitter delay (respects low RPS)
-    for (let i = 0; i < pages.length; i++) {
+    for (const batch of batches) {
       if (signalRef.aborted) break
-      if (state.results[String(i)]) continue
-      await processOne(i)
-      if (i < pages.length - 1) await sleepJitter(effDelay)
+      if (batch.indices.every(idx => state.results[String(idx)])) continue
+      await processBatch(batch)
+      await sleepJitter(effDelay)
     }
   } else {
-    // concurrent workers — each respects adaptive delay via jittered sleep after each job
     const workers = Array.from({ length: concurrency }, async () => {
       while (true) {
         if (signalRef.aborted) break
-        const idx: number | null = getNext()
-        if (idx == null) break
-        await processOne(idx)
-        // stagger next pick a bit to avoid burst
+        const batch = getNextBatch()
+        if (!batch) break
+        await processBatch(batch)
         await sleepJitter(effDelay / concurrency)
       }
     })
