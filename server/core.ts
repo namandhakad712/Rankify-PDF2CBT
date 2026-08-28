@@ -4,6 +4,7 @@ import fs from "node:fs"
 import path from "node:path"
 import YAML from "yaml"
 import OpenAI from "openai"
+import { Mistral } from "@mistralai/mistralai"
 
 type YamlFile = { providers?: { id: string; endpoint: string }[] }
 
@@ -70,6 +71,78 @@ export async function handleStatus(): Promise<{ status: number; json: unknown }>
   // Debug: list which env keys exist in process.env without exposing values
   const envSeen = Object.keys(process.env).filter(k => k.includes("API_KEY")).sort()
   return jsonOut(200, { presets, envKeys, debug: { yamlOk, yamlError, cwd: process.cwd(), envSeen, nodeEnv: process.env.VERCEL_ENV || process.env.NODE_ENV || null } })
+}
+
+/** Real provider health — tries tiny request with the server key, not just env presence */
+export async function handleHealth(): Promise<{ status: number; json: unknown }> {
+  type P = { id: string; name: string; endpoint: string; response?: string; envKey?: string; docsUrl?: string; models?: (string | { id: string })[]; agentId?: string }
+  let providers: P[] = []
+  for (const candidate of [
+    path.join(process.cwd(), "src/config/providers.yaml"),
+    path.join(process.cwd(), "../src/config/providers.yaml"),
+    path.join(process.cwd(), "../../src/config/providers.yaml"),
+  ]) {
+    try {
+      const f = YAML.parse(fs.readFileSync(candidate, "utf8")) as { providers?: P[] }
+      providers = f.providers || []
+      break
+    } catch {}
+  }
+  const results: Record<string, { ok: boolean; hasKey: boolean; status?: number; ms?: number; error?: string }> = {}
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+  await Promise.all(providers.map(async (p) => {
+    const hasKey = p.envKey ? !!getEnv(p.envKey) : true
+    if (!hasKey) { results[p.id] = { ok: false, hasKey: false, error: "no key" }; return }
+    const key = p.envKey ? getEnv(p.envKey) : ""
+    // mistral-agent uses conversations API — retry 2× if timeout/5xx, then mark not working
+    if (p.response === "mistral-agent") {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const start = Date.now()
+        try {
+          const client = new Mistral({ apiKey: key })
+          const r: unknown = await Promise.race([
+            client.beta.conversations.start({ agentId: (p as unknown as { agentId: string }).agentId || "ag_01a033a6dd8b729c89877137d609d0fc", agentVersion: 4, inputs: [{ role: "user", content: "hi" }] } as never),
+            new Promise((_, rej) => setTimeout(() => rej(new Error("timeout 5s")), 5000))
+          ])
+          results[p.id] = r ? { ok: true, hasKey: true, ms: Date.now() - start } : { ok: false, hasKey: true, error: "empty" }
+          return
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : String(e)
+          const isRate = /429|rate.?limit/i.test(msg)
+          if (isRate) { results[p.id] = { ok: true, hasKey: true, ms: Date.now() - start }; return }
+          if (attempt === 2 || /401|403/.test(msg)) {
+            results[p.id] = { ok: false, hasKey: true, error: msg.slice(0, 120), ms: Date.now() - start }
+            return
+          }
+          await sleep(1200 * attempt)
+        }
+      }
+      return
+    }
+    // for openai-compatible, try GET /models (cheapest, no tokens) — retry 2×
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const start = Date.now()
+      try {
+        const base = p.endpoint.replace(/\/+$/, "").replace(/\/chat\/completions$/, "")
+        const ctrl = new AbortController()
+        const to = setTimeout(() => ctrl.abort(), 4500)
+        const r = await fetch(`${base}/models`, { headers: key ? { Authorization: `Bearer ${key}` } : {}, signal: ctrl.signal })
+        clearTimeout(to)
+        const ms = Date.now() - start
+        if (r.ok) { results[p.id] = { ok: true, hasKey: true, status: r.status, ms }; return }
+        const txt = (await r.text()).slice(0, 120)
+        if (r.status === 429) { results[p.id] = { ok: true, hasKey: true, status: r.status, ms }; return }
+        if (r.status === 401 || r.status === 403 || attempt === 2) { results[p.id] = { ok: false, hasKey: true, status: r.status, error: txt, ms }; return }
+        await sleep(1200 * attempt)
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e)
+        const isTimeout = /abort|timeout/i.test(msg)
+        if (attempt === 2) { results[p.id] = { ok: false, hasKey: true, error: isTimeout ? "timeout" : msg.slice(0, 120), ms: Date.now() - start }; return }
+        await sleep(1200 * attempt)
+      }
+    }
+  }))
+  return jsonOut(200, { health: results })
 }
 
 export async function handleChat(opts: {

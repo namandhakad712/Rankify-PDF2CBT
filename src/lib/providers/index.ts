@@ -154,6 +154,55 @@ export async function fetchEnvStatus(): Promise<Record<string, boolean>> {
   }
 }
 
+const HEALTH_CACHE_KEY = "rpdf2cbt-health-cache"
+const HEALTH_TTL = 24 * 60 * 60 * 1000 // once a day, as you said
+/** Real health — cached 24h, with retries: fail → retry 2× (2s, 5s), then mark not working, re-check after 10m in background */
+export async function fetchHealthStatus(force = false): Promise<Record<string, { ok: boolean; hasKey: boolean; error?: string }>> {
+  try {
+    if (!force) {
+      const raw = localStorage.getItem(HEALTH_CACHE_KEY)
+      if (raw) {
+        const c = JSON.parse(raw) as { ts: number; data: Record<string, { ok: boolean; hasKey: boolean; error?: string }> }
+        if (c?.ts && Date.now() - c.ts < HEALTH_TTL && c.data) {
+          // background refresh if stale >12h and some provider is not ok
+          if (Date.now() - c.ts > 12 * 60 * 60 * 1000) {
+            const hasFail = Object.values(c.data).some(v => v.hasKey && !v.ok)
+            if (hasFail) setTimeout(() => { void fetchHealthStatus(true) }, 10_000)
+          }
+          return c.data
+        }
+      }
+    }
+  } catch {}
+  // fetch with retries (fail → retry after 2s, 5s, then mark not working)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const r = await fetch("/api/agent/health")
+      if (!r.ok) throw new Error(String(r.status))
+      const j = (await r.json()) as { health?: Record<string, { ok: boolean; hasKey: boolean; error?: string }> }
+      const data = j.health || {}
+      try { localStorage.setItem(HEALTH_CACHE_KEY, JSON.stringify({ ts: Date.now(), data })) } catch {}
+      // if some provider failed but we have retries left, wait a bit and re-check (maybe transient 429)
+      const hasFail = Object.values(data).some(v => v.hasKey && !v.ok && !/429|rate/i.test(v.error || ""))
+      if (hasFail && attempt < 3) {
+        await new Promise(res => setTimeout(res, attempt === 1 ? 2000 : 5000))
+        continue
+      }
+      return data
+    } catch {
+      if (attempt < 3) await new Promise(res => setTimeout(res, attempt === 1 ? 2000 : 5000))
+    }
+  }
+  try {
+    const raw = localStorage.getItem(HEALTH_CACHE_KEY)
+    if (raw) {
+      const c = JSON.parse(raw) as { ts: number; data: Record<string, { ok: boolean; hasKey: boolean; error?: string }> }
+      if (c?.data) return c.data
+    }
+  } catch {}
+  return {}
+}
+
 /**
  * The ONE chat function.
  *  - preset + no client key → /api/agent/chat proxy (server reads envKey secret)

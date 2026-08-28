@@ -33,6 +33,7 @@
       "includeFiles": "src/config/providers.yaml, server/**"
     },
     "api/agent/ocr.ts": { "maxDuration": 60, "includeFiles": "src/config/providers.yaml, server/**" },
-    "api/agent/status.ts": { "includeFiles": "src/config/providers.yaml, server/**" }
+    "api/agent/status.ts": { "includeFiles": "src/config/providers.yaml, server/**" },
+    "api/agent/health.ts": { "maxDuration": 10, "includeFiles": "src/config/providers.yaml, server/**" }
   }
 }

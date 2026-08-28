@@ -10,6 +10,7 @@ import {
   deleteProvider as deleteProviderEntry,
   fetchModels as fetchProviderModels,
   fetchEnvStatus,
+  fetchHealthStatus,
   normalizeBaseUrl,
   type ProviderEntry,
 } from "@/lib/providers"
@@ -185,6 +186,18 @@ const formFetching = ref(false)
 const envStatus = ref<Record<string, boolean>>({})
 const envLoaded = ref(false)
 void fetchEnvStatus().then((s) => { envStatus.value = s; envLoaded.value = true })
+const healthStatus = ref<Record<string, { ok: boolean; hasKey: boolean; error?: string }>>({})
+const healthLastChecked = ref<number | null>(null)
+const healthChecking = ref(false)
+async function refreshHealth() {
+  healthChecking.value = true
+  try {
+    const h = await fetchHealthStatus(true)
+    healthStatus.value = h
+    healthLastChecked.value = Date.now()
+  } finally { healthChecking.value = false }
+}
+void fetchHealthStatus().then((h) => { healthStatus.value = h; healthLastChecked.value = Date.now() })
 
 const activeProvider = computed(() => providerList.value.find((p) => p.id === activeProviderId.value))
 const ocrReady = computed(() =>
@@ -699,26 +712,35 @@ void (async () => {
                     <button @click="showSettings=false" class="w-8 h-8 rounded-full hover:bg-ink/5 grid place-items-center text-ink/60">✕</button>
                   </div>
 
-                  <!-- OCR readiness chip -->
-                  <div class="flex items-center gap-2">
+                  <!-- OCR readiness chip + health refresh -->
+                  <div class="flex items-center gap-2 flex-wrap">
                     <span :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold', ocrReady ? 'bg-correct/[0.1] text-green-700 ring-1 ring-correct/30' : 'bg-redmargin/[0.08] text-redmargin ring-1 ring-redmargin/30']">
                       {{ ocrReady ? "✓ " + t('extract.settings.ocrReady') : "✕ " + t('extract.settings.ocrOff') }}
                     </span>
                     <span class="text-[10px] text-ink/40">{{ ocrReady ? t('extract.settings.ocrReadyNote') : t('extract.settings.ocrOffNote') }}</span>
                   </div>
+                  <div class="flex items-center gap-2">
+                    <button @click="refreshHealth" :disabled="healthChecking" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-ink/10 bg-paper text-[11px] font-bold text-ink/70 hover:border-pen hover:text-pen disabled:opacity-40">{{ healthChecking ? 'Checking…' : '↻ Recheck providers' }}</button>
+                    <span v-if="healthLastChecked" class="font-mono text-[10px] text-ink/35">last: {{ new Date(healthLastChecked).toLocaleTimeString() }} · cached 24h</span>
+                    <span v-else class="font-mono text-[10px] text-ink/35">cached 24h</span>
+                  </div>
 
                   <div>
                     <div class="font-mono text-[10px] font-bold tracking-[0.25em] text-ink/45 mb-2">{{ t('extract.settings.preconfigured') }}</div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" :class="['relative rounded-2xl border-2 p-3 transition-all overflow-hidden min-w-0', !presetReady(p) ? 'border-ink/10 opacity-50 grayscale cursor-not-allowed' : activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
+                      <div v-for="p in providerList.filter(x => x.isPreset)" :key="p.id" :class="['relative rounded-2xl border-2 p-3 transition-all overflow-hidden min-w-0', !presetReady(p) ? 'border-ink/10 opacity-50 grayscale cursor-not-allowed' : healthStatus[p.id] && !healthStatus[p.id].ok ? 'border-amber-300 opacity-90' : activeProviderId===p.id ? 'border-pen bg-pen/[0.04] shadow-[0_10px_25px_-14px_rgba(47,95,224,0.5)]' : 'border-ink/10 hover:border-ink/30']">
                         <div v-if="!presetReady(p)" class="absolute inset-0 z-10 grid place-items-center">
                           <span class="rotate-[-12deg] border-[3px] border-redmargin text-redmargin font-mono font-extrabold tracking-widest text-[10px] uppercase px-3 py-1 rounded-md bg-white/70">{{ t('extract.settings.envNotAvailable') }}</span>
+                        </div>
+                        <div v-else-if="healthStatus[p.id] && !healthStatus[p.id].ok" class="absolute inset-0 z-10 grid place-items-center pointer-events-none">
+                          <span class="rotate-[-12deg] border-[3px] border-amber-500 text-amber-600 font-mono font-extrabold tracking-widest text-[10px] uppercase px-3 py-1 rounded-md bg-white/85 shadow-sm">Provider not working</span>
                         </div>
                         <button class="w-full flex items-center justify-between gap-2" @click="presetReady(p) && selectProvider(p.id)">
                           <span class="text-sm font-extrabold font-display text-ink">{{ p.name }}</span>
                           <span :class="['w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold', presetReady(p) && activeProviderId===p.id ? 'bg-pen text-white' : 'bg-ink/[0.06] text-transparent']">✓</span>
                         </button>
                         <div class="font-mono text-[9px] mt-0.5" :class="presetReady(p) ? 'text-green-700' : 'text-redmargin'">{{ p.envKey ? (presetReady(p) ? 'env: ' + p.envKey + t('extract.settings.envDetected') : 'env: ' + p.envKey + t('extract.settings.envMissing')) : t('extract.settings.byok') }}</div>
+                        <div v-if="healthStatus[p.id]" class="font-mono text-[8px] mt-0.5 truncate" :class="healthStatus[p.id]!.ok ? 'text-green-700' : 'text-amber-600'">{{ healthStatus[p.id]!.ok ? '✓ working' : '✗ not working' + (healthStatus[p.id]!.error ? ' — ' + (healthStatus[p.id]!.error as string).slice(0,45) : '') }}</div>
                         <div class="mt-2 flex flex-wrap gap-1">
                           <button v-for="m in p.models" :key="m" :disabled="!presetReady(p)" @click="presetReady(p) && selectModel(p.id, m)" :class="['px-2 py-1 rounded-lg font-mono text-[9px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed', presetReady(p) && activeProviderId===p.id && activeModel===m ? 'bg-pen text-white' : 'bg-paper border border-ink/12 text-ink/60 hover:border-pen/50 hover:text-pen']" :title="t('extract.settings.useModel') + m">{{ m }}</button>
                           <span v-if="!p.models.length" class="font-mono text-[9px] text-ink/35">{{ t('extract.settings.noModelsListed') }}</span>

@@ -27,6 +27,8 @@ function vercelApiDev() {
             send(await core.handleChat({ ...parsed, authHeader: (req.headers.authorization as string) || '' }))
           } else if (req.url.startsWith('/api/agent/ocr')) {
             send(await core.handleOcr(body, (req.headers.authorization as string) || ''))
+          } else if (req.url.startsWith('/api/agent/health')) {
+            send(await core.handleHealth())
           } else if (req.url.startsWith('/api/agent/status')) {
             send(await core.handleStatus())
           } else next()

@@ -63,7 +63,7 @@ providers:
 
   - id: mistral
     name: Mistral
-    priority: 3
+    priority: 2
     endpoint: https://api.mistral.ai/v1
     response: openai-completions
     envKey: MISTRAL_API_KEY
@@ -74,14 +74,14 @@ providers:
       - id: labs-leanstral-1-5-1
         contextWindow: 256000
         maxTokens: 128000
-      - id: ministral-14b-2512
-        contextWindow: 256000
       - id: mistral-medium-2508
+        contextWindow: 256000
+      - id: ministral-14b-2512
         contextWindow: 256000
 
   - id: nvidia
     name: NVIDIA NIM
-    priority: 4
+    priority: 5
     endpoint: https://integrate.api.nvidia.com/v1
     response: openai-completions
     envKey: NVIDIA_API_KEY
@@ -97,7 +97,7 @@ providers:
 
   - id: poolside
     name: Poolside AI
-    priority: 1
+    priority: 3
     endpoint: https://inference.poolside.ai/v1
     response: openai-completions
     envKey: POOLSIDE_API_KEY
@@ -112,7 +112,7 @@ providers:
 
   - id: agnes
     name: Agnes AI
-    priority: 2
+    priority: 1
     endpoint: https://apihub.agnes-ai.com/v1/chat/completions
     response: openai-completions
     envKey: AGNES_API_KEY
@@ -127,23 +127,23 @@ providers:
 
   - id: inferx
     name: InferX
-    priority: 5
+    priority: 4
     endpoint: https://model.inferx.net/endpoints/v1
     response: openai-completions
     envKey: INFERX_API_KEY
     docsUrl: https://docs.inferx.ai/
     models:
-      - id: Devstral-2-123B-Instruct-2512-int4-AutoRound
-        contextWindow: 128000
-        maxTokens: 65000
       - id: Qwen3-Coder-Next-FP8
+        contextWindow: 256000
+        maxTokens: 65000
+      - id: Qwen3.8-27B-FP8
         contextWindow: 256000
         maxTokens: 65000
       - id: Qwen3.6-35B-A3B-FP8
         contextWindow: 256000
         maxTokens: 65000
-      - id: Qwen3.8-27B-FP8
-        contextWindow: 256000
+      - id: Devstral-2-123B-Instruct-2512-int4-AutoRound
+        contextWindow: 128000
         maxTokens: 65000
     
   - id: opencode_zen
