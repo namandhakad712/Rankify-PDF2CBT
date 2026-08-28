@@ -381,7 +381,7 @@ graph LR
 </td>
 <td align="center" width="20%">
 <img src="https://dexie.org/assets/images/dexie-logo.png" alt="Dexie" width="48" />
-<p><strong>Dexie 4</strong><br>Single DB<br>3 tables → 4</p>
+<p><strong>Dexie 4</strong><br>Single DB<br>5 tables<br><code>papers/results/settings/pdfs/extractJobs</code></p>
 </td>
 <td align="center" width="20%">
 <img src="https://mozilla.github.io/pdf.js/images/logo.svg" alt="pdf.js" width="48" />
@@ -395,10 +395,11 @@ graph LR
 ```diff
 + 🔐 BYOK or Vercel env fallback — never hardcoded
 + 🛡️ GEM primary needs NO key — hides key wall from 80% users
-+ 📝 Providers via /api/*/chat proxies — key stays server-side
-+ 🔒 Client-only PDF + JSON — Dexie single DB, no tracking
++ 📝 Providers via /api/*/chat + /api/agent/mistral + /api/agent/health proxies — key stays server-side
++ 🔒 Client-only PDF + JSON — Dexie 5 tables, no tracking, PWA 109 precache offline
 + ✅ UniversalPaper schema src/types/schema.json — free strings
-+ ✅ CORS + security headers vercel.json:9
++ ✅ CORS + security headers vercel.json:9 + health cached 24h + 2 retries
++ ⚡ Context-aware batch 12/8/4 (poolside 1M →12p/req, labs 256k→8p) + isQuestionLike skip
 ```
 
 
@@ -412,20 +413,21 @@ graph LR
 
 <div align="center">
 
-### 🌐 **Vite SPA + 3 Serverless Proxies**
+### 🌐 **Vite SPA + 5 Serverless Proxies + PWA**
 
 <a href="https://vercel.com/new/clone?repository-url=https://github.com/namandhakad712/Rankify-PDF2CBT">
   <img src="https://vercel.com/button" alt="Deploy with Vercel" height="32">
 </a>
 
-**Vercel import:** Framework `Vite`, Build `pnpm build`, Output `dist` (from `vercel.json:1`). Auto-detects `framework: vite`.
+**Vercel import:** Framework `Vite`, Build `pnpm build` (`2305 modules`, `PWA 109 precache 4156 KiB`), Output `dist` (from `vercel.json:1`). Auto-detects `framework: vite`.
 
 | Env | When | How |
 |-----|------|-----|
-| `MISTRAL_API_KEY` | Agent Mode only,[OCR+JSON] | Vercel → Settings → Env Vars → Production+Preview |
+| `MISTRAL_API_KEY` | Mistral Agent ★ + OCR | Vercel → Settings → Env Vars → Production+Preview |
+| `POOLSIDE_API_KEY` / `AGNES_API_KEY` / `GROQ_API_KEY` etc | Free models fallback | Same — or BYOK in Settings (local only) |
 | _(none)_ | GEM primary | Nothing needed |
 
-Headers: `Cache-Control immutable` for `/assets/*`, `X-Frame-Options:DENY`, `HSTS` `vercel.json:9`. Functions: `maxDuration 30` `vercel.json:6`. SPA rewrites `/(.*) → /index.html` `vercel.json:35`.
+Headers: `Cache-Control immutable` for `/assets/*`, `X-Frame-Options:DENY`, `HSTS` `vercel.json:9`. Functions: `chat/mistral/ocr/status/health` `maxDuration 30/60/10` `vercel.json:35`. SPA rewrites `/(.*) → /index.html` `vercel.json:35`. PWA `vite-plugin-pwa` `registerType: autoUpdate`.
 
 **Local Vercel test:**
 
@@ -454,13 +456,13 @@ npx serve dist -l 3000
 
 | Page | Route | Purpose |
 |------|-------|---------|
-| **Home** | `/` | Hero + scanner + bento + FAQ — simple `Home.vue` |
-| **Extract** | `/extract` | GEM paste/AI Agent + PDF drop → parse → Review |
-| **Review** | `/review` | Edit + per-Q `DiagramCropper.vue` pdf.js crop |
-| **Test** | `/test` | Single CBT shell, 5-state palette, timer, Dexie autosave |
-| **Results** | `/results` | Simple bars, detailed You vs Ans |
-| **About** | `/about` | Why universal, project description |
-| **Getting Started** | `/getting-started` | Step-by-step GEM + AI Agent guide |
+| **Home** | `/` | Hero + sponsor heart + scanner + bento + FAQ — `Home.vue` |
+| **Extract** | `/extract` | GEM paste / Mistral Agent ★ chat (📎 PDF self-handles) + AI Agent free models (poolside 1M batch 12, labs 256k batch 8) + health check 24h cached |
+| **Review** | `/review` | Edit + per-Q `DiagramCropper.vue` + `Ctrl+K` search + Student/Teacher/Blank PDF export with branding per page + full-page sponsor |
+| **Test** | `/test` | CBT shell, 5-state palette + **timer presets 15-180m** + **Practice instant ✓/✗** + **bookmark ★ + keyboard 1-4/M/N/P/C/B** + **font A-/A+ + fullscreen** + per-Q `timeSpent` + streak |
+| **Results** | `/results` | Bars + `Time analytics` (avg/slowest 5) + streak + detailed You vs Ans + `window.print` |
+| **About** | `/about` | **Motto: Dead PDFs? No fun. Most exams are CBT.** Free AI (ChatGPT/GEM) → JSON, no signup, your little diagram mehnat, support via UPI/GitHub |
+| **Getting Started** | `/getting-started` | GEM + Agent + **Pro tips** (timer/bookmarks/keyboard/time/streak/PWA/storage) |
 | **Privacy** | `/privacy` | No tracking, local-only, GDPR note |
 
 </div>
@@ -471,7 +473,7 @@ All docs = Vue SFC in `src/pages/`, routed via `src/router/index.ts:3`,SEO via `
 
 ```bash
 pnpm exec vue-tsc -b --noEmit  # typecheck
-pnpm build                     # 1711 modules, 110KB initial — must stay <350KB
+pnpm build                     # 2305 modules, PWA 109 precache, 121k CSS — keep initial <350KB
 ```
 <br>
 
