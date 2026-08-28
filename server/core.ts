@@ -4,7 +4,6 @@ import fs from "node:fs"
 import path from "node:path"
 import YAML from "yaml"
 import OpenAI from "openai"
-import { Mistral } from "@mistralai/mistralai"
 
 type YamlFile = { providers?: { id: string; endpoint: string }[] }
 
@@ -94,32 +93,7 @@ export async function handleHealth(): Promise<{ status: number; json: unknown }>
     const hasKey = p.envKey ? !!getEnv(p.envKey) : true
     if (!hasKey) { results[p.id] = { ok: false, hasKey: false, error: "no key" }; return }
     const key = p.envKey ? getEnv(p.envKey) : ""
-    // mistral-agent uses conversations API — retry 2× if timeout/5xx, then mark not working
-    if (p.response === "mistral-agent") {
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        const start = Date.now()
-        try {
-          const client = new Mistral({ apiKey: key })
-          const r: unknown = await Promise.race([
-            client.beta.conversations.start({ agentId: (p as unknown as { agentId: string }).agentId || "ag_01a033a6dd8b729c89877137d609d0fc", agentVersion: 4, inputs: [{ role: "user", content: "hi" }] } as never),
-            new Promise((_, rej) => setTimeout(() => rej(new Error("timeout 5s")), 5000))
-          ])
-          results[p.id] = r ? { ok: true, hasKey: true, ms: Date.now() - start } : { ok: false, hasKey: true, error: "empty" }
-          return
-        } catch (e: unknown) {
-          const msg = e instanceof Error ? e.message : String(e)
-          const isRate = /429|rate.?limit/i.test(msg)
-          if (isRate) { results[p.id] = { ok: true, hasKey: true, ms: Date.now() - start }; return }
-          if (attempt === 2 || /401|403/.test(msg)) {
-            results[p.id] = { ok: false, hasKey: true, error: msg.slice(0, 120), ms: Date.now() - start }
-            return
-          }
-          await sleep(1200 * attempt)
-        }
-      }
-      return
-    }
-    // for openai-compatible, try GET /models (cheapest, no tokens) — retry 2×
+    // openai-compatible endpoints — retry 2× if timeout/5xx, then mark not working
     for (let attempt = 1; attempt <= 2; attempt++) {
       const start = Date.now()
       try {
