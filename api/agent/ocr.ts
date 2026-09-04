@@ -1,3 +1,4 @@
+/// <reference types="node" />
 // Vercel Serverless — thin wrapper over server/core.ts (shared with Vite dev shim)
 export const maxDuration = 60
 import type { VercelRequest, VercelResponse } from "@vercel/node"

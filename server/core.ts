@@ -1,3 +1,4 @@
+/// <reference types="node" />
 // Shared agent-API core — used by Vercel functions (api/) AND the Vite dev
 // shim (vite.config.ts). Pure Node logic, no framework types.
 import fs from "node:fs"

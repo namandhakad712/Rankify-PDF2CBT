@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import type { VercelRequest, VercelResponse } from "@vercel/node"
 
 // Free-tier + open-source safe: no DB, no paid service.
