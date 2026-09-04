@@ -184,6 +184,99 @@ const streakInfo = computed(() => {
 
 function exportPdf() { window.print() }
 
+function esc(s: string): string { const d = typeof document !== 'undefined' ? document.createElement('div') : null as unknown as HTMLDivElement; if (!d) return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); d.textContent = s; return d.innerHTML }
+
+function buildMistakesHTML(): string {
+  if (!result.value) return ''
+  const mistakes = result.value.paper.questions.filter(q => verdictOf(q) === 'w')
+  if (!mistakes.length) return ''
+  const title = esc(result.value.paper.meta.title)
+  let html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system; color:#23203a; max-width:760px; margin:0 auto; padding:18px 14px;">
+      <div style="text-align:center; border-bottom:2.5px solid #23203a; padding-bottom:12px; margin-bottom:16px;">
+        <div style="font-size:22px; font-weight:900; letter-spacing:-0.02em;">Rankify <span style="color:#2F5FE0;">PDF2CBT</span> — Mistakes Review</div>
+        <div style="font-size:11px; color:#23203a70; margin-top:4px;">${title} · ${mistakes.length} wrong out of ${result.value.paper.questions.length} · ${new Date(result.value.createdAt).toLocaleString()}</div>
+        <div style="display:inline-block; margin-top:8px; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#F26D6D; background:#F26D6D12; border:1px solid #F26D6D30; padding:3px 10px; border-radius:999px;">Only wrong — with options</div>
+      </div>
+  `
+  mistakes.forEach((q, qi) => {
+    const your = yourAnswerText(q)
+    const correct = correctAnswerText(q)
+    const opts = q.options || []
+    const yourRaw = result.value!.answers[q.id]
+    const isMsq = q.type === 'msq'
+    const yourSet: Set<string> = isMsq ? new Set(((yourRaw as string[])||[]).map(String)) : new Set()
+    const correctSet: Set<string> = isMsq ? new Set((q.answers||[]).map(String)) : new Set()
+    const yourIdx = !isMsq && q.options && /^\d+$/.test(String(yourRaw ?? '')) ? String(Number(yourRaw)-1) : null
+    const correctIdx = !isMsq && q.options && /^\d+$/.test(String(q.answer ?? '')) ? String(Number(q.answer)-1) : null
+    const optsHTML = opts.length ? opts.map((o, oi) => {
+      const letter = String.fromCharCode(65+oi)
+      const oiStr = String(oi)
+      const isYourWrong = isMsq ? (yourSet.has(oiStr) && !correctSet.has(oiStr)) : (yourIdx === oiStr)
+      const isCorrect = isMsq ? correctSet.has(oiStr) : (correctIdx === oiStr)
+      const isYourCorrect = isMsq ? (yourSet.has(oiStr) && correctSet.has(oiStr)) : false
+      let bg = 'background:#fff;border-color:#23203a12;'
+      let badge = ''
+      if (isCorrect || isYourCorrect) { bg = 'background:#1FA45C0f;border-color:#1FA45C55;'; badge = '<span style="margin-left:6px; font-size:10px; font-weight:800; color:#1FA45C;">✓ Correct</span>' }
+      if (isYourWrong) { bg = 'background:#F26D6D0f;border-color:#F26D6D55;'; badge = '<span style="margin-left:6px; font-size:10px; font-weight:800; color:#F26D6D;">✗ Your pick</span>' }
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 10px;margin:4px 0 0 18px;border:1px solid #23203a12;border-radius:8px;${bg}"><span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;min-width:18px;color:${isCorrect ? '#1FA45C' : isYourWrong ? '#F26D6D' : '#23203a55'}">${letter}.</span><span style="flex:1;min-width:0;word-break:break-word;font-size:13px;">${esc(o)}${badge}</span></div>`
+    }).join('') : ''
+    const yourLine = `<div style="margin:7px 0 0 18px; padding:7px 10px; border-radius:8px; background:#F26D6D0c; border:1px solid #F26D6D22; font-size:12px;"><span style="font-weight:700; color:#F26D6D;">You:</span> ${esc(your)} <span style="color:#F26D6D;">✗</span></div>`
+    const correctLine = `<div style="margin:4px 0 0 18px; padding:7px 10px; border-radius:8px; background:#1FA45C0c; border:1px solid #1FA45C22; font-size:12px;"><span style="font-weight:700; color:#1FA45C;">Correct:</span> ${esc(correct)} <span style="color:#1FA45C;">✓</span></div>`
+    html += `
+      <div style="page-break-inside:avoid; margin-bottom:12px; padding:12px 12px 10px; border:1px solid #23203a10; border-radius:10px; background:${qi%2===0 ? '#FBF8F1' : '#fff'};">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;background:#23203a;color:#fff;padding:2px 7px;border-radius:999px;white-space:nowrap;">Q${q.number}</span>
+          <span style="flex:1;min-width:0;font-size:13px;line-height:1.5;word-break:break-word;">${esc(q.text)}</span>
+          <span style="font-size:10px;color:#23203a55;white-space:nowrap;margin-left:6px;">[${q.type.toUpperCase()}]</span>
+        </div>
+        ${optsHTML}
+        ${yourLine}
+        ${correctLine}
+        <div style="font-size:10px;color:#23203a55;margin-top:6px;padding-left:18px;">${esc(q.subject || 'General')}${q.topic ? ' · '+esc(q.topic):''} · ${q.marks} marks${q.negativeMarks ? ' · −'+q.negativeMarks:''}</div>
+      </div>
+    `
+    if ((qi+1)%6===0 && qi!==mistakes.length-1) {
+      html += `<div style="text-align:center; margin:8px 0 14px; padding:8px; font-size:10px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#2F5FE0; background:#2F5FE00d; border:1px dashed #2F5FE030; border-radius:8px;">Generated by Rankify PDF2CBT — rankify-pdf2cbt.vercel.app — Free & Open Source</div>`
+    }
+  })
+  html += `
+      <div style="text-align:center; margin-top:22px; padding:10px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#2F5FE0; background:#2F5FE00d; border:1px solid #2F5FE030; border-radius:10px;">Generated by Rankify PDF2CBT — rankify-pdf2cbt.vercel.app — Free for every student</div>
+      <div style="page-break-before:always; min-height:88vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:36px 28px; margin-top:12px; border:3px solid #2F5FE0; border-radius:18px; background:#FBF8F1;">
+        <div style="font-size:13px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#23203a60;">This PDF was made using</div>
+        <div style="font-size:13px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#F26D6D; background:#F26D6D12; border:1px solid #F26D6D30; padding:4px 12px; border-radius:999px; margin-top:8px;">Mistakes Review</div>
+        <div style="font-size:13px; font-weight:800; color:#23203a; margin-top:6px;">of</div>
+        <div style="font-size:32px; font-weight:900; letter-spacing:-0.02em; color:#2F5FE0; margin-top:4px; line-height:1.1;">Rankify PDF2CBT</div>
+        <div style="font-size:12px; color:#23203a55; margin-top:6px; letter-spacing:0.04em;">rankify-pdf2cbt.vercel.app</div>
+        <div style="width:48px; height:3px; background:#2F5FE0; border-radius:999px; margin:18px auto;"></div>
+        <p style="font-size:13px; line-height:1.65; color:#23203a; max-width:560px; margin:0 auto;">It is <b>free to use</b> and <b>open-source</b> for every student, teacher &amp; coaching — no signup, no upload to us, your PDFs stay private in your browser.<br/>Made for students, by a student <b style="color:#2F5FE0;">Naman</b> — because dead PDFs deserve to be live CBTs.<br/><span style="display:inline-block; margin-top:10px; font-weight:700; color:#2F5FE0;">Go help someone by sharing this tool —</span> one share can save someone's 10 hours of re-typing. Thank you ❤️</p>
+        <div style="margin-top:22px; font-size:10px; color:#23203a35; border-top:1px solid #23203a10; padding-top:10px; width:100%;">PolyForm Noncommercial 1.0.0 — Free for learning · Open on GitHub: github.com/namandhakad712/Rankify-PDF2CBT</div>
+      </div>
+    </div>
+  `
+  return html
+}
+
+async function exportMistakes() {
+  if (!result.value) return
+  const mistakes = result.value.paper.questions.filter(q => verdictOf(q) === 'w')
+  if (!mistakes.length) { alert('No mistakes to export — all correct! 🎉'); return }
+  const html = buildMistakesHTML()
+  const w = window.open('', '_blank')
+  if (w) {
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Mistakes — ${esc(result.value.paper.meta.title)}</title><style>body{margin:0;padding:14px;background:#FBF8F1} @media print{body{background:white}}</style></head><body>${html}</body></html>`)
+    w.document.close()
+    setTimeout(() => { try { w.focus(); w.print() } catch {} }, 400)
+    return
+  }
+  const { default: html2pdf } = await import('html2pdf.js')
+  const wrap = document.createElement('div')
+  wrap.innerHTML = html
+  wrap.style.position = 'absolute'; wrap.style.left = '0'; wrap.style.top = '0'; wrap.style.width = '760px'; wrap.style.background = 'white'
+  document.body.appendChild(wrap)
+  try { await (html2pdf as unknown as { (): { from: (el: HTMLElement) => { set: (o: unknown) => { save: () => Promise<void> } } } })().from(wrap).set({ margin: 8, filename: `mistakes-${(result.value.paper.meta.title||'paper').replace(/[^a-z0-9]+/gi,'-')}.pdf`, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).save() } finally { wrap.remove() }
+}
+
 const grade = computed(() => {
   const s = stats.value
   if (!s || s.total === 0) return '—'
@@ -209,6 +302,7 @@ const grade = computed(() => {
         </div>
         <div class="flex items-center gap-3">
           <button class="no-print px-4 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-bold text-ink/70 hover:border-pen hover:text-pen transition-colors" @click="exportPdf">⤓ {{ t('results.exportPdf') }}</button>
+          <button v-if="stats && stats.wrong>0" class="no-print px-4 py-2.5 rounded-xl bg-redmargin text-white text-sm font-bold hover:brightness-110 transition-colors" @click="exportMistakes">⤓ Mistakes ({{ stats.wrong }}) — with options</button>
           <div v-if="stats" class="grade grid h-20 w-20 rotate-6 place-items-center rounded-full border-[3px] border-redmargin font-hand text-4xl font-bold text-redmargin bg-redmargin/[0.04]">{{ grade }}</div>
         </div>
       </div>

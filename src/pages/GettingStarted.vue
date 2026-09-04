@@ -52,6 +52,18 @@ onBeforeUnmount(() => { ctx?.revert() })
       <p class="mt-4 text-[15px] lg:text-[16px] text-ink/60 leading-relaxed max-w-xl break-words gs-sub">{{ t('gs.sub.a') }}<b>Gemini GEM flow</b>{{ t('gs.sub.b') }}<b>AI Agent</b>{{ t('gs.sub.c') }}</p>
       <p class="font-hand text-xl lg:text-2xl text-pen mt-2 rotate-1 break-words gs-chai">{{ t('gs.chai') }}</p>
 
+      <div class="gs-card mt-6 rounded-2xl overflow-hidden bg-white ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] p-4 lg:p-5">
+        <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3 text-center">▶ watch tutorial — 60s walkthrough</div>
+        <div class="relative rounded-xl overflow-hidden bg-ink aspect-video">
+          <iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/VQVJe_dz6AQ" title="Rankify PDF2CBT Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+        <div class="mt-3 flex flex-wrap justify-center gap-2">
+          <a href="https://www.youtube.com/watch?v=VQVJe_dz6AQ" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-redmargin hover:underline">Open on YouTube ↗</a>
+          <span class="text-ink/20">·</span>
+          <span class="text-xs text-ink/50">No signup — just watch & build</span>
+        </div>
+      </div>
+
       <div class="mt-8 lg:mt-10 grid gap-6">
         <section class="gs-card relative rounded-lg bg-white p-4 lg:p-7 shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] ring-1 ring-ink/[0.06] overflow-hidden" style="transform: rotate(-0.4deg)">
           <div class="tape" aria-hidden="true"></div>

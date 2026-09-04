@@ -231,6 +231,33 @@ const counts = computed(() => {
 })
 const bookmarkCount = computed(() => Object.values(bookmarks.value).filter(Boolean).length)
 
+/* ── palette colour fix for practice mode ── */
+function isCorrectForPalette(qq: UniversalPaper["questions"][number]): boolean {
+  const a: unknown = answers.value[qq.id]
+  if (qq.type === "msq") {
+    const sel = (a as string[] | undefined) || []
+    const exp = (qq.answers || []).slice().sort().join(",")
+    return sel.length > 0 && [...sel].sort().join(",") === exp
+  }
+  return !!a && String(a) === String(qq.answer)
+}
+function hasAttemptForPalette(qq: UniversalPaper["questions"][number]): boolean {
+  const a: unknown = answers.value[qq.id]
+  if (qq.type === "msq") return Array.isArray(a) && (a as string[]).length > 0
+  return !!a
+}
+function paletteClass(qq: UniversalPaper["questions"][number]): string {
+  const st = status.value[qq.id] || "notVisited"
+  if (st === "markedAnswered") return "bg-[#8b5cf6] text-white"
+  if (st === "marked") return "bg-[#8b5cf6] text-white"
+  if (practiceMode.value && hasAttemptForPalette(qq)) {
+    return isCorrectForPalette(qq) ? "bg-correct text-white" : "bg-redmargin text-white"
+  }
+  if (st === "answered") return "bg-correct text-white"
+  if (st === "notAnswered") return "bg-redmargin text-white"
+  return "bg-paper border border-dashed border-ink/30 text-ink/45"
+}
+
 function submit() {
   if (!paper.value) return
   flushQTimer()
@@ -428,7 +455,7 @@ watch(timeLeft, (val) => {
 
         <div class="flex-1 min-h-0 overflow-y-auto px-4 py-4 overflow-x-hidden">
           <div class="grid grid-cols-5 gap-2 lg:grid-cols-5">
-            <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-10 h-10 min-h-[40px] min-w-[40px] rounded-lg text-xs font-bold transition-all relative grid place-items-center', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white' : '', status[qq.id]==='answered' ? 'bg-correct text-white' : status[qq.id]==='markedAnswered' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='marked' ? 'bg-[#8b5cf6] text-white' : status[qq.id]==='notAnswered' ? 'bg-redmargin text-white' : 'bg-paper border border-dashed border-ink/30 text-ink/45', bookmarks[qq.id] ? 'ring-1 ring-hlyellow' : '']">{{ qq.number }}<span v-if="status[qq.id]==='markedAnswered'" class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-correct border border-white"></span><span v-if="bookmarks[qq.id]" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-hlyellow border-2 border-white grid place-items-center text-[8px] leading-none">★</span></button>
+            <button v-for="(qq,i) in paper.questions" :key="qq.id" @click="go(i)" :class="['w-10 h-10 min-h-[40px] min-w-[40px] rounded-lg text-xs font-bold transition-all relative grid place-items-center', idx===i ? 'ring-2 ring-pen ring-offset-2 ring-offset-white' : '', paletteClass(qq), bookmarks[qq.id] ? 'ring-1 ring-hlyellow' : '']">{{ qq.number }}<span v-if="status[qq.id]==='markedAnswered'" class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-correct border border-white"></span><span v-if="bookmarks[qq.id]" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-hlyellow border-2 border-white grid place-items-center text-[8px] leading-none">★</span></button>
           </div>
 
           <div class="mt-5 grid grid-cols-2 gap-2">

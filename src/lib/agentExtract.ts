@@ -119,17 +119,19 @@ async function chatOnce(
     if (signal.aborted) throw new Error("cancelled")
     try {
       const p = providerChat(entry, { model, messages, responseFormat: { type: "json_object" } })
-      const t = new Promise<never>((_, rej) => setTimeout(() => rej(new Error("408 page timeout 15s")), 15_000))
+      const t = new Promise<never>((_, rej) => setTimeout(() => rej(new Error("408 page timeout 8s")), 8000))
       return await Promise.race([p, t])
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       const is401 = /\b401\b|Missing key|Unauthorized/i.test(msg)
-      if (is401) throw e // don't waste time retrying bad key — fallback to next provider immediately
+      if (is401) throw e // bad key → next provider instantly
+      const is429 = /\b429\b|rate.?limit|too many requests/i.test(msg)
+      if (is429) throw e // 429 → next provider instantly, no wait (Hobby 10s wall, as requested)
       const retryAfter = /retry-after:\s*(\d+)/i.exec(msg)?.[1]
-      const retryable = /\b429\b|rate.?limit|too many requests|408\b/i.test(msg) || /\b5\d\d\b/.test(msg)
+      const retryable = /\b408\b/i.test(msg) || /\b5\d\d\b/.test(msg)
       if (!retryable || attempt === 2) throw e
       wait = retryAfter ? Number(retryAfter) * 1000 : wait * 1.6
-      await sleepJitter(Math.min(wait, 12_000))
+      await sleepJitter(Math.min(wait, 8000))
     }
   }
   throw new Error("unreachable")

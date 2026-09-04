@@ -1,0 +1,21 @@
+# Rankify PDF2CBT — free, privacy-first CBT from any PDF
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# LLM crawlers — explicitly allowed (for AI citations)
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://rankify-pdf2cbt.vercel.app/sitemap.xml
+Sitemap: https://rankify.zone.id/sitemap.xml

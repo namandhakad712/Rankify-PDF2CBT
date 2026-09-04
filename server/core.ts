@@ -132,7 +132,7 @@ export async function handleChat(opts: {
   if (!key && opts.envKey && /^[A-Z0-9_]+$/.test(opts.envKey)) key = getEnv(opts.envKey)
   if (!key) return jsonOut(401, { error: `Missing key — set ${opts.envKey || "the env var"} on Vercel/.env.local or send Authorization header` })
 
-  const client = new OpenAI({ apiKey: key, baseURL: endpoint, maxRetries: 2, timeout: 25000 })
+  const client = new OpenAI({ apiKey: key, baseURL: endpoint, maxRetries: 0, timeout: 8000 })
   try {
     if (opts.response === "openai-responses") {
       const instructions = opts.messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n") || undefined

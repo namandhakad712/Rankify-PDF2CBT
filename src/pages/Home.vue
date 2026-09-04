@@ -179,6 +179,22 @@
         </div>
       </section>
 
+      <!-- ═══════════ TUTORIAL VIDEO ═══════════ -->
+      <section class="paper relative py-10 lg:py-16 border-y-2 border-ink/[0.07] bg-white">
+        <div class="mx-auto max-w-4xl px-5 text-center">
+          <div class="font-mono text-[11px] uppercase tracking-[0.3em] text-ink/45 mb-3">watch & build in 60 seconds</div>
+          <h2 class="font-display font-extrabold tracking-tight text-ink text-3xl lg:text-4xl">How to convert PDF → CBT</h2>
+          <p class="mt-2 font-hand text-xl text-ink/50 -rotate-1">full walkthrough — no signup, no upload</p>
+          <div class="mt-6 relative rounded-2xl overflow-hidden bg-ink shadow-[0_24px_60px_-24px_rgba(35,32,58,0.35)] ring-1 ring-ink/10 aspect-video">
+            <iframe class="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/VQVJe_dz6AQ" title="Rankify PDF2CBT Tutorial" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          </div>
+          <div class="mt-4 flex flex-wrap justify-center gap-3">
+            <a href="https://www.youtube.com/watch?v=VQVJe_dz6AQ" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-redmargin text-white text-sm font-bold hover:brightness-110 transition-colors min-h-[44px]">▶ Watch on YouTube</a>
+            <RouterLink to="/extract" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold hover:bg-pen/90 transition-colors min-h-[44px]">Try it now →</RouterLink>
+          </div>
+        </div>
+      </section>
+
       <!-- ═══════════ MARQUEE ═══════════ -->
       <section class="border-y-2 border-ink/[0.07] bg-white py-5 overflow-hidden" aria-hidden="true">
         <div ref="marqueeTrack" class="flex whitespace-nowrap will-change-transform">
@@ -791,10 +807,19 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeyEasterEgg) })
 
 useHead({
   title: 'Rankify — Any question paper. Now it\'s a real exam.',
+  link: [{ rel: 'canonical', href: 'https://rankify-pdf2cbt.vercel.app/' }],
   meta: [
     { name: 'description', content: 'Drop a PDF of any test and get a full computer-based mock exam — timer, palette, marks. Free, private, nothing uploaded.' },
     { property: 'og:title', content: 'Rankify — Dead paper, live exam' },
-    { property: 'og:image', content: '/og-image.png' }
+    { property: 'og:image', content: 'https://rankify-pdf2cbt.vercel.app/og-image.png' },
+    { property: 'og:url', content: 'https://rankify-pdf2cbt.vercel.app/' },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' }
+  ],
+  script: [
+    { type: 'application/ld+json', children: JSON.stringify({ '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Rankify PDF2CBT', applicationCategory: 'EducationalApplication', operatingSystem: 'Web', url: 'https://rankify-pdf2cbt.vercel.app/', image: 'https://rankify-pdf2cbt.vercel.app/og-image.png', description: 'Turn any question-paper PDF into a real computer-based test in your browser. Free, private, no signups, no uploads.', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, author: { '@type': 'Person', name: 'Naman', url: 'https://github.com/namandhakad712' }, aggregateRating: { '@type': 'AggregateRating', ratingValue: '5', ratingCount: '1' } }) },
+    { type: 'application/ld+json', children: JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: [{ '@type': 'Question', name: 'Do I need to create an account?', acceptedAnswer: { '@type': 'Answer', text: 'No. Rankify runs 100% in your browser. No signup, no upload to us.' } }, { '@type': 'Question', name: 'Will my PDFs be uploaded?', acceptedAnswer: { '@type': 'Answer', text: 'No. PDFs stay on device. Gemini GEM flow copy-pastes JSON, AI Agent proxies keys server-side.' } }, { '@type': 'Question', name: 'What question types are supported?', acceptedAnswer: { '@type': 'Answer', text: 'MCQ, MSQ, NAT, true/false, fill, match, assertion-reason, passage — any language.' } }, { '@type': 'Question', name: 'Is it free?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Free to use and open-source (PolyForm Noncommercial 1.0).' } }, { '@type': 'Question', name: 'Can I export mistakes as PDF?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. Results page lets you export only wrong questions with options, correct vs your answer.' } }, { '@type': 'Question', name: 'Is there a tutorial?', acceptedAnswer: { '@type': 'Answer', text: 'Yes. 60s walkthrough at https://www.youtube.com/watch?v=VQVJe_dz6AQ' } }] }) },
+    { type: 'application/ld+json', children: JSON.stringify({ '@context': 'https://schema.org', '@type': 'VideoObject', name: 'Rankify PDF2CBT — 60s Tutorial', description: 'How to convert any PDF question paper to CBT in 60 seconds.', thumbnailUrl: 'https://img.youtube.com/vi/VQVJe_dz6AQ/hqdefault.jpg', uploadDate: '2026-09-04', embedUrl: 'https://www.youtube.com/embed/VQVJe_dz6AQ', contentUrl: 'https://www.youtube.com/watch?v=VQVJe_dz6AQ' }) }
   ]
 })
 </script>
