@@ -184,6 +184,21 @@ const streakInfo = computed(() => {
 
 function exportPdf() { window.print() }
 
+/* ── inline 10s feedback (free-tier, no DB) ── */
+const inlineHardest = ref('')
+const inlineText = ref('')
+const inlineSent = ref(false)
+const inlineLoading = ref(false)
+async function submitInlineFeedback() {
+  if (!inlineText.value.trim() && !inlineHardest.value) return
+  inlineLoading.value = true
+  try {
+    await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hardest: inlineHardest.value, text: inlineText.value.trim(), mood: 'inline-results', path: '/results' }) })
+    try { const arr = JSON.parse(localStorage.getItem('rpdf2cbt-feedback')||'[]'); arr.push({ hardest: inlineHardest.value, text: inlineText.value.trim(), at: new Date().toISOString(), path: '/results' }); localStorage.setItem('rpdf2cbt-feedback', JSON.stringify(arr.slice(-50))) } catch {}
+    inlineSent.value = true
+  } catch { inlineSent.value = true } finally { inlineLoading.value = false }
+}
+
 function esc(s: string): string { const d = typeof document !== 'undefined' ? document.createElement('div') : null as unknown as HTMLDivElement; if (!d) return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); d.textContent = s; return d.innerHTML }
 
 function buildMistakesHTML(): string {
@@ -430,6 +445,27 @@ const grade = computed(() => {
           <div v-if="streakInfo" class="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-hlyellow/20 border border-hlyellow text-xs font-semibold text-ink">
             <span class="text-base">🔥</span> Streak: <b>{{ streakInfo.count }} day{{ streakInfo.count>1?'s':'' }}</b> · Best {{ streakInfo.best }} · keep going!
           </div>
+        </div>
+
+        <!-- inline 10s feedback — free-tier: posts to /api/feedback, or saves locally -->
+        <div class="no-print mt-6 rounded-2xl bg-white p-4 lg:p-5 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.15)]">
+          <div v-if="inlineSent" class="text-center py-2">
+            <div class="text-xl">🙏</div><div class="font-bold text-sm mt-1">Thanks — we read every reply!</div><div class="text-xs text-ink/50">Open-source, no data sold. Your note is saved locally + forwarded if webhook set.</div>
+          </div>
+          <template v-else>
+            <div class="font-display font-bold text-sm">Help us — what should we fix next? <span class="font-hand font-normal text-ink/50">10s</span></div>
+            <p class="text-xs text-ink/55 mt-1">Pick hardest + one line — goes straight to maker. Also try 💬 bottom-right anytime.</p>
+            <div class="mt-3 grid gap-2 sm:grid-cols-[180px_1fr] items-start">
+              <select v-model="inlineHardest" class="rounded-xl border border-ink/12 bg-paper px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pen/30">
+                <option value="">What was hardest?</option><option>PDF upload</option><option>Extraction / AI</option><option>Diagram crop</option><option>Timer / CBT</option><option>Results / mistakes PDF</option><option>Language</option><option>Other</option>
+              </select>
+              <div class="flex gap-2">
+                <input v-model="inlineText" placeholder="What do you wish it did? One line is enough…" class="flex-1 min-w-0 rounded-xl border border-ink/12 bg-paper px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pen/30" @keydown.enter="submitInlineFeedback" />
+                <button @click="submitInlineFeedback" :disabled="inlineLoading" class="shrink-0 px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold hover:bg-pen/90 disabled:opacity-50">{{ inlineLoading ? '…' : 'Send' }}</button>
+              </div>
+            </div>
+            <p class="text-[10px] text-ink/35 mt-2">Free-tier open-source: set <code class="bg-paper px-1 rounded border border-ink/10">FEEDBACK_WEBHOOK_URL</code> or <code class="bg-paper px-1 rounded border border-ink/10">FEEDBACK_TELEGRAM_BOT_TOKEN</code> on Vercel to get DMs; otherwise saved in your browser + GitHub fallback.</p>
+          </template>
         </div>
 
         <!-- detailed -->

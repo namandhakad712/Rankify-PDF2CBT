@@ -5,6 +5,7 @@ import { BookOpen, Info, ShieldCheck, ArrowRight } from 'lucide-vue-next'
 import gsap from 'gsap'
 import { t } from '@/lib/i18n'
 import LangSwitch from '@/components/LangSwitch.vue'
+import FeedbackFab from '@/components/FeedbackFab.vue'
 
 const logoGlow = ref(false)
 let keyBuffer = ''
@@ -90,4 +91,5 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKeyDown) })
       </div>
     </div>
   </nav>
+  <FeedbackFab />
 </template>
