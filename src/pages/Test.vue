@@ -43,6 +43,19 @@ const qFontClass = computed(() => {
   const m = ["text-[14px] lg:text-[15px]", "text-[15px] lg:text-[16px]", "text-[17px] lg:text-[18px]", "text-[19px] lg:text-[20px]"]
   return m[fontLevel.value] || m[1]
 })
+/* proportional scaling — A-/A+ scales stem + options + feedback + NAT together */
+const optFontClass = computed(() => {
+  const m = ["text-[13px] lg:text-[14px]", "text-[15px]", "text-[17px] lg:text-[18px]", "text-[19px] lg:text-[20px]"]
+  return m[fontLevel.value] || m[1]
+})
+const metaFontClass = computed(() => {
+  const m = ["text-[10px]", "text-[11px]", "text-[12px]", "text-[13px]"]
+  return m[fontLevel.value] || m[1]
+})
+const tinyFontClass = computed(() => {
+  const m = ["text-[9px]", "text-[10px]", "text-[11px]", "text-[12px]"]
+  return m[fontLevel.value] || m[1]
+})
 const isFullscreen = ref(false)
 function toggleFullscreen() {
   const el = document.getElementById("test-root")
@@ -391,14 +404,14 @@ watch(timeLeft, (val) => {
       <div class="flex-1 lg:min-h-0 lg:overflow-hidden flex flex-col bg-white min-w-0 overflow-hidden">
         <div class="flex-1 lg:overflow-y-auto px-4 lg:px-6 md:px-10 py-5 md:py-6 min-w-0">
         <div v-if="q" class="q-sheet min-w-0 break-words">
-          <div class="flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-wider text-ink/50 uppercase break-words">
+          <div :class="['flex flex-wrap items-center gap-2 font-mono tracking-wider text-ink/50 uppercase break-words', metaFontClass]">
               <span>Q{{ q.number }} / {{ total }}</span><span class="text-ink/25">·</span>
               <span class="break-words">{{ q.type.toUpperCase() }}</span><span class="text-ink/25">·</span>
               <span class="truncate break-words min-w-0">{{ q.subject || t('test.general') }}</span>
               <span v-if="q.hasDiagram" class="bg-hlyellow text-ink px-2 py-0.5 rounded-full font-sans font-bold normal-case tracking-normal break-words">{{ t('test.diagramBelow') }}</span>
-              <button @click="toggleBookmark" :title="bookmarks[q.id] ? 'Remove bookmark (B)' : 'Bookmark doubt (B)'" :class="['ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors', bookmarks[q.id] ? 'bg-hlyellow border-hlyellow text-ink' : 'bg-paper border-ink/15 text-ink/50 hover:border-hlyellow hover:text-ink']">{{ bookmarks[q.id] ? '★ Bookmarked' : '☆ Bookmark' }}</button>
+              <button @click="toggleBookmark" :title="bookmarks[q.id] ? 'Remove bookmark (B)' : 'Bookmark doubt (B)'" :class="['ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold border transition-colors', metaFontClass, bookmarks[q.id] ? 'bg-hlyellow border-hlyellow text-ink' : 'bg-paper border-ink/15 text-ink/50 hover:border-hlyellow hover:text-ink']">{{ bookmarks[q.id] ? '★ Bookmarked' : '☆ Bookmark' }}</button>
             </div>
-            <div class="mt-1 font-mono text-[10px] text-ink/35 hidden sm:block">Keys: 1-4 select · ←/→ or N/P next/prev · M mark · C clear · B bookmark</div>
+            <div :class="['mt-1 font-mono text-ink/35 hidden sm:block', tinyFontClass]">Keys: 1-4 select · ←/→ or N/P next/prev · M mark · C clear · B bookmark</div>
             <div :class="['mt-3.5 leading-relaxed whitespace-pre-wrap break-words overflow-hidden', qFontClass]"><MathText :text="q.text" /></div>
             <div v-if="q.diagrams?.length" class="mt-3 flex gap-2.5 flex-wrap">
               <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 max-w-full rounded-lg border border-ink/10 bg-white" />
@@ -406,35 +419,35 @@ watch(timeLeft, (val) => {
 
             <div v-if="q.options" class="mt-5 grid gap-2.5 min-w-0">
               <template v-if="q.type==='msq'">
-                <label v-for="(opt, oi) in q.options" :key="oi" :class="['flex items-center gap-3 text-left rounded-xl border-2 px-4 py-3 text-[15px] cursor-pointer transition-all min-h-[44px] break-words', ((answers[q.id] as string[])||[]).includes(String(oi)) ? 'border-pen bg-pen/[0.05] font-medium' : 'border-ink/10 bg-paper hover:border-ink/25']">
+                <label v-for="(opt, oi) in q.options" :key="oi" :class="['flex items-center gap-3 text-left rounded-xl border-2 px-4 py-3 cursor-pointer transition-all min-h-[44px] break-words', optFontClass, ((answers[q.id] as string[])||[]).includes(String(oi)) ? 'border-pen bg-pen/[0.05] font-medium' : 'border-ink/10 bg-paper hover:border-ink/25']">
                   <input type="checkbox" :checked="((answers[q.id] as string[])||[]).includes(String(oi))" @change="selectOption(String(oi))" class="accent-pen w-4 h-4 shrink-0" />
-                  <span class="font-mono text-xs text-ink/50 shrink-0">{{ String.fromCharCode(65+oi) }}.</span><span class="min-w-0 flex-1 break-words"><MathText :text="opt" /></span>
+                  <span class="font-mono text-[0.85em] text-ink/50 shrink-0">{{ String.fromCharCode(65+oi) }}.</span><span class="min-w-0 flex-1 break-words"><MathText :text="opt" /></span>
                 </label>
               </template>
               <template v-else>
-                <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left rounded-xl border-2 px-4 py-3 text-[15px] transition-all min-h-[44px] break-words overflow-hidden', answers[q.id]===String(oi+1) ? 'border-pen bg-pen text-white font-medium' : 'border-ink/10 bg-paper hover:border-ink/30']">
-                  <span class="font-mono text-xs mr-2.5 shrink-0" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span><span class="min-w-0 break-words"><MathText :text="opt" /></span>
+                <button v-for="(opt, oi) in q.options" :key="oi" @click="selectOption(String(oi+1))" :class="['text-left rounded-xl border-2 px-4 py-3 transition-all min-h-[44px] break-words overflow-hidden', optFontClass, answers[q.id]===String(oi+1) ? 'border-pen bg-pen text-white font-medium' : 'border-ink/10 bg-paper hover:border-ink/30']">
+                  <span class="font-mono text-[0.85em] mr-2.5 shrink-0" :class="answers[q.id]===String(oi+1) ? 'text-white/70' : 'text-ink/50'">{{ String.fromCharCode(65+oi) }}.</span><span class="min-w-0 break-words"><MathText :text="opt" /></span>
                 </button>
               </template>
             </div>
-            <div v-if="practiceMode && practiceFeedback" :class="['mt-4 px-4 py-3 rounded-xl border-2 text-sm font-semibold flex items-center gap-2', practiceFeedback.ok ? 'bg-correct/[0.08] border-correct/30 text-green-700' : 'bg-redmargin/[0.06] border-redmargin/30 text-redmargin']">
-              <span class="w-7 h-7 rounded-full grid place-items-center text-sm font-bold shrink-0" :class="practiceFeedback.ok ? 'bg-correct text-white' : 'bg-redmargin text-white'">{{ practiceFeedback.ok ? '✓' : '✗' }}</span>
+            <div v-if="practiceMode && practiceFeedback" :class="['mt-4 px-4 py-3 rounded-xl border-2 font-semibold flex items-center gap-2', optFontClass, practiceFeedback.ok ? 'bg-correct/[0.08] border-correct/30 text-green-700' : 'bg-redmargin/[0.06] border-redmargin/30 text-redmargin']">
+              <span class="w-7 h-7 rounded-full grid place-items-center text-[0.9em] font-bold shrink-0" :class="practiceFeedback.ok ? 'bg-correct text-white' : 'bg-redmargin text-white'">{{ practiceFeedback.ok ? '✓' : '✗' }}</span>
               <span>{{ practiceFeedback.text }}</span>
             </div>
 
             <div v-if="q.type==='nat'" class="mt-5 flex flex-wrap items-start gap-4 min-w-0">
               <div class="min-w-0">
-                <div class="font-mono text-[10px] uppercase tracking-wider text-ink/45 mb-1.5">{{ t('test.nat.answer') }}</div>
-                <div class="w-full max-w-48 h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums break-all px-2">{{ answers[q.id] || '—' }}</div>
+                <div :class="['font-mono uppercase tracking-wider text-ink/45 mb-1.5', tinyFontClass]">{{ t('test.nat.answer') }}</div>
+                <div :class="['w-full max-w-48 h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono font-bold tabular-nums break-all px-2', qFontClass]">{{ answers[q.id] || '—' }}</div>
               </div>
               <div class="w-full max-w-52 min-w-0">
-                <div class="w-full h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono text-lg font-bold tabular-nums mb-2 break-all px-2">{{ answers[q.id] || '' }}</div>
+                <div :class="['w-full h-11 rounded-lg border-2 border-pen/40 bg-paper grid place-items-center font-mono font-bold tabular-nums mb-2 break-all px-2', qFontClass]">{{ answers[q.id] || '' }}</div>
                 <div class="grid grid-cols-3 gap-1.5">
-                  <button v-for="k in ['1','2','3','4','5','6','7','8','9','.','0','+/-']" :key="k" @click="natKey(k)" class="w-full min-h-[44px] h-11 rounded-lg border border-ink/15 bg-paper text-base font-bold text-ink hover:border-pen hover:text-pen transition-colors">{{ k }}</button>
+                  <button v-for="k in ['1','2','3','4','5','6','7','8','9','.','0','+/-']" :key="k" @click="natKey(k)" :class="['w-full min-h-[44px] h-11 rounded-lg border border-ink/15 bg-paper font-bold text-ink hover:border-pen hover:text-pen transition-colors', optFontClass]">{{ k }}</button>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5 mt-1.5">
-                  <button @click="natKey('⌫')" class="min-h-[44px] h-11 rounded-lg border border-redmargin/40 bg-redmargin/[0.07] text-redmargin grid place-items-center hover:bg-redmargin/[0.12] transition-colors" :title="t('test.nat.backspaceT')">⌫</button>
-                  <button @click="natKey('✓')" class="col-span-2 min-h-[44px] h-11 rounded-lg border border-pen/40 bg-pen/[0.08] text-pen grid place-items-center text-lg font-bold hover:bg-pen/[0.14] transition-colors" :title="t('test.nat.saveAnsT')">✓</button>
+                  <button @click="natKey('⌫')" :class="['min-h-[44px] h-11 rounded-lg border border-redmargin/40 bg-redmargin/[0.07] text-redmargin grid place-items-center hover:bg-redmargin/[0.12] transition-colors', optFontClass]" :title="t('test.nat.backspaceT')">⌫</button>
+                  <button @click="natKey('✓')" :class="['col-span-2 min-h-[44px] h-11 rounded-lg border border-pen/40 bg-pen/[0.08] text-pen grid place-items-center font-bold hover:bg-pen/[0.14] transition-colors', optFontClass]" :title="t('test.nat.saveAnsT')">✓</button>
                 </div>
               </div>
             </div>
