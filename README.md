@@ -459,11 +459,11 @@ npx serve dist -l 3000
 | **Home** | `/` | Hero + sponsor heart + scanner + bento + FAQ — `Home.vue` |
 | **Extract** | `/extract` | GEM paste / Mistral Agent ★ chat (📎 PDF self-handles) + AI Agent free models (poolside 1M batch 12, labs 256k batch 8) + health check 24h cached |
 | **Review** | `/review` | Edit + per-Q `DiagramCropper.vue` + `Ctrl+K` search + Student/Teacher/Blank PDF export with branding per page + full-page sponsor |
-| **Test** | `/test` | CBT shell, 5-state palette + **timer presets 15-180m** + **Practice instant ✓/✗** + **bookmark ★ + keyboard 1-4/M/N/P/C/B** + **font A-/A+ + fullscreen** + per-Q `timeSpent` + streak |
-| **Results** | `/results` | Bars + `Time analytics` (avg/slowest 5) + streak + detailed You vs Ans + `window.print` |
+| **Test** | `/test` | CBT shell, 5-state palette + **timer presets 15-180m** + **Practice instant ✓/✗ (palette green=correct/red=wrong)** + **bookmark ★ + keyboard 1-4/←→/N/P/M/C/B** + **proportional font A-/A+ (stem+options+NAT) + fullscreen** + per-Q `timeSpent` + streak |
+| **Results** | `/results` | Bars + `Time analytics` (avg/slowest 5) + streak + detailed You vs Ans (full text) + **clean full-report PDF + Mistakes-only PDF (wrong Qs, options, your vs correct, KaTeX)** + inline 10s feedback → Discord |
 | **About** | `/about` | **Motto: Dead PDFs? No fun. Most exams are CBT.** Free AI (ChatGPT/GEM) → JSON, no signup, your little diagram mehnat, support via UPI/GitHub |
-| **Getting Started** | `/getting-started` | GEM + Agent + **Pro tips** (timer/bookmarks/keyboard/time/streak/PWA/storage) |
-| **Privacy** | `/privacy` | No tracking, local-only, GDPR note |
+| **Getting Started** | `/getting-started` | GEM + Agent + tutorial video `VQVJe_dz6AQ` + **Pro tips** (timer/bookmarks/keyboard/time/streak/PWA/storage) |
+| **Privacy** | `/privacy` | Private by design + analytics disclosure (Vercel anon / YouTube / Discord feedback / optional `VITE_GTM_ID`, opt-out `?no-track=1`), GDPR note |
 
 </div>
 

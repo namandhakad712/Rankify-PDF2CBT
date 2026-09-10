@@ -26,6 +26,11 @@
     <style>html{background:#FBF8F1}</style>
   </head>
   <body>
+    <!-- GTM: <head> part is injected at runtime by src/lib/gtm.ts ONLY when
+         VITE_GTM_ID is set (Vercel env). No hardcoded ID in repo (fork-safe).
+         No <noscript> iframe: this is a JS-only Vue SPA (blank #app without JS),
+         so GTM's no-JS fallback would never fire — the JS loader covers 100%
+         of real users. -->
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

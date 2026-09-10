@@ -8,7 +8,4 @@
   <url><loc>https://rankify-pdf2cbt.vercel.app/getting-started</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://rankify-pdf2cbt.vercel.app/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://rankify-pdf2cbt.vercel.app/privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
-  <!-- mirrors -->
-  <url><loc>https://rankify.zone.id/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://rankify-cbt.vercel.app/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
 </urlset>

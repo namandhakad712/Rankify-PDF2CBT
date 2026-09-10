@@ -95,6 +95,17 @@ onBeforeUnmount(() => { ctx?.revert() })
         </section>
 
         <section class="priv-card rounded-lg bg-white p-4 lg:p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] overflow-hidden">
+          <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">Analytics & tracking — what actually loads</h2>
+          <ul class="mt-3 list-disc list-inside text-[15px] text-ink/65 space-y-1.5 leading-relaxed break-words">
+            <li class="break-words"><b>Vercel Analytics</b> — anonymous pageviews, no cookies, always on. No personal data.</li>
+            <li class="break-words"><b>YouTube tutorial embed</b> — loading the video contacts Google/YouTube (their cookies apply). Blocked if you never scroll to the video.</li>
+            <li class="break-words"><b>Feedback (optional)</b> — only when YOU hit Send. Goes to our private Discord via <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">POST /api/feedback</code>. Nothing auto-sent.</li>
+            <li class="break-words"><b>Google Tag Manager (optional, off by default)</b> — loads ONLY if the site owner sets <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">VITE_GTM_ID</code> in Vercel env. Open-source safe: the ID is public by design, but the repo ships it empty so forks send nothing to us. Respects <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">Do Not Track</code>.</li>
+            <li class="break-words"><b>Opt out anytime</b> — run <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">localStorage.setItem('rpdf2cbt-analytics-optout','1')</code> in console, or open any page with <code class="bg-paper px-1.5 py-0.5 rounded border border-ink/10 text-[13px] break-all">?no-track=1</code>. To re-enable, set it to '0'.</li>
+          </ul>
+        </section>
+
+        <section class="priv-card rounded-lg bg-white p-4 lg:p-7 ring-1 ring-ink/[0.06] shadow-[0_14px_40px_-18px_rgba(35,32,58,0.28)] overflow-hidden">
           <h2 class="font-display font-bold text-lg lg:text-xl tracking-tight break-words">{{ t('privacy.s6.title') }}</h2>
           <p class="mt-2 text-[15px] text-ink/65 leading-relaxed break-words">{{ t('privacy.s6.a') }}<a href="https://github.com/namandhakad712/Rankify-PDF2CBT/issues" class="text-pen underline decoration-wavy underline-offset-2 break-all">Rankify-PDF2CBT/issues</a>{{ t('privacy.s6.b') }}</p>
         </section>
