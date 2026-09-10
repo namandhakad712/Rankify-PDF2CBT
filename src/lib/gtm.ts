@@ -18,7 +18,11 @@ export function isOptedOut(): boolean {
     if (typeof window === "undefined") return true
     if (new URLSearchParams(window.location.search).get("no-track") === "1") return true
     if (localStorage.getItem(OPT_OUT_KEY) === "1") return true
-    if (navigator.doNotTrack === "1") return true
+    // NOTE: navigator.doNotTrack deliberately NOT checked. DNT is a deprecated
+    // voluntary signal (failed W3C standard, legally binding nowhere) and it is
+    // ON by default in some browsers — it silently killed GTM for real users.
+    // The GTM container itself sets no cookies; tracking only happens via tags
+    // the owner adds inside GTM. Explicit opt-out (?no-track / flag) stays.
   } catch { /* allow */ }
   return false
 }
@@ -60,4 +64,19 @@ export function trackEvent(name: string, params: Record<string, unknown> = {}) {
     window.dataLayer = window.dataLayer || []
     window.dataLayer.push({ event: name, ...params })
   } catch {}
+}
+
+/** Runtime self-diagnosis — run `__gtmStatus()` in console when GTM looks dead. */
+export function gtmStatus() {
+  return {
+    id: gtmId() || "(none — set VITE_GTM_ID and redeploy)",
+    loaded: !!window.__gtmLoaded,
+    dataLayerEvents: Array.isArray(window.dataLayer) ? window.dataLayer.length : 0,
+    optedOut: isOptedOut(),
+    dnt: (typeof navigator !== "undefined" && navigator.doNotTrack) || "n/a",
+  }
+}
+
+if (typeof window !== "undefined") {
+  (window as unknown as { __gtmStatus?: typeof gtmStatus }).__gtmStatus = gtmStatus
 }
