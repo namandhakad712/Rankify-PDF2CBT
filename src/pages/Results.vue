@@ -5,6 +5,7 @@ import { useRouter } from "vue-router"
 import gsap from "gsap"
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
+import katex from "katex"
 import { t } from "@/lib/i18n"
 const router = useRouter()
 
@@ -182,7 +183,77 @@ const streakInfo = computed(() => {
   } catch { return null }
 })
 
-function exportPdf() { window.print() }
+function renderLatex(text: string): string {
+  if (!text) return ''
+  let out = esc(text)
+  out = out.replace(/\$\$([\s\S]*?)\$\$/g, (_, tex) => {
+    try { return katex.renderToString(String(tex).trim(), { displayMode: true, throwOnError: false }) } catch { return String(tex) }
+  })
+  out = out.replace(/\$([^$]+?)\$/g, (_, tex) => {
+    try { return katex.renderToString(String(tex).trim(), { displayMode: false, throwOnError: false }) } catch { return String(tex) }
+  })
+  // \(...\) and \[...\]
+  out = out.replace(/\\\(([\s\S]*?)\\\)/g, (_, tex) => {
+    try { return katex.renderToString(String(tex).trim(), { displayMode: false, throwOnError: false }) } catch { return String(tex) }
+  })
+  out = out.replace(/\\\[([\s\S]*?)\\\]/g, (_, tex) => {
+    try { return katex.renderToString(String(tex).trim(), { displayMode: true, throwOnError: false }) } catch { return String(tex) }
+  })
+  return out
+}
+
+function printWindow(title: string, bodyHTML: string, filename: string) {
+  // Same robust pattern as Review.vue — self-printing window, never blank
+  const w = window.open('', '_blank')
+  if (w) {
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><style>body{margin:0;padding:20px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#23203a;background:#fff} @media print{body{padding:0} @page{margin:12mm} .no-print{display:none}} img{max-width:100%} .katex{font-size:1em}</style></head><body>${bodyHTML}<script>setTimeout(()=>{focus();print()}, 500)<\/script></body></html>`)
+    w.document.close()
+    return true
+  }
+  return false
+}
+
+async function saveWithHtml2pdf(el: HTMLElement, filename: string) {
+  const { default: html2pdf } = await import('html2pdf.js')
+  const wrapper = document.createElement('div')
+  // keep in viewport but invisible — html2canvas can't capture left:-9999px (blank bug)
+  wrapper.style.cssText = 'position:absolute;left:0;top:0;width:210mm;background:#fff;opacity:0;pointer-events:none;z-index:-1;overflow:visible;'
+  wrapper.appendChild(el)
+  document.body.appendChild(wrapper)
+  try {
+    const imgs = Array.from(el.querySelectorAll('img')) as HTMLImageElement[]
+    await Promise.all(imgs.map(img => img.complete && img.naturalWidth > 0 ? Promise.resolve() : new Promise<void>(res => {
+      const to = setTimeout(() => res(), 2500)
+      img.onload = () => { clearTimeout(to); res() }
+      img.onerror = () => { clearTimeout(to); res() }
+    })))
+    if ((document as unknown as { fonts?: { ready?: Promise<unknown> } }).fonts?.ready) { try { await (document as unknown as { fonts: { ready: Promise<unknown> } }).fonts.ready } catch {} }
+    await new Promise(r => setTimeout(r, 280))
+    // NOTE: set() BEFORE from() — reverse order produces blank/corrupt PDFs
+    await (html2pdf() as unknown as { set: (o: unknown) => { from: (e: HTMLElement) => { save: () => Promise<void> } } }).set({
+      margin: 10,
+      filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, logging: false, windowWidth: el.scrollWidth },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] },
+    }).from(el).save()
+  } finally {
+    if (wrapper.parentNode) document.body.removeChild(wrapper)
+  }
+}
+
+function exportPdf() {
+  if (!result.value) { window.print(); return }
+  const html = buildFullReportHTML()
+  const title = `${result.value.paper.meta.title || 'paper'} — Result`
+  const fname = `result-${(result.value.paper.meta.title || 'paper').replace(/[^a-z0-9]+/gi, '-').slice(0, 48)}.pdf`
+  if (printWindow(title, html, fname)) return
+  const div = document.createElement('div')
+  div.innerHTML = html
+  div.style.cssText = 'font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#23203a;background:#fff;padding:18px 20px;width:100%;box-sizing:border-box;font-size:13px;line-height:1.55;'
+  saveWithHtml2pdf(div, fname).catch(() => alert('PDF failed — please allow popups and use Ctrl+P → Save as PDF.'))
+}
 
 /* ── inline 10s feedback (free-tier, no DB) ── */
 const inlineHardest = ref('')
@@ -234,17 +305,21 @@ function buildMistakesHTML(): string {
       let badge = ''
       if (isCorrect || isYourCorrect) { bg = 'background:#1FA45C0f;border-color:#1FA45C55;'; badge = '<span style="margin-left:6px; font-size:10px; font-weight:800; color:#1FA45C;">✓ Correct</span>' }
       if (isYourWrong) { bg = 'background:#F26D6D0f;border-color:#F26D6D55;'; badge = '<span style="margin-left:6px; font-size:10px; font-weight:800; color:#F26D6D;">✗ Your pick</span>' }
-      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 10px;margin:4px 0 0 18px;border:1px solid #23203a12;border-radius:8px;${bg}"><span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;min-width:18px;color:${isCorrect ? '#1FA45C' : isYourWrong ? '#F26D6D' : '#23203a55'}">${letter}.</span><span style="flex:1;min-width:0;word-break:break-word;font-size:13px;">${esc(o)}${badge}</span></div>`
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 10px;margin:4px 0 0 18px;border:1px solid #23203a12;border-radius:8px;${bg}"><span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;min-width:18px;color:${isCorrect || isYourCorrect ? '#1FA45C' : isYourWrong ? '#F26D6D' : '#23203a55'}">${letter}.</span><span style="flex:1;min-width:0;word-break:break-word;font-size:13px;">${renderLatex(o || '')}${badge}</span></div>`
     }).join('') : ''
-    const yourLine = `<div style="margin:7px 0 0 18px; padding:7px 10px; border-radius:8px; background:#F26D6D0c; border:1px solid #F26D6D22; font-size:12px;"><span style="font-weight:700; color:#F26D6D;">You:</span> ${esc(your)} <span style="color:#F26D6D;">✗</span></div>`
-    const correctLine = `<div style="margin:4px 0 0 18px; padding:7px 10px; border-radius:8px; background:#1FA45C0c; border:1px solid #1FA45C22; font-size:12px;"><span style="font-weight:700; color:#1FA45C;">Correct:</span> ${esc(correct)} <span style="color:#1FA45C;">✓</span></div>`
+    const diagHTML = ((q as unknown as { diagrams?: string[] }).diagrams || []).map(d =>
+      `<div style="margin:8px 0 0 18px;"><img src="${d}" style="max-height:150px;max-width:100%;border:1px solid #23203a14;border-radius:8px;display:block;" /></div>`
+    ).join('')
+    const yourLine = `<div style="margin:7px 0 0 18px; padding:7px 10px; border-radius:8px; background:#F26D6D0c; border:1px solid #F26D6D22; font-size:12px;"><span style="font-weight:700; color:#F26D6D;">You:</span> ${renderLatex(your)} <span style="color:#F26D6D;">✗</span></div>`
+    const correctLine = `<div style="margin:4px 0 0 18px; padding:7px 10px; border-radius:8px; background:#1FA45C0c; border:1px solid #1FA45C22; font-size:12px;"><span style="font-weight:700; color:#1FA45C;">Correct:</span> ${renderLatex(correct)} <span style="color:#1FA45C;">✓</span></div>`
     html += `
       <div style="page-break-inside:avoid; margin-bottom:12px; padding:12px 12px 10px; border:1px solid #23203a10; border-radius:10px; background:${qi%2===0 ? '#FBF8F1' : '#fff'};">
         <div style="display:flex;gap:8px;align-items:flex-start;">
           <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;background:#23203a;color:#fff;padding:2px 7px;border-radius:999px;white-space:nowrap;">Q${q.number}</span>
-          <span style="flex:1;min-width:0;font-size:13px;line-height:1.5;word-break:break-word;">${esc(q.text)}</span>
+          <span style="flex:1;min-width:0;font-size:13px;line-height:1.5;word-break:break-word;">${renderLatex(q.text)}</span>
           <span style="font-size:10px;color:#23203a55;white-space:nowrap;margin-left:6px;">[${q.type.toUpperCase()}]</span>
         </div>
+        ${diagHTML}
         ${optsHTML}
         ${yourLine}
         ${correctLine}
@@ -272,24 +347,102 @@ function buildMistakesHTML(): string {
   return html
 }
 
+function buildFullReportHTML(): string {
+  if (!result.value || !stats.value) return ''
+  const s = stats.value
+  const title = esc(result.value.paper.meta.title)
+  const when = new Date(result.value.createdAt).toLocaleString()
+  let html = `
+    <div style="font-family: ui-sans-serif, system-ui, -apple-system; color:#23203a; max-width:760px; margin:0 auto; padding:18px 14px;">
+      <div style="text-align:center; border-bottom:2.5px solid #23203a; padding-bottom:12px; margin-bottom:16px;">
+        <div style="font-size:22px; font-weight:900; letter-spacing:-0.02em;">Rankify <span style="color:#2F5FE0;">PDF2CBT</span> — Result Report</div>
+        <div style="font-size:13px; font-weight:700; margin-top:6px;">${title}</div>
+        <div style="font-size:11px; color:#23203a70; margin-top:4px;">${when} · Score ${s.score} · ${s.correct}/${s.total} correct · ${s.wrong} wrong · ${s.unattempted} skipped</div>
+      </div>
+  `
+  result.value.paper.questions.forEach((q, qi) => {
+    const v = verdictOf(q)
+    const your = yourAnswerText(q)
+    const correct = correctAnswerText(q)
+    const opts = q.options || []
+    const yourRaw = result.value!.answers[q.id]
+    const isMsq = q.type === 'msq'
+    const yourSet: Set<string> = isMsq ? new Set(((yourRaw as string[]) || []).map(String)) : new Set()
+    const correctSet: Set<string> = isMsq ? new Set((q.answers || []).map(String)) : new Set()
+    const yourIdx = !isMsq && q.options && /^\d+$/.test(String(yourRaw ?? '')) ? String(Number(yourRaw) - 1) : null
+    const correctIdx = !isMsq && q.options && /^\d+$/.test(String(q.answer ?? '')) ? String(Number(q.answer) - 1) : null
+    const border = v === 'c' ? '#1FA45C45' : v === 'w' ? '#F26D6D55' : '#23203a12'
+    const badge = v === 'c'
+      ? '<span style="font-size:10px;font-weight:800;color:#fff;background:#1FA45C;padding:2px 8px;border-radius:999px;white-space:nowrap;">✓ CORRECT</span>'
+      : v === 'w'
+        ? '<span style="font-size:10px;font-weight:800;color:#fff;background:#F26D6D;padding:2px 8px;border-radius:999px;white-space:nowrap;">✗ WRONG</span>'
+        : '<span style="font-size:10px;font-weight:800;color:#23203a70;background:#23203a12;padding:2px 8px;border-radius:999px;white-space:nowrap;">— SKIPPED</span>'
+    const optsHTML = opts.length ? opts.map((o, oi) => {
+      const letter = String.fromCharCode(65 + oi)
+      const oiStr = String(oi)
+      const isYour = isMsq ? yourSet.has(oiStr) : yourIdx === oiStr
+      const isCorr = isMsq ? correctSet.has(oiStr) : correctIdx === oiStr
+      let bg = 'background:#fff;border-color:#23203a12;'
+      let tag = ''
+      if (isCorr) { bg = 'background:#1FA45C0f;border-color:#1FA45C55;'; tag = '<span style="margin-left:6px;font-size:10px;font-weight:800;color:#1FA45C;">✓ Correct</span>' }
+      if (isYour && !isCorr) { bg = 'background:#F26D6D0f;border-color:#F26D6D55;'; tag = '<span style="margin-left:6px;font-size:10px;font-weight:800;color:#F26D6D;">✗ Your pick</span>' }
+      if (isYour && isCorr) { tag = '<span style="margin-left:6px;font-size:10px;font-weight:800;color:#1FA45C;">✓ Your pick · Correct</span>' }
+      const lc = isCorr ? '#1FA45C' : (isYour ? '#F26D6D' : '#23203a55')
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 10px;margin:4px 0 0 18px;border:1px solid #23203a12;border-radius:8px;${bg}"><span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;min-width:18px;color:${lc}">${letter}.</span><span style="flex:1;min-width:0;word-break:break-word;font-size:13px;">${renderLatex(o || '')}${tag}</span></div>`
+    }).join('') : ''
+    const diagHTML = ((q as unknown as { diagrams?: string[] }).diagrams || []).map(d =>
+      `<div style="margin:8px 0 0 18px;"><img src="${d}" style="max-height:150px;max-width:100%;border:1px solid #23203a14;border-radius:8px;display:block;" /></div>`
+    ).join('')
+    const youBg = v === 'c' ? 'background:#1FA45C0c;border:1px solid #1FA45C22;' : v === 'w' ? 'background:#F26D6D0c;border:1px solid #F26D6D22;' : 'background:#23203a08;border:1px solid #23203a12;'
+    const youColor = v === 'c' ? '#1FA45C' : v === 'w' ? '#F26D6D' : '#23203a60'
+    const youIcon = v === 'c' ? '✓' : v === 'w' ? '✗' : '–'
+    html += `
+      <div style="page-break-inside:avoid; margin-bottom:12px; padding:12px 12px 10px; border:1px solid ${border}; border-radius:10px; background:${qi % 2 === 0 ? '#FBF8F1' : '#fff'};">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;background:#23203a;color:#fff;padding:2px 7px;border-radius:999px;white-space:nowrap;">Q${q.number}</span>
+          <span style="flex:1;min-width:0;font-size:13px;line-height:1.5;word-break:break-word;">${renderLatex(q.text)}</span>
+          ${badge}
+        </div>
+        ${diagHTML}
+        ${optsHTML}
+        <div style="margin:7px 0 0 18px; padding:7px 10px; border-radius:8px; ${youBg} font-size:12px;"><span style="font-weight:700; color:${youColor};">You:</span> ${renderLatex(your)} <span style="color:${youColor};">${youIcon}</span></div>
+        <div style="margin:4px 0 0 18px; padding:7px 10px; border-radius:8px; background:#1FA45C0c; border:1px solid #1FA45C22; font-size:12px;"><span style="font-weight:700; color:#1FA45C;">Correct:</span> ${renderLatex(correct)} <span style="color:#1FA45C;">✓</span></div>
+        <div style="font-size:10px;color:#23203a55;margin-top:6px;padding-left:18px;">${esc(q.subject || 'General')}${q.topic ? ' · ' + esc(q.topic) : ''} · ${q.marks} marks${q.negativeMarks ? ' · −' + q.negativeMarks : ''}</div>
+      </div>
+    `
+    if ((qi + 1) % 6 === 0 && qi !== result.value!.paper.questions.length - 1) {
+      html += `<div style="text-align:center; margin:8px 0 14px; padding:8px; font-size:10px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; color:#2F5FE0; background:#2F5FE00d; border:1px dashed #2F5FE030; border-radius:8px;">Generated by Rankify PDF2CBT — rankify-pdf2cbt.vercel.app — Free & Open Source</div>`
+    }
+  })
+  html += `
+      <div style="text-align:center; margin-top:22px; padding:10px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#2F5FE0; background:#2F5FE00d; border:1px solid #2F5FE030; border-radius:10px;">Generated by Rankify PDF2CBT — rankify-pdf2cbt.vercel.app — Free for every student</div>
+      <div style="page-break-before:always; min-height:88vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:36px 28px; margin-top:12px; border:3px solid #2F5FE0; border-radius:18px; background:#FBF8F1;">
+        <div style="font-size:13px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#23203a60;">This PDF was made using</div>
+        <div style="font-size:13px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:#2F5FE0; background:#2F5FE012; border:1px solid #2F5FE030; padding:4px 12px; border-radius:999px; margin-top:8px;">Result Report</div>
+        <div style="font-size:13px; font-weight:800; color:#23203a; margin-top:6px;">of</div>
+        <div style="font-size:32px; font-weight:900; letter-spacing:-0.02em; color:#2F5FE0; margin-top:4px; line-height:1.1;">Rankify PDF2CBT</div>
+        <div style="font-size:12px; color:#23203a55; margin-top:6px; letter-spacing:0.04em;">rankify-pdf2cbt.vercel.app</div>
+        <div style="width:48px; height:3px; background:#2F5FE0; border-radius:999px; margin:18px auto;"></div>
+        <p style="font-size:13px; line-height:1.65; color:#23203a; max-width:560px; margin:0 auto;">It is <b>free to use</b> and <b>open-source</b> for every student, teacher &amp; coaching — no signup, no upload to us, your PDFs stay private in your browser.<br/>Made for students, by a student <b style="color:#2F5FE0;">Naman</b> — because dead PDFs deserve to be live CBTs.<br/><span style="display:inline-block; margin-top:10px; font-weight:700; color:#2F5FE0;">Go help someone by sharing this tool —</span> one share can save someone's 10 hours of re-typing. Thank you ❤️</p>
+        <div style="margin-top:22px; font-size:10px; color:#23203a35; border-top:1px solid #23203a10; padding-top:10px; width:100%;">PolyForm Noncommercial 1.0.0 — Free for learning · Open on GitHub: github.com/namandhakad712/Rankify-PDF2CBT</div>
+      </div>
+    </div>
+  `
+  return html
+}
+
 async function exportMistakes() {
   if (!result.value) return
   const mistakes = result.value.paper.questions.filter(q => verdictOf(q) === 'w')
   if (!mistakes.length) { alert('No mistakes to export — all correct! 🎉'); return }
   const html = buildMistakesHTML()
-  const w = window.open('', '_blank')
-  if (w) {
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Mistakes — ${esc(result.value.paper.meta.title)}</title><style>body{margin:0;padding:14px;background:#FBF8F1} @media print{body{background:white}}</style></head><body>${html}</body></html>`)
-    w.document.close()
-    setTimeout(() => { try { w.focus(); w.print() } catch {} }, 400)
-    return
-  }
-  const { default: html2pdf } = await import('html2pdf.js')
-  const wrap = document.createElement('div')
-  wrap.innerHTML = html
-  wrap.style.position = 'absolute'; wrap.style.left = '0'; wrap.style.top = '0'; wrap.style.width = '760px'; wrap.style.background = 'white'
-  document.body.appendChild(wrap)
-  try { await (html2pdf as unknown as { (): { from: (el: HTMLElement) => { set: (o: unknown) => { save: () => Promise<void> } } } })().from(wrap).set({ margin: 8, filename: `mistakes-${(result.value.paper.meta.title||'paper').replace(/[^a-z0-9]+/gi,'-')}.pdf`, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).save() } finally { wrap.remove() }
+  const title = `Mistakes — ${result.value.paper.meta.title || 'paper'}`
+  const fname = `mistakes-${(result.value.paper.meta.title || 'paper').replace(/[^a-z0-9]+/gi, '-').slice(0, 48)}.pdf`
+  if (printWindow(title, html, fname)) return
+  const div = document.createElement('div')
+  div.innerHTML = html
+  div.style.cssText = 'font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#23203a;background:#fff;padding:18px 20px;width:100%;box-sizing:border-box;font-size:13px;line-height:1.55;'
+  try { await saveWithHtml2pdf(div, fname) } catch { alert('PDF failed — please allow popups and use Ctrl+P → Save as PDF.') }
 }
 
 const grade = computed(() => {
@@ -308,7 +461,7 @@ const grade = computed(() => {
   <div class="min-h-screen bg-paper text-ink font-sans pt-28 pb-16">
     <AppNav />
     <div class="max-w-4xl mx-auto px-5">
-      <button class="text-sm font-medium text-ink/50 hover:text-ink transition-colors" @click="router.push('/')">{{ t('common.backHome') }}</button>
+      <button class="no-print text-sm font-medium text-ink/50 hover:text-ink transition-colors" @click="router.push('/')">{{ t('common.backHome') }}</button>
 
       <div class="res-hero mt-3 flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -475,12 +628,12 @@ const grade = computed(() => {
             <div v-for="q in result.paper.questions" :key="q.id" class="verdict-row rounded-xl border px-3 py-2.5 lg:px-3.5 min-w-0 overflow-hidden" :class="verdictOf(q) === 'c' ? 'bg-correct/[0.05] border-correct/30' : verdictOf(q) === 'w' ? 'bg-redmargin/[0.04] border-redmargin/30' : 'bg-paper border-ink/10'">
               <div class="flex gap-2 lg:gap-3 items-start text-sm min-w-0">
                 <div class="w-9 font-mono text-xs text-ink/50 shrink-0">Q{{ q.number }}</div>
-                <div class="flex-1 min-w-0 text-ink/80 break-words line-clamp-2">{{ q.text.slice(0, 90) }}</div>
+                <div class="flex-1 min-w-0 text-ink/80 break-words line-clamp-2 print:line-clamp-none">{{ q.text }}</div>
                 <span :class="['shrink-0 w-6 h-6 grid place-items-center rounded-full text-[11px] font-bold text-white', verdictOf(q) === 'c' ? 'bg-correct' : verdictOf(q) === 'w' ? 'bg-redmargin' : 'bg-ink/30']">{{ verdictOf(q) === 'c' ? '✓' : verdictOf(q) === 'w' ? '✗' : '–' }}</span>
               </div>
               <div class="mt-1.5 pl-0 lg:pl-12 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[12px] min-w-0">
-                <div :class="verdictOf(q) === 'w' ? 'text-redmargin' : 'text-ink/60'" class="min-w-0 break-words"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">{{ t('results.you') }}</span><b class="font-semibold break-words break-all">{{ yourAnswerText(q).slice(0, 70) }}</b></div>
-                <div class="text-green-700 min-w-0 break-words"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">{{ t('results.ans') }}</span><b class="font-semibold break-words break-all">{{ correctAnswerText(q).slice(0, 70) }}</b></div>
+                <div :class="verdictOf(q) === 'w' ? 'text-redmargin' : 'text-ink/60'" class="min-w-0 break-words"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">{{ t('results.you') }}</span><b class="font-semibold break-words break-all">{{ yourAnswerText(q) }}</b></div>
+                <div class="text-green-700 min-w-0 break-words"><span class="font-mono text-[9px] uppercase tracking-wider opacity-70 mr-1">{{ t('results.ans') }}</span><b class="font-semibold break-words break-all">{{ correctAnswerText(q) }}</b></div>
               </div>
             </div>
           </div>
@@ -488,7 +641,7 @@ const grade = computed(() => {
 
         <p class="mt-6 font-hand text-2xl text-ink/50 -rotate-1">{{ stats.correct / stats.total >= 0.6 ? t('results.good') : t('results.bad') }}</p>
 
-        <div class="mt-4 flex flex-wrap gap-3">
+        <div class="no-print mt-4 flex flex-wrap gap-3">
           <button class="px-5 py-2.5 rounded-xl border-2 border-ink/12 text-sm font-bold text-ink/70 hover:border-ink/30 transition-colors" @click="router.push('/review')">{{ t('results.backReview') }}</button>
           <button class="px-5 py-2.5 rounded-xl bg-pen text-white text-sm font-bold" @click="router.push('/extract')">{{ t('results.newTest') }}</button>
         </div>
@@ -499,9 +652,16 @@ const grade = computed(() => {
 
 <style scoped>
 @media print {
-  .no-print, header, nav { display: none !important; }
-  body { background: white !important; }
+  .no-print, header, nav, canvas { display: none !important; }
+  /* FAB lives outside <nav> — kill any fixed feedback button in print */
+  div.fixed.bottom-4.right-4 { display: none !important; }
+  body, .min-h-screen { background: white !important; }
   .res-hero h1 { font-size: 2rem; }
+  .stat-card, .verdict-row { box-shadow: none !important; break-inside: avoid !important; overflow: visible !important; }
+  /* detailed rows were line-clamp-2 + slice(0,90) on screen — show full in print */
+  .line-clamp-2 { display: block !important; -webkit-line-clamp: unset !important; -webkit-box-orient: unset !important; overflow: visible !important; }
+  .tape { display: none !important; }
+  .grade { box-shadow: none !important; }
 }
 .tape {
   position: absolute;

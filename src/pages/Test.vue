@@ -157,6 +157,9 @@ function onKey(e: KeyboardEvent) {
   const tag = (e.target as HTMLElement)?.tagName
   if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) return
   if (showPresetMenu.value) return
+  // ArrowLeft / ArrowRight → prev / next question (as requested)
+  if (e.key === 'ArrowRight') { e.preventDefault(); if (idx.value < total.value - 1) go(idx.value + 1); return }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); if (idx.value > 0) go(idx.value - 1); return }
   const k = e.key.toLowerCase()
   if (k >= '1' && k <= '4' && q.value?.options) {
     const oi = parseInt(k, 10) - 1
@@ -257,6 +260,19 @@ function paletteClass(qq: UniversalPaper["questions"][number]): string {
   if (st === "notAnswered") return "bg-redmargin text-white"
   return "bg-paper border border-dashed border-ink/30 text-ink/45"
 }
+
+/* practice legend counts — must match paletteClass (marked stays purple) */
+const practiceCounts = computed(() => {
+  let correct = 0, wrong = 0
+  for (const qq of paper.value?.questions || []) {
+    const st = status.value[qq.id] || "notVisited"
+    if (st === "marked" || st === "markedAnswered") continue
+    if (!hasAttemptForPalette(qq)) continue
+    if (isCorrectForPalette(qq)) correct++
+    else wrong++
+  }
+  return { correct, wrong }
+})
 
 function submit() {
   if (!paper.value) return
@@ -382,7 +398,7 @@ watch(timeLeft, (val) => {
               <span v-if="q.hasDiagram" class="bg-hlyellow text-ink px-2 py-0.5 rounded-full font-sans font-bold normal-case tracking-normal break-words">{{ t('test.diagramBelow') }}</span>
               <button @click="toggleBookmark" :title="bookmarks[q.id] ? 'Remove bookmark (B)' : 'Bookmark doubt (B)'" :class="['ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors', bookmarks[q.id] ? 'bg-hlyellow border-hlyellow text-ink' : 'bg-paper border-ink/15 text-ink/50 hover:border-hlyellow hover:text-ink']">{{ bookmarks[q.id] ? '★ Bookmarked' : '☆ Bookmark' }}</button>
             </div>
-            <div class="mt-1 font-mono text-[10px] text-ink/35 hidden sm:block">Keys: 1-4 select · M mark · N/P next/prev · C clear · B bookmark</div>
+            <div class="mt-1 font-mono text-[10px] text-ink/35 hidden sm:block">Keys: 1-4 select · ←/→ or N/P next/prev · M mark · C clear · B bookmark</div>
             <div :class="['mt-3.5 leading-relaxed whitespace-pre-wrap break-words overflow-hidden', qFontClass]"><MathText :text="q.text" /></div>
             <div v-if="q.diagrams?.length" class="mt-3 flex gap-2.5 flex-wrap">
               <img v-for="d in q.diagrams" :key="d" :src="d" class="max-h-44 max-w-full rounded-lg border border-ink/10 bg-white" />
@@ -445,8 +461,10 @@ watch(timeLeft, (val) => {
         </div>
 
         <div class="shrink-0 px-4 py-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] font-medium text-ink/60 border-b border-ink/[0.06]">
-          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-correct inline-block"></span> {{ t('test.legend.answered') }} ({{ counts.answered }})</div>
-          <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-redmargin inline-block"></span> {{ t('test.legend.notAnswered') }} ({{ counts.notAnswered }})</div>
+          <div v-if="!practiceMode" class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-correct inline-block"></span> {{ t('test.legend.answered') }} ({{ counts.answered }})</div>
+          <div v-if="!practiceMode" class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-redmargin inline-block"></span> {{ t('test.legend.notAnswered') }} ({{ counts.notAnswered }})</div>
+          <div v-if="practiceMode" class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-correct inline-block"></span> Correct ({{ practiceCounts.correct }})</div>
+          <div v-if="practiceMode" class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-redmargin inline-block"></span> Wrong ({{ practiceCounts.wrong }})</div>
           <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"></span> {{ t('test.legend.marked') }} ({{ counts.marked }})</div>
           <div class="flex items-center gap-1.5"><span class="relative w-3.5 h-3.5 rounded bg-[#8b5cf6] inline-block"><span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-correct border border-white"></span></span> {{ t('test.legend.ansMarked') }} ({{ counts.markedAnswered }})</div>
           <div class="flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-paper border border-dashed border-ink/35 inline-block"></span> {{ t('test.legend.notVisited') }} ({{ counts.notVisited }})</div>
