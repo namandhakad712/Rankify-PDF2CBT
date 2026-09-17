@@ -63,7 +63,7 @@ providers:
 
   - id: mistral
     name: Mistral
-    priority: 2
+    priority: 4
     endpoint: https://api.mistral.ai/v1
     response: openai-completions
     envKey: MISTRAL_API_KEY
@@ -112,39 +112,33 @@ providers:
 
   - id: agnes
     name: Agnes AI
-    priority: 1
+    priority: 2
     endpoint: https://apihub.agnes-ai.com/v1/chat/completions
     response: openai-completions
     envKey: AGNES_API_KEY
     docsUrl: https://docs.agnes-ai.com/
     models:
+      - id: agnes-3.0-flash
+        contextWindow: 512000
+        maxTokens: 64000
       - id: agnes-2.5-flash
         contextWindow: 512000
         maxTokens: 32000
       - id: agnes-2.0-flash
         contextWindow: 512000
-        maxTokens: 32000
+        maxTokens: 32000  
 
-  - id: inferx
-    name: InferX
-    priority: 4
-    endpoint: https://model.inferx.net/endpoints/v1
+  - id: atria_internlm
+    name: Internlm
+    priority: 1
+    endpoint: https://api.atria-asi.ai/v1
     response: openai-completions
-    envKey: INFERX_API_KEY
-    docsUrl: https://docs.inferx.ai/
+    envKey: ATRIA_API_KEY
+    docsUrl: https://api.atria-asi.ai/docs
     models:
-      - id: Qwen3-Coder-Next-FP8
+      - id: Atria-Dawn-Preview
         contextWindow: 256000
-        maxTokens: 65000
-      - id: Qwen3.8-27B-FP8
-        contextWindow: 256000
-        maxTokens: 65000
-      - id: Qwen3.6-35B-A3B-FP8
-        contextWindow: 256000
-        maxTokens: 65000
-      - id: Devstral-2-123B-Instruct-2512-int4-AutoRound
-        contextWindow: 128000
-        maxTokens: 65000
+        maxTokens: 64000
     
   - id: opencode_zen
     name: OpenCode Zen
