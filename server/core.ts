@@ -149,36 +149,3 @@ export async function handleChat(opts: {
     return jsonOut(status >= 400 && status < 600 ? status : 502, { error: `${status} ${e instanceof Error ? e.message : String(e)}`.slice(0, 500) })
   }
 }
-
-export async function handleOcr(pdfBytes: Buffer, authHeader?: string): Promise<{ status: number; json: unknown }> {
-  const ah = authHeader ?? ""
-  let key = ah.startsWith("Bearer ") ? ah.slice(7).trim() : ""
-  if (!key) key = getEnv("MISTRAL_API_KEY")
-  if (!key) return jsonOut(401, { error: "401 Missing MISTRAL_API_KEY — set it in Vercel/.env.local for scanned-PDF OCR" })
-  if (!pdfBytes?.length) return jsonOut(400, { error: "Empty PDF body" })
-  if (pdfBytes.length > 45 * 1024 * 1024) return jsonOut(413, { error: "PDF too large for OCR proxy (<45MB)" })
-  const H = { Authorization: `Bearer ${key}` }
-  const BASE = "https://api.mistral.ai/v1"
-  try {
-    const fd = new FormData()
-    fd.append("purpose", "ocr")
-    fd.append("file", new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" }), "paper.pdf")
-    const up = await fetch(`${BASE}/files`, { method: "POST", headers: H, body: fd })
-    if (!up.ok) return jsonOut(up.status === 429 ? 429 : 502, { error: `${up.status} ${(await up.text()).slice(0, 300)}` })
-    const fileId = ((await up.json()) as { id: string }).id
-    const su = await fetch(`${BASE}/files/${fileId}/url`, { headers: H })
-    if (!su.ok) return jsonOut(502, { error: `${su.status} ${(await su.text()).slice(0, 300)}` })
-    const signedUrl = ((await su.json()) as { url: string }).url
-    const oc = await fetch(`${BASE}/ocr`, {
-      method: "POST",
-      headers: { ...H, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "mistral-ocr-latest", document: { type: "document_url", document_name: "paper.pdf", document_url: signedUrl } }),
-    })
-    if (!oc.ok) return jsonOut(oc.status === 429 ? 429 : 502, { error: `${oc.status} ${(await oc.text()).slice(0, 300)}` })
-    const j = (await oc.json()) as { pages?: { index: number; markdown?: string }[] }
-    const pages = (j.pages || []).sort((a, b) => a.index - b.index).map((p) => (p.markdown || "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").trim())
-    return jsonOut(200, { pages })
-  } catch (e: unknown) {
-    return jsonOut(502, { error: e instanceof Error ? e.message : String(e) })
-  }
-}

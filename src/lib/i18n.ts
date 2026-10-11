@@ -189,6 +189,8 @@ const dicts: Record<Locale, Dict> = {
     'extract.settings.ocrOff': 'Mistral OCR off',
     'extract.settings.ocrReadyNote': 'scanned PDFs supported · [FREE] by owner key',
     'extract.settings.ocrOffNote': 'add a "mistral" provider in providers.yaml',
+    'extract.agent.ocrConsent': 'Scanned PDF detected. OCR sends pages to Mistral (your key or shared). Nothing stored.',
+    'extract.agent.ocrNeedKey': 'OCR needs your Mistral API key. Add one in Settings, or use the GEM paste path (no key, 100+ pages).',
     'extract.settings.preconfigured': 'PRECONFIGURED — src/config/providers.yaml',
     'extract.settings.envNotAvailable': 'env not available',
     'extract.settings.envDetected': ' ✓ detected',

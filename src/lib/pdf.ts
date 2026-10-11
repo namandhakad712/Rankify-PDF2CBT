@@ -1,11 +1,4 @@
-import * as pdfjs from "pdfjs-dist"
-// Vite handles worker via ?url
-import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url"
-
-if (typeof window !== "undefined") {
-  // @ts-ignore
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
-}
+import { getPdfjs } from "./ocr"
 
 export async function loadPdfFromFile(file: File) {
   const buf = await file.arrayBuffer()
@@ -20,11 +13,12 @@ export async function loadPdfFromBuffer(buf: ArrayBuffer) {
   // hand it a private copy made WITHOUT slice() (slice throws on detached).
   const copy = new Uint8Array(buf.byteLength)
   copy.set(new Uint8Array(buf))
+  const pdfjs = await getPdfjs()
   const doc = await pdfjs.getDocument({ data: copy }).promise
   return doc
 }
 
-export async function renderPageToCanvas(doc: pdfjs.PDFDocumentProxy, pageNum: number, scale = 1.5): Promise<HTMLCanvasElement> {
+export async function renderPageToCanvas(doc: any, pageNum: number, scale = 1.5): Promise<HTMLCanvasElement> {
   const page = await doc.getPage(pageNum)
   const viewport = page.getViewport({ scale })
   const canvas = document.createElement("canvas")

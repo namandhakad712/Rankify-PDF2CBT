@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import AppNav from '@/components/AppNav.vue'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue"
 import { useRouter } from "vue-router"
@@ -692,6 +692,11 @@ void (async () => {
               <input type="checkbox" v-model="forceOcr" class="accent-pen mt-0.5" />
               <span>{{ t('extract.agent.ocrQ') }}<b>Mistral OCR</b>{{ t('extract.agent.ocrNeeds') }}<b>{{ t('extract.agent.ocrDirect') }}</b></span>
             </label>
+            <div class="mt-2 px-3 py-2 rounded-lg bg-hlyellow/15 border border-hlyellow/30 text-[11px] text-ink/75 flex items-start gap-2">
+              <span class="shrink-0 mt-0.5">⚠</span>
+              <span v-if="ocrReady">{{ t('extract.agent.ocrConsent') }}</span>
+              <span v-else class="text-redmargin">{{ t('extract.agent.ocrNeedKey') }}</span>
+            </div>
           </div>
 
         <!-- AI Agent tab — page-chunked extraction -->

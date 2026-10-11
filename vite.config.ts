@@ -25,8 +25,6 @@ function vercelApiDev() {
           if (req.url.startsWith('/api/agent/chat')) {
             const parsed = JSON.parse(body.toString('utf8') || '{}')
             send(await core.handleChat({ ...parsed, authHeader: (req.headers.authorization as string) || '' }))
-          } else if (req.url.startsWith('/api/agent/ocr')) {
-            send(await core.handleOcr(body, (req.headers.authorization as string) || ''))
           } else if (req.url.startsWith('/api/agent/health')) {
             send(await core.handleHealth())
           } else if (req.url.startsWith('/api/agent/status')) {
@@ -72,14 +70,23 @@ export default defineConfig({
   },
   build: {
     target: 'es2020',
+    chunkSizeWarningLimit: 1000, // Large lazy chunks are intentional (html2pdf, pdfjs, katex)
     rollupOptions: {
       output: {
         manualChunks(id: string) {
           if (!id.includes('node_modules')) return
-          if (id.includes('gsap')) return 'gsap'
-          if (id.includes('ogl')) return 'ogl'
+          // Heavy libs - keep them lazy
+          if (id.includes('html2pdf.js') || id.includes('jspdf') || id.includes('html2canvas') || id.includes('snapdom')) return 'html2pdf'
+          if (id.includes('canvas-confetti')) return 'confetti'
+          if (id.includes('yaml')) return 'yaml'
+          if (id.includes('dexie')) return 'dexie'
+          if (id.includes('katex')) return 'katex'
+          if (id.includes('lucide-vue-next')) return 'lucide'
+          if (id.includes('openai')) return 'openai'
           if (id.includes('pdfjs-dist')) return 'pdfjs'
           if (id.includes('motion-v')) return 'motion'
+          if (id.includes('gsap')) return 'gsap'
+          if (id.includes('ogl')) return 'ogl'
           if (id.includes('vue') || id.includes('@vueuse') || id.includes('reka-ui')) return 'vue'
           return 'vendor'
         },
